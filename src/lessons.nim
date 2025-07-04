@@ -16,6 +16,7 @@ type
     expectedOutput*: Option[string] # Optional: Expected stdout for validation
     validationScript*: Option[string] # Optional: Path to a custom validation script (.nims)
     pointsValue*: int               # Points awarded for completing this exercise
+    sandboxPreference*: string      # "native" (default), "wasm"
 
 proc getExercisesRootPath*(): string =
   # Try to find the 'exercises' directory relative to the executable
@@ -57,6 +58,7 @@ proc discoverExercises*(): seq[Exercise] =
           var expectedOutputStr: Option[string] = none[string]()
           var validationScriptPath: Option[string] = none[string]()
           var points = 10 # Default points
+          var sandboxPref = "native" # Default sandbox preference
           var multiLineExpectedOutput: seq[string] = @[]
           var inExpectedOutputBlock = false
 
@@ -91,6 +93,11 @@ proc discoverExercises*(): seq[Exercise] =
                     multiLineExpectedOutput.add(strippedLine) # Or raise error
               elif strippedLine.startsWith("# ValidationScript:"):
                 validationScriptPath = some(strippedLine.split(":", 1)[1].strip())
+              elif strippedLine.startsWith("# SandboxPreference:"):
+                sandboxPref = strippedLine.split(":", 1)[1].strip().toLower()
+                if sandboxPref notin ["native", "wasm"]:
+                  echo "Warning: Invalid SandboxPreference '", sandboxPref, "' in ", filePath, ". Defaulting to 'native'."
+                  sandboxPref = "native"
 
           except IOError:
             echo "Warning: Could not read exercise file for metadata: ", filePath
@@ -103,7 +110,8 @@ proc discoverExercises*(): seq[Exercise] =
             hint: hint,
             expectedOutput: expectedOutputStr,
             validationScript: validationScriptPath,
-            pointsValue: points
+            pointsValue: points,
+            sandboxPreference: sandboxPref
           ))
 
   # Sort exercises by topic and then by name for consistent order

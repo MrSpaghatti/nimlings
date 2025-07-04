@@ -4,4 +4,5 @@
 # TODO: Modify the line below to print the correct message.
 echo "Hello, world!"
 
+# SandboxPreference: wasm
 # ExpectedOutput: Hello, Nimlings!

@@ -45,8 +45,8 @@ proc runExercise*(exerciseNameOrPath: string) =
   echo "WARNING: Exercises are run without a secure sandbox. Do not run untrusted exercises." # Add warning
   echo "--------------------------------------------------"
 
-  # Call the sandboxed execution
-  var sboxResult = sandbox.executeSandboxed(exercise.path, exercise.path.parentDir)
+  # Call the sandboxed execution, passing the preference
+  var sboxResult = sandbox.executeSandboxed(exercise.path, exercise.path.parentDir, preference = exercise.sandboxPreference)
   var overallSuccess = false
   var validationRunOutput = "" # To store output from validation script or comparison
 
@@ -298,19 +298,20 @@ proc status*() =
 when isMainModule:
 import rdstdin
 
-proc runTemporaryNimCode(code: string, tempFileName: string = "nimlings_repl_temp.nim"): sandbox.SandboxedExecutionResult =
-  ## Writes the given code to a temporary file and runs it using the sandbox.
+proc runTemporaryNimCode(userCode: string, context: string, tempFileName: string = "nimlings_repl_temp.nim"): sandbox.SandboxedExecutionResult =
+  ## Writes the combined context + user code to a temporary file and runs it.
+  let fullCode = if context.len > 0: context & "\n\n" & userCode else: userCode
   try:
-    writeFile(tempFileName, code)
+    writeFile(tempFileName, fullCode)
   except IOError:
     var res: sandbox.SandboxedExecutionResult
-    res.flags = {sandbox.CompilationFailed} # Use CompilationFailed to indicate setup error
+    res.flags = {sandbox.CompilationFailed}
     res.compilationOutput = "Error: Could not write temporary file for REPL."
     return res
 
-  let result = sandbox.executeSandboxed(tempFileName, getCurrentDir()) # Run in current dir
+  let result = sandbox.executeSandboxed(tempFileName, getCurrentDir())
 
-  # temp file cleanup is tricky if sandbox compilation creates more artifacts.
+  # Temp file cleanup
   # For now, simple removal. executeSandboxed already removes its own .exe_temp_sandbox
   if fileExists(tempFileName):
     try:
@@ -328,56 +329,103 @@ proc shell*() =
   echo "WARNING: Code is run via the sandbox module, which is not yet secure."
   echo "---"
 
-  var currentInput = ""
+  var inputBuffer: string = ""
+  var replContext: string = "" # For storing persistent declarations
+
+  # Helper to check if code likely contains top-level declarations
+  proc likelyContainsDeclarations(code: string): bool =
+    for line in code.splitLines():
+      let stripped = line.strip()
+      if stripped.startsWith("var ") or stripped.startsWith("let ") or \
+         stripped.startsWith("const ") or stripped.startsWith("type ") or \
+         stripped.startsWith("proc ") or stripped.startsWith("iterator ") or \
+         stripped.startsWith("macro ") or stripped.startsWith("template "):
+        return true
+    return false
+
   while true:
-    let prompt = if currentInput.len == 0: "nim> " else: "nim| "
+    let prompt = if inputBuffer.len == 0: "nim> " else: "nim| " # Indicate multi-line
     stdout.write(prompt)
     stdout.flushFile()
 
-    let line =readLine(stdin)
+    let line = readLine(stdin)
+    let strippedLine = line.strip()
 
-    if line.len == 0 and currentInput.len > 0: # User might press enter to submit multi-line
-        # continue, effectively treating blank line as "run current buffer" for multi-line
-        # For now, let's require explicit run or treat each line separately unless we add :run
-        # For simplicity, let's just execute currentInput if it's not empty.
-        # This means multi-line needs to be pasted or handled carefully.
-        # A better REPL would parse for complete statements.
-        # For this basic version, we'll just execute line by line or accumulated lines if we had a trigger.
-        # Let's assume each non-command line is part of a block until an empty line or command.
-        # No, simpler: each line is an input, for now. Multi-line via copy-paste.
-        # Let's stick to: execute each non-empty, non-command line.
-      discard # Handled by outer loop logic for single lines
-
-    if line.strip() == ":quit" or line.strip() == ":exit":
+    # Check for commands first
+    if strippedLine == ":quit" or strippedLine == ":exit":
       echo "Exiting Nimlings shell. Bye!"
       break
-    elif line.strip() == ":help":
+    elif strippedLine == ":help":
       echo """
-Nimlings Basic REPL Help:
-  - Type any valid Nim expression or statement.
-  - Multi-line input: Paste directly. Execution happens on pressing Enter after the full paste.
-    (Note: True multi-line statement parsing is not yet implemented; it treats input as a block.)
+Nimlings Enhanced REPL Help:
+  - Type Nim code. It will be added to a buffer.
+  - Enter a blank line or type `:run` to execute the buffered code.
+  - Multi-line input is supported; lines are collected until you execute.
   - :quit or :exit   - Exit the shell.
   - :help            - Show this help message.
+  - :run             - Execute the current code in the buffer.
+  - :show            - Show the current code in the buffer without running.
+  - :clear           - Clear the current code buffer.
+  - :show_context    - Show the persistent REPL context.
+  - :clear_context   - Clear the persistent REPL context.
 """
-    # Add other commands like :clear if desired later
-    else:
-      # For now, execute every non-empty line. A real REPL would buffer until a complete expression/statement.
-      # This basic version will just try to run the line.
-      if line.strip().len > 0:
-        let result = runTemporaryNimCode(line)
+    elif strippedLine == ":run" or (line.len == 0 and inputBuffer.strip().len > 0) : # :run or blank line with content
+      if inputBuffer.strip().len > 0:
+        let result = runTemporaryNimCode(inputBuffer, replContext)
         if sandbox.CompilationFailed in result.flags:
           echo "Compilation Error:\n", result.compilationOutput
+          if replContext.len > 0:
+            echo "Note: An error occurred while using the REPL context. Try `:clear_context` if issues persist."
         elif sandbox.RuntimeFailed in result.flags:
           echo "Runtime Error:\n", result.runtimeOutput
-        else: # Success (as per sandbox)
+          if replContext.len > 0:
+            echo "Note: An error occurred while using the REPL context. Try `:clear_context` if issues persist."
+        else: # Success
           if result.runtimeOutput.len > 0:
             echo result.runtimeOutput
           else:
-            # No output, but successful execution (e.g. variable assignment)
             echo "OK (No output)"
-      # If line is empty, just loop for next prompt.
 
+          # If successful and input likely contained declarations, add to context
+          if likelyContainsDeclarations(inputBuffer):
+            if replContext.len > 0:
+              replContext &= "\n" & inputBuffer
+            else:
+              replContext = inputBuffer
+            echo "(Context updated)"
+
+        inputBuffer = "" # Clear buffer after running or attempting to run
+      elif strippedLine == ":run": # :run called on empty buffer
+        echo "Buffer is empty. Type some code or :help."
+      # if blank line on empty buffer, just re-prompt (handled by continue below)
+    elif strippedLine == ":clear":
+      inputBuffer = ""
+      echo "Input buffer cleared."
+    elif strippedLine == ":show":
+      if inputBuffer.len > 0:
+        echo "--- Current Input Buffer ---"
+        echo inputBuffer
+        echo "--------------------------"
+      else:
+        echo "Input buffer is empty."
+    elif strippedLine == ":show_context":
+      if replContext.len > 0:
+        echo "--- REPL Context ---"
+        echo replContext
+        echo "--------------------"
+      else:
+        echo "REPL context is empty."
+    elif strippedLine == ":clear_context":
+      replContext = ""
+      echo "REPL context cleared."
+    elif line.len == 0: # Blank line entered on an already empty buffer
+        # Blank line on empty buffer, do nothing, just re-prompt
+        continue
+    else: # Regular code line
+      if inputBuffer.len > 0:
+        inputBuffer &= "\n" & line
+      else:
+        inputBuffer = line
   echo "---"
 
 
