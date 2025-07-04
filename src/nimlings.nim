@@ -16,9 +16,9 @@ import os
 import lessons
 import state
 import strutils
-import sandbox # Import the new sandbox module
+import sandbox
 import times
-
+import achievements # For badges
 # Remove local definitions of RunResultFlag and CompileAndRunResult as they come from sandbox
 # type RunResultFlag = enum ...
 # type CompileAndRunResult = object ...
@@ -122,14 +122,30 @@ proc runExercise*(exerciseNameOrPath: string) =
   if overallSuccess:
     echo "🎉 Exercise completed successfully! 🎉"
     if validationRunOutput.len > 0 : echo "Validation: ", validationRunOutput
+
+    var justCompletedExercise = false
     if exercise.path notin userState.completedExercises:
       userState.completedExercises.add(exercise.path)
       userState.points += exercise.pointsValue
+      justCompletedExercise = true
+      # Initial save for points and exercise completion
       saveState(userState)
       echo "Gained ", exercise.pointsValue, " points! Total points: ", userState.points
       echo "Progress saved."
     else:
-      echo "This exercise was already completed. (No points awarded this time)"
+      echo "This exercise was already completed. (No points or new badges from this completion)"
+
+    if justCompletedExercise:
+      # Check for new badges
+      # Need allExercises for topic master checks
+      let allExercisesList = discoverExercises() # Potentially move this earlier if too slow here
+      let newBadges = achievements.checkAndAwardBadges(userState, allExercisesList)
+      if newBadges.len > 0:
+        echo "\n✨ You've earned new badges! ✨"
+        for badge in newBadges:
+          echo "  ", badge.emoji, " ", badge.name, " - ", badge.description
+        saveState(userState) # Save again to persist newly earned badges
+        echo "Badges saved."
   else:
     echo "❌ Exercise failed. Please check the compiler messages above and try again."
     echo "Hint: ", if exercise.hint.len > 0: exercise.hint else: "No hint available for this exercise."
@@ -284,14 +300,27 @@ proc status*() =
     let percentage = (completedCount.toFloat / totalExercises.toFloat * 100.0)
     echo "Progress: ", formatFloat(percentage, ffDecimal, 2), "%"
 
+  if userState.earnedBadges.len > 0:
+    echo "\n--- Earned Badges ---"
+    for badgeId in userState.earnedBadges:
+      let badgeOpt = achievements.getBadge(badgeId)
+      if badgeOpt.isSome:
+        let badge = badgeOpt.get
+        echo "  ", badge.emoji, " ", badge.name, " - ", badge.description
+      else:
+        echo "  Unknown badge ID: ", badgeId # Should not happen if logic is correct
+    echo "---------------------"
+  else:
+    echo "No badges earned yet. Keep going!"
+
   if completedCount == totalExercises && totalExercises > 0:
-    echo "✨ Congratulations! You have completed all available exercises! ✨"
+    echo "\n✨ Congratulations! You have completed all available exercises! ✨"
   elif totalExercises > 0 :
     let nextEx = findNextPendingExercise(allExercises, userState)
     if nextEx.isSome:
-      echo "Next up: ", nextEx.get.topic, "/", nextEx.get.name
+      echo "\nNext up: ", nextEx.get.topic, "/", nextEx.get.name
   else:
-    echo "No exercises found. Add some to the 'exercises' directory!"
+    echo "\nNo exercises found. Add some to the 'exercises' directory!"
   echo "---------------------------"
 
 

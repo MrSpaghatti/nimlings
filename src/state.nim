@@ -5,10 +5,13 @@ import ospaths
 const AppName = "Nimlings"
 const StateFileName = "state.json"
 
+import sets
+
 type
   UserState* = object
-    completedExercises*: seq[string]
+    completedExercises*: seq[string] # Paths of completed exercises
     points*: int
+    earnedBadges*: HashSet[string] # IDs of earned badges for quick lookup and no duplicates
 
 proc getStateFilePath*(): string =
   var configDir = getConfigDir()
@@ -24,17 +27,18 @@ proc loadState*(): UserState =
     try:
       let data = readFile(stateFile)
       result = fromJsonStr[UserState](data)
-      # If `points` was missing in JSON, it should be initialized to 0 by default by Nim's object construction.
-      # No explicit check needed unless we want to log migration.
+      # Missing fields like `points` (int) or `earnedBadges` (HashSet)
+      # are typically initialized to their default values (0 and empty set respectively)
+      # by Nim's object construction during JSON deserialization if not present in JSON.
     except JsonParsingError as e:
       echo "Warning: Could not parse state file: ", e.msg, ". Starting with a fresh state."
-      result = UserState(completedExercises: @[], points: 0)
+      result = UserState(completedExercises: @[], points: 0, earnedBadges: initHashSet[string]())
     except IOError:
       echo "Warning: Could not read state file. Starting with a fresh state."
-      result = UserState(completedExercises: @[], points: 0)
+      result = UserState(completedExercises: @[], points: 0, earnedBadges: initHashSet[string]())
   else:
     # New user, fresh state
-    result = UserState(completedExercises: @[], points: 0)
+    result = UserState(completedExercises: @[], points: 0, earnedBadges: initHashSet[string]())
 
 proc saveState*(state: UserState) =
   let stateFile = getStateFilePath()
