@@ -4,6 +4,8 @@ import strutils
 
 const ExercisesDir = "exercises" # Relative to the project root or executable path
 
+import strformat
+
 type
   Exercise* = object
     name*: string          # e.g., "variables1"
@@ -11,6 +13,9 @@ type
     topic*: string         # e.g., "01_variables"
     description*: string   # Optional: A short description of the exercise
     hint*: string          # Optional: A hint for the exercise
+    expectedOutput*: Option[string] # Optional: Expected stdout for validation
+    validationScript*: Option[string] # Optional: Path to a custom validation script (.nims)
+    pointsValue*: int               # Points awarded for completing this exercise
 
 proc getExercisesRootPath*(): string =
   # Try to find the 'exercises' directory relative to the executable
@@ -49,14 +54,44 @@ proc discoverExercises*(): seq[Exercise] =
           # Basic parsing for description and hint from comments (can be enhanced)
           var description = ""
           var hint = ""
+          var expectedOutputStr: Option[string] = none[string]()
+          var validationScriptPath: Option[string] = none[string]()
+          var points = 10 # Default points
+          var multiLineExpectedOutput: seq[string] = @[]
+          var inExpectedOutputBlock = false
+
           try
             for line in lines(filePath):
-              if description == "" and line.strip().startsWith("# Description:"):
-                description = line.split(":", 1)[1].strip()
-              elif hint == "" and line.strip().startsWith("# Hint:"):
-                hint = line.split(":", 1)[1].strip()
-              if description != "" and hint != "":
-                break
+              let strippedLine = line.strip()
+              if strippedLine.startsWith("# Description:"):
+                description = strippedLine.split(":", 1)[1].strip()
+              elif strippedLine.startsWith("# Hint:"):
+                hint = strippedLine.split(":", 1)[1].strip()
+              elif strippedLine.startsWith("# Points:"):
+                try:
+                  points = parseInt(strippedLine.split(":", 1)[1].strip())
+                except ValueError:
+                  echo "Warning: Could not parse Points value in ", filePath, ". Using default."
+              elif strippedLine.startsWith("# ExpectedOutput:"):
+                if strippedLine.split(":", 1)[1].strip() == "```":
+                  inExpectedOutputBlock = true
+                else:
+                  expectedOutputStr = some(strippedLine.split(":", 1)[1].strip())
+              elif inExpectedOutputBlock:
+                if strippedLine == "# ```":
+                  inExpectedOutputBlock = false
+                  expectedOutputStr = some(multiLineExpectedOutput.join("\n"))
+                else:
+                  # Remove leading "# " or "#" from multiline comments
+                  if strippedLine.startsWith("# "):
+                    multiLineExpectedOutput.add(strippedLine[2..^1])
+                  elif strippedLine.startsWith("#"):
+                    multiLineExpectedOutput.add(strippedLine[1..^1])
+                  else: # Should not happen if correctly formatted
+                    multiLineExpectedOutput.add(strippedLine) # Or raise error
+              elif strippedLine.startsWith("# ValidationScript:"):
+                validationScriptPath = some(strippedLine.split(":", 1)[1].strip())
+
           except IOError:
             echo "Warning: Could not read exercise file for metadata: ", filePath
 
@@ -65,7 +100,10 @@ proc discoverExercises*(): seq[Exercise] =
             path: filePath,
             topic: topicName,
             description: description,
-            hint: hint
+            hint: hint,
+            expectedOutput: expectedOutputStr,
+            validationScript: validationScriptPath,
+            pointsValue: points
           ))
 
   # Sort exercises by topic and then by name for consistent order

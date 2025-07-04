@@ -9,6 +9,7 @@ echo x # This line is correct.
 # TODO: Declare a variable named `message` of type string and assign it the value "Hello, Nimlings!".
 # Then, print the `message` to the console.
 
-# Expected output:
+# ExpectedOutput: ```
 # 5
 # Hello, Nimlings!
+# ```

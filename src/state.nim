@@ -8,7 +8,7 @@ const StateFileName = "state.json"
 type
   UserState* = object
     completedExercises*: seq[string]
-    # We can add more fields here later, like points, badges, etc.
+    points*: int
 
 proc getStateFilePath*(): string =
   var configDir = getConfigDir()
@@ -23,16 +23,18 @@ proc loadState*(): UserState =
   if fileExists(stateFile):
     try:
       let data = readFile(stateFile)
-      result =fromJsonStr[UserState](data)
-    except JsonParsingError:
-      echo "Warning: Could not parse state file. Starting with a fresh state."
-      # Fallback to default state if parsing fails
-      result = UserState(completedExercises: @[])
+      result = fromJsonStr[UserState](data)
+      # If `points` was missing in JSON, it should be initialized to 0 by default by Nim's object construction.
+      # No explicit check needed unless we want to log migration.
+    except JsonParsingError as e:
+      echo "Warning: Could not parse state file: ", e.msg, ". Starting with a fresh state."
+      result = UserState(completedExercises: @[], points: 0)
     except IOError:
       echo "Warning: Could not read state file. Starting with a fresh state."
-      result = UserState(completedExercises: @[])
+      result = UserState(completedExercises: @[], points: 0)
   else:
-    result = UserState(completedExercises: @[])
+    # New user, fresh state
+    result = UserState(completedExercises: @[], points: 0)
 
 proc saveState*(state: UserState) =
   let stateFile = getStateFilePath()

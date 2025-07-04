@@ -14,9 +14,11 @@ var count: string = 100 # This should be an integer.
 #         and another string variable `adj` with the value "awesome".
 #         Concatenate them and print the result.
 
+# ValidationScript: validate_variables2.nims
 
-# Expected output (order might vary for tasks, but each should appear):
-# 100
-# 3.14159
-# (Sum of a and b)
-# Nim is awesome
+# Note: The validation script will check for the presence of expected outputs.
+# Make sure your program prints:
+# - The number 100 (after fixing Task 1)
+# - The number 3.14159
+# - The sum of two integers
+# - The string "Nim is awesome"
