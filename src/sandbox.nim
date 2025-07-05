@@ -230,38 +230,38 @@ proc executeWASM_EmbedRuntime_PoC(filePath: string, exerciseDir: string): Sandbo
     startFunc() # Call the _start function
     echo "WASM execution finished."
 
-    # Close the write ends of the pipes before reading to signal EOF to readers.
-    # This is important for `readAll` to not block indefinitely.
+    # Close the write ends of the pipes BEFORE reading from the read ends.
     pipeStdoutWrite.close()
-    pipeStderrWrite.close()
+    pipeStderrWrite.close() # Now safe to call close again due to `isAssociated` check below
 
     let capturedStdout = pipeStdoutRead.readAll()
     let capturedStderr = pipeStderrRead.readAll()
 
+    var finalRuntimeOutput = ""
+    if capturedStdout.len > 0:
+      finalRuntimeOutput &= capturedStdout
     if capturedStderr.len > 0:
-      # If there's stderr, it might indicate a runtime issue even if no trap occurred.
-      # For now, combine them. Consider how to report stderr distinctly if needed.
-      res.runtimeOutput = "Stdout:\n" & capturedStdout & "\nStderr:\n" & capturedStderr
-      # Potentially set a flag or modify success based on stderr content.
-      # For this PoC, if startFunc didn't trap, we'll call it a Success from execution POV.
-      # The content of stderr might lead to ValidationFailed later by the exercise logic.
-      res.flags = {Success}
-    else:
-      res.runtimeOutput = capturedStdout
-      res.flags = {Success}
+      if finalRuntimeOutput.len > 0: finalRuntimeOutput &= "\n---Stderr---\n"
+      finalRuntimeOutput &= capturedStderr
+      # Consider if significant stderr should automatically mark as RuntimeFailed.
+      # For now, success means no trap. Validation might fail based on stderr.
+      # echo "[WASM Stderr] ", capturedStderr # For debugging nimlings itself
 
-    if res.runtimeOutput.strip().len == 0:
-        res.runtimeOutput = "(WASM module produced no stdout/stderr)"
+    res.runtimeOutput = if finalRuntimeOutput.strip().len > 0: finalRuntimeOutput else: "(WASM module produced no stdout/stderr)"
+    res.flags = {Success} # If startFunc() completed without raising an exception
 
-
-  except CatchableError as e: # Catch Wasmer specific errors or other Nim errors
+  except Trap as e: # Specifically catch Wasmer Traps
     res.flags = {RuntimeFailed}
-    res.runtimeOutput = "WASM Execution Error: " & e.name & " - " & e.msg
-    # Ensure pipes are closed on error too, though defer should handle some of this.
+    res.runtimeOutput = "[WASM Trap] " & e.msg & "\n(Note: This indicates an error within the WebAssembly module execution, like division by zero, out-of-bounds memory access, or an explicit trap instruction.)"
+  except CatchableError as e: # Catch other errors (e.g., from Wasmer setup, file ops)
+    res.flags = {RuntimeFailed}
+    res.runtimeOutput = "[WASM Host Error] " & e.name & ": " & e.msg
+  finally:
+    # Ensure pipes are closed, `defer` might not cover all paths if exceptions occur before `defer` statements for pipes.
+    # However, the `defer` on pipe handles themselves is more robust.
+    # This explicit closure here is more about the write ends if not closed by success path.
     if pipeStdoutWrite.isAssociated: pipeStdoutWrite.close()
-    if pipeStdoutRead.isAssociated: pipeStdoutRead.close()
     if pipeStderrWrite.isAssociated: pipeStderrWrite.close()
-    if pipeStderrRead.isAssociated: pipeStderrRead.close()
 
   if fileExists(wasmOutFile): removeFile(wasmOutFile) # Clean up .wasm file
   return res
