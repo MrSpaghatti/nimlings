@@ -11,15 +11,16 @@ proc version*() =
   ## Shows version information.
   echo "Nimlings Alpha Version 0.1.0"
 
-import osproc # Still needed for validation script execution
+import osproc
 import os
 import lessons
 import state
 import strutils
 import sandbox
 import times
-import achievements # For badges
-import sequtils     # For .filter
+import achievements
+import sequtils
+import ospaths      # For path manipulation in initExercise
 
 proc runExercise*(exerciseNameOrPath: string) =
   ## Compiles and runs the specified exercise using the sandbox module.
@@ -160,16 +161,14 @@ proc listExercises*(topicFilter: string = "", statusFilter: string = "", searchT
   ## Lists all available exercises and their completion status.
   ## Can be filtered by topic, status (todo, done), and/or search term (name/description).
   let userState = loadState()
-  var exercisesToList = discoverExercises() # Start with all exercises
+  var exercisesToList = discoverExercises()
   var activeFilterMessages: seq[string]
 
-  # Apply topic filter
   if topicFilter.len > 0:
     let lcFilter = topicFilter.toLower()
     exercisesToList = exercisesToList.filter(proc(ex: Exercise): bool = lcFilter in ex.topic.toLower())
     activeFilterMessages.add("topic containing '" & topicFilter & "'")
 
-  # Apply status filter
   if statusFilter.len > 0:
     let lcStatusFilter = statusFilter.toLower()
     if lcStatusFilter == "todo":
@@ -182,7 +181,6 @@ proc listExercises*(topicFilter: string = "", statusFilter: string = "", searchT
       echo "Invalid status filter '", statusFilter, "'. Use 'todo' or 'done'."
       return
 
-  # Apply search term filter
   if searchTerm.len > 0:
     let lcSearchTerm = searchTerm.toLower()
     exercisesToList = exercisesToList.filter(proc(ex: Exercise): bool =
@@ -190,7 +188,6 @@ proc listExercises*(topicFilter: string = "", statusFilter: string = "", searchT
     )
     activeFilterMessages.add("name/desc containing '" & searchTerm & "'")
 
-  # Report if filters are active and if they resulted in no matches
   if activeFilterMessages.len > 0:
     if exercisesToList.len == 0:
       echo "No exercises found matching filters: ", activeFilterMessages.join(" AND ")
@@ -201,7 +198,6 @@ proc listExercises*(topicFilter: string = "", statusFilter: string = "", searchT
     echo "No exercises found. Please make sure the 'exercises' directory is set up correctly."
     return
 
-  # Display the (potentially filtered) list
   echo "\nAvailable exercises:"
   echo "Status | Topic          | Name              | Points | Description"
   echo "-------|----------------|-------------------|--------|------------------------------------"
@@ -338,6 +334,57 @@ proc status*() =
     echo "\nNo exercises found. Add some to the 'exercises' directory!"
   echo "---------------------------"
 
+proc initExercise*(exercisePathFragment: string, workspace: string = "nimlings_workspace") =
+  ## Copies a specified exercise to the user's workspace directory for solving.
+  ## The workspace path can be relative (e.g., "./my_solutions") or absolute.
+  ## Example: nimlings init intro1_helloworld
+  ##          nimlings init 02_control_flow/if_else_1
+  ##          nimlings init exercises/02_control_flow/if_else_1_positive_negative_zero.nim
+
+  let allExercises = discoverExercises() # Needed to resolve path fragment
+  let exerciseOpt = findExercise(exercisePathFragment, allExercises)
+
+  if exerciseOpt.isNone:
+    echo "Error: Exercise '", exercisePathFragment, "' not found in the Nimlings curriculum."
+    echo "Use `nimlings list` to see available exercises."
+    return
+
+  let sourceExercise = exerciseOpt.get
+  let sourceExercisePath = sourceExercise.path # This is the full path from discoverExercises
+
+  # Determine the relative path of the exercise within the 'exercises' dir
+  # to replicate the structure in the workspace.
+  # lessons.getExercisesRootPath() gives the root of the exercises dir.
+  var relativePath = ""
+  let exercisesRoot = lessons.getExercisesRootPath()
+  if sourceExercisePath.startsWith(exercisesRoot):
+    # +1 to skip the leading slash if present after removing prefix
+    let skipChars = if exercisesRoot.endsWith(DirSep): exercisesRoot.len else: exercisesRoot.len + 1
+    relativePath = sourceExercisePath[skipChars .. ^1]
+  else:
+    # Fallback if path structure is unexpected, just use filename
+    relativePath = sourceExercisePath.extractFilename()
+    echo "Warning: Could not determine relative path for exercise. Using filename only in workspace."
+
+  if relativePath.len == 0: # Should not happen if sourceExercisePath is valid
+      echo "Error: Could not determine a valid relative path for the exercise."
+      return
+
+  let targetWorkspacePath = workspace / relativePath
+  let targetWorkspaceDir = targetWorkspacePath.parentDir()
+
+  try:
+    createDir(targetWorkspaceDir) # Create topic subdirectories if they don't exist
+    copyFile(sourceExercisePath, targetWorkspacePath)
+    echo "Exercise '", sourceExercise.name, "' initialized in your workspace at:"
+    echo "  ", targetWorkspacePath
+    echo "\nYou can now edit this file. `nimlings run` currently works with files in the original 'exercises' path."
+    echo "To test your solution in the workspace, you can typically use: nim r ", targetWorkspacePath
+  except OSError as e:
+    echo "Error initializing exercise in workspace: ", e.msg
+  except CatchableError as e: # For other potential errors
+    echo "An unexpected error occurred during init: ", e.msg
+
 import rdstdin
 
 proc runTemporaryNimCode(userCode: string, context: string, tempFileName: string = "nimlings_repl_temp.nim"): sandbox.SandboxedExecutionResult =
@@ -464,4 +511,4 @@ Nimlings Enhanced REPL Help:
   echo "---"
 
 when isMainModule:
-  dispatchMulti([hello, version, runExercise, hint, listExercises, watch, status, shell])
+  dispatchMulti([hello, version, runExercise, hint, listExercises, watch, status, shell, initExercise])
