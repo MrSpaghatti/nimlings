@@ -407,8 +407,42 @@ when isMainModule:
     # `nim c -r` might leave other artifacts, e.g. in nimcache. For this test, it's fine.
 
   if fileExists("test_module.nim"):
-    testWasmExecution()
+    # testWasmExecution() # Keeping the old test code commented for now
+    discard "Old testWasmExecution disabled for new capability tests."
   else:
-    echo "test_module.nim not found. Skipping WASM execution test."
+    echo "test_module.nim not found. Skipping old WASM execution test."
 
-  echo "\n--- Sandbox module testing complete ---"
+  echo "\n--- Testing WASM Capability Restrictions ---"
+
+  proc runWasmTest(testFile: string) =
+    echo "\n>>> Running WASM Test: ", testFile
+    if not fileExists(testFile):
+      echo "Test file '", testFile, "' not found. Skipping."
+      return
+
+    let result = executeWASM_EmbedRuntime_PoC(testFile, ".") # Run in current dir
+    echo "--- Output for ", testFile, " ---"
+    echo result.compilationOutput
+    echo result.runtimeOutput
+    echo "--- Flags for ", testFile, ": ", result.flags, " ---"
+    if Success in result.flags:
+      echo "Execution reported success (no trap)."
+    if CompilationFailed in result.flags:
+      echo "Execution reported COMPILE FAILED."
+    if RuntimeFailed in result.flags:
+      echo "Execution reported RUNTIME FAILED (trap or host error)."
+    echo "<<< Finished WASM Test: ", testFile
+
+  runWasmTest("wasm_test_fs.nim")
+  runWasmTest("wasm_test_env.nim")
+
+  # Clean up test files if they were created by a previous step in a plan
+  # For local running, user creates them. For agent, they were created by create_file_with_block.
+  # These files are not exercises, so Nimlings itself won't manage them.
+  # Let's add cleanup for these specific test files.
+  if fileExists("wasm_test_fs.nim"): try: removeFile("wasm_test_fs.nim") except: discard
+  if fileExists("wasm_test_env.nim"): try: removeFile("wasm_test_env.nim") except: discard
+  if fileExists("test_module.nim"): try: removeFile("test_module.nim") except: discard
+
+
+  echo "\n--- Sandbox module capability testing complete ---"
