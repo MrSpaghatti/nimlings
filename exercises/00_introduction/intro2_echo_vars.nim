@@ -1,5 +1,7 @@
 # Description: Practice using `echo` with variables.
 # Hint: Declare a variable with `var <name>: <type> = <value>` or `let <name> = <value>`. Then you can print it with `echo name` or `echo "My variable is: ", name`.
+# SandboxPreference: wasm
+# Points: 10
 
 # Task 1: Declare a variable `planet` and assign it the string value "Earth".
 # Task 2: Print the value of the `planet` variable.

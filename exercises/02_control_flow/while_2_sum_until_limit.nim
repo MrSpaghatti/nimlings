@@ -58,8 +58,9 @@ else:
 # Added: 3
 # Added: 4
 # Added: 5
-# Total sum: 15
-# Numbers added: 5
+# Added: 6
+# Total sum: 21
+# Numbers added: 6
 # ---
 # Limit: 1
 # Added: 1

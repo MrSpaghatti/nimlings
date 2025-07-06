@@ -1,5 +1,7 @@
 # Description: Work with different types of variables and basic operations.
 # Hint: Remember that Nim is statically typed. Ensure your variable types match the assigned values. For numeric types, you can perform standard arithmetic operations. For strings, `&` is used for concatenation.
+# SandboxPreference: wasm
+# Points: 10
 
 # Task 1: Fix the type mismatch.
 var count: string = 100 # This should be an integer.

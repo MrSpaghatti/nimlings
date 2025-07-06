@@ -38,7 +38,13 @@ import concepts # For SomeNumber, SomeInteger, SomeFloat (may also be in system 
 # This is advanced. For now, let's use `[T: seq|string]` and see if it compiles for `len`.
 # Nim's `len` is a built-in that works on seq, string, array.
 # So, `[T: seq|string|array]` should work for things that `len` applies to.
-# Let's stick to `string|seq` for simplicity of testing.
+# Let's stick to `string|seq|array` for the constraint, and make the output generic.
+
+# TODO: Step 2 - Define generic proc printLength[T: string|seq|array]
+# It should print "Length of collection: [length]"
+# proc printLength[T: string|seq|array](collection: T) =
+#   echo "Length of collection: ", len(collection)
+
 
 proc main() =
   # TODO: Step 3a - Call addNumerics with integers
@@ -69,6 +75,6 @@ else:
 # ExpectedOutput: ```
 # Sum of 5 and 10 (ints): 15
 # Sum of 2.5 and 3.7 (floats): 6.2
-# Length of 'Hello Nim' is 9
-# Length of sequence is 4
+# Length of collection: 9
+# Length of collection: 4
 # ```

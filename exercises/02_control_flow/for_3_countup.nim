@@ -2,7 +2,7 @@
 # Hint: `for i in countup(start, finish, step)` iterates from `start` to `finish` with a custom `step`.
 # `countdown` works similarly but goes downwards.
 # SandboxPreference: wasm
-# Points: 10
+# Points: 15
 
 # Task: Print even numbers from a `start` value to a `finish` value (inclusive) using `countup`.
 # Then, print numbers from `finish` down to `start` (inclusive) with a step of 2, using `countdown`.

@@ -11,10 +11,11 @@
 
 # TODO: Define your `addAndPrint` procedure here.
 
-# TODO: Call your `addAndPrint` procedure multiple times with different arguments.
-# For example:
-# addAndPrint(5, 3)
-# addAndPrint(10, -2)
+# TODO: Call your `addAndPrint` procedure multiple times with different arguments
+# to produce the ExpectedOutput below. For example:
+# addAndPrint(5, 3)  # Expected: Sum: 8
+# addAndPrint(12, -4) # Expected: Sum: 8
+# addAndPrint(50, 50) # Expected: Sum: 100
 echo "Procedure definition or calls not implemented." # Placeholder
 
 # Do not modify the lines below; they are for testing.

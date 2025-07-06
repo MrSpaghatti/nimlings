@@ -19,11 +19,8 @@ proc processValue*(selector: int, data: seq[int]) =
   try:
     if selector == 1:
       echo "Attempting out-of-bounds access..."
-      # TODO: Access data[10] here. This line itself should be inside the try for the hint to make sense.
-      # For the exercise structure, we'll put the access attempt here and expect the user
-      # to build the try/except around the call or within the if/else.
-      # Let's assume the user will write `let x = data[10]` or similar *inside* their try block.
-      # For the provided solution structure, we'll directly raise it for testing.
+      # The following line will cause an IndexDefect if data is too small.
+      # User's task is to add `except IndexDefect:` block below.
       if data.len <= 10: # Simulate condition for the error
           raise newException(IndexDefect, "Simulated index error")
       else:
@@ -31,7 +28,8 @@ proc processValue*(selector: int, data: seq[int]) =
 
     elif selector == 2:
       echo "Attempting division by zero..."
-      # TODO: Perform 10 div 0 here.
+      # The following line will cause a DivByZeroError.
+      # User's task is to add `except DivByZeroError:` block below.
       var x = 10 div 0 # This will raise DivByZeroError
       echo "Result of 10 div 0: ", x # Should not be reached
     else:

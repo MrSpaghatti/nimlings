@@ -1,5 +1,7 @@
 # Description: Declare a variable and assign a value.
 # Hint: In Nim, you can declare a variable using `var` or `let`. For example, `var myNumber: int = 10`.
+# SandboxPreference: wasm
+# Points: 10
 
 # Fix the following code so it compiles and prints the value of `x`.
 var x: int
