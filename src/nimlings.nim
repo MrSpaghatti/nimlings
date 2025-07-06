@@ -11,7 +11,7 @@ proc version*() =
   ## Shows version information.
   echo "Nimlings Alpha Version 0.1.0"
 
-import osproc # Still needed for validation script execution, consider moving that to sandbox too
+import osproc # Still needed for validation script execution
 import os
 import lessons
 import state
@@ -19,13 +19,7 @@ import strutils
 import sandbox
 import times
 import achievements # For badges
-# Remove local definitions of RunResultFlag and CompileAndRunResult as they come from sandbox
-# type RunResultFlag = enum ...
-# type CompileAndRunResult = object ...
-
-# Remove local compileAndRun proc, it's now in sandbox.nim
-# proc compileAndRun(filePath: string): CompileAndRunResult = ...
-
+import sequtils     # For .filter
 
 proc runExercise*(exerciseNameOrPath: string) =
   ## Compiles and runs the specified exercise using the sandbox module.
@@ -42,29 +36,27 @@ proc runExercise*(exerciseNameOrPath: string) =
   let exercise = exerciseOpt.get
   echo "Running exercise: ", exercise.topic, "/", exercise.name
   echo "File: ", exercise.path
-  echo "WARNING: Exercises are run without a secure sandbox. Do not run untrusted exercises." # Add warning
+  echo "WARNING: Exercises are run without a secure sandbox. Do not run untrusted exercises."
   echo "--------------------------------------------------"
 
-  # Call the sandboxed execution, passing the preference
   var sboxResult = sandbox.executeSandboxed(exercise.path, exercise.path.parentDir, preference = exercise.sandboxPreference)
   var overallSuccess = false
-  var validationRunOutput = "" # To store output from validation script or comparison
+  var validationRunOutput = ""
 
   if sandbox.CompilationFailed in sboxResult.flags:
     echo "❌ Compilation Failed ❌"
     echo sboxResult.compilationOutput
   elif sandbox.RuntimeFailed in sboxResult.flags:
     echo "💥 Runtime Error 💥"
-    echo sboxResult.runtimeOutput # This contains the error message from the exercise
-  else: # Compiled and ran without error (according to sandbox), now check validation
+    echo sboxResult.runtimeOutput
+  else:
     echo "✅ Compiled and Ran Successfully (according to sandbox)."
     echo "--- Output from your program ---"
     echo sboxResult.runtimeOutput
     echo "--- End of Output ---"
 
-    # Normalize outputs for comparison (e.g., CRLF to LF, trim trailing newlines)
     let normalizedRuntimeOutput = sboxResult.runtimeOutput.strip().replace("\r\n", "\n")
-    var currentFlags = sboxResult.flags # Copy flags to modify for validation
+    var currentFlags = sboxResult.flags
 
     if exercise.expectedOutput.isSome:
       let expected = exercise.expectedOutput.get.strip().replace("\r\n", "\n")
@@ -111,11 +103,10 @@ proc runExercise*(exerciseNameOrPath: string) =
         currentFlags = {sandbox.ValidationFailed}
         validationRunOutput = "Validation script not found: " & scriptPath
     else:
-      # No specific validation, successful run from sandbox is enough
       overallSuccess = true
       currentFlags = {sandbox.Success}
 
-    sboxResult.flags = currentFlags # Update sboxResult flags with validation outcome
+    sboxResult.flags = currentFlags
 
   echo "--------------------------------------------------"
 
@@ -128,7 +119,6 @@ proc runExercise*(exerciseNameOrPath: string) =
       userState.completedExercises.add(exercise.path)
       userState.points += exercise.pointsValue
       justCompletedExercise = true
-      # Initial save for points and exercise completion
       saveState(userState)
       echo "Gained ", exercise.pointsValue, " points! Total points: ", userState.points
       echo "Progress saved."
@@ -136,15 +126,13 @@ proc runExercise*(exerciseNameOrPath: string) =
       echo "This exercise was already completed. (No points or new badges from this completion)"
 
     if justCompletedExercise:
-      # Check for new badges
-      # Need allExercises for topic master checks
-      let allExercisesList = discoverExercises() # Potentially move this earlier if too slow here
+      let allExercisesList = discoverExercises()
       let newBadges = achievements.checkAndAwardBadges(userState, allExercisesList)
       if newBadges.len > 0:
         echo "\n✨ You've earned new badges! ✨"
         for badge in newBadges:
           echo "  ", badge.emoji, " ", badge.name, " - ", badge.description
-        saveState(userState) # Save again to persist newly earned badges
+        saveState(userState)
         echo "Badges saved."
   else:
     echo "❌ Exercise failed. Please check the compiler messages above and try again."
@@ -168,42 +156,75 @@ proc hint*(exerciseNameOrPath: string) =
   else:
     echo "No hint available for this exercise."
 
-proc listExercises*() =
+proc listExercises*(topicFilter: string = "", statusFilter: string = "", searchTerm: string = "") =
   ## Lists all available exercises and their completion status.
+  ## Can be filtered by topic, status (todo, done), and/or search term (name/description).
   let userState = loadState()
-  let allExercises = discoverExercises()
+  var exercisesToList = discoverExercises() # Start with all exercises
+  var activeFilterMessages: seq[string]
 
-  if allExercises.len == 0:
+  # Apply topic filter
+  if topicFilter.len > 0:
+    let lcFilter = topicFilter.toLower()
+    exercisesToList = exercisesToList.filter(proc(ex: Exercise): bool = lcFilter in ex.topic.toLower())
+    activeFilterMessages.add("topic containing '" & topicFilter & "'")
+
+  # Apply status filter
+  if statusFilter.len > 0:
+    let lcStatusFilter = statusFilter.toLower()
+    if lcStatusFilter == "todo":
+      exercisesToList = exercisesToList.filter(proc(ex: Exercise): bool = ex.path notin userState.completedExercises)
+      activeFilterMessages.add("status: todo")
+    elif lcStatusFilter == "done":
+      exercisesToList = exercisesToList.filter(proc(ex: Exercise): bool = ex.path in userState.completedExercises)
+      activeFilterMessages.add("status: done")
+    else:
+      echo "Invalid status filter '", statusFilter, "'. Use 'todo' or 'done'."
+      return
+
+  # Apply search term filter
+  if searchTerm.len > 0:
+    let lcSearchTerm = searchTerm.toLower()
+    exercisesToList = exercisesToList.filter(proc(ex: Exercise): bool =
+      (lcSearchTerm in ex.name.toLower()) or (lcSearchTerm in ex.description.toLower())
+    )
+    activeFilterMessages.add("name/desc containing '" & searchTerm & "'")
+
+  # Report if filters are active and if they resulted in no matches
+  if activeFilterMessages.len > 0:
+    if exercisesToList.len == 0:
+      echo "No exercises found matching filters: ", activeFilterMessages.join(" AND ")
+      return
+    else:
+      echo "Showing exercises for filters: ", activeFilterMessages.join(" AND ")
+  elif exercisesToList.len == 0 :
     echo "No exercises found. Please make sure the 'exercises' directory is set up correctly."
     return
 
-  echo "Available exercises:"
+  # Display the (potentially filtered) list
+  echo "\nAvailable exercises:"
   echo "Status | Topic          | Name              | Points | Description"
   echo "-------|----------------|-------------------|--------|------------------------------------"
 
-  var currentTopic = ""
-  for ex in allExercises:
-    if ex.topic != currentTopic:
-      if currentTopic != "": # Add a separator line between topics, but not before the first one
+  var currentTopicDisplay = ""
+  for ex in exercisesToList:
+    if ex.topic != currentTopicDisplay:
+      if currentTopicDisplay != "":
         echo "-------|----------------|-------------------|--------|------------------------------------"
-      currentTopic = ex.topic
+      currentTopicDisplay = ex.topic
 
-    let status = if ex.path in userState.completedExercises: "[DONE]" else: "[TODO]"
+    let statusSymbol = if ex.path in userState.completedExercises: "[DONE]" else: "[TODO]"
     let topicFormatted = ex.topic.align(14)
     let nameFormatted = ex.name.align(17)
-    let pointsFormatted = $ex.pointsValue.align(6) # Convert int to string for align
+    let pointsFormatted = $ex.pointsValue.align(6)
 
-    echo status, " | ", topicFormatted, " | ", nameFormatted, " | ", pointsFormatted, " | ", ex.description
+    echo statusSymbol, " | ", topicFormatted, " | ", nameFormatted, " | ", pointsFormatted, " | ", ex.description
 
   echo "---------------------------------------------------------------------------------------------"
   echo "Total Points: ", userState.points
   echo "Run an exercise using: nimlings run <exercise_name_or_path>"
   echo "Get a hint using: nimlings hint <exercise_name_or_path>"
   echo "Check your progress: nimlings status"
-
-
-when isMainModule:
-import times
 
 proc findNextPendingExercise*(allExercises: seq[Exercise], state: UserState): Option[Exercise] =
   for ex in allExercises:
@@ -236,21 +257,19 @@ proc watch*(exerciseToWatch: string = "") =
 
   var lastModTime = getLastModificationTime(currentExercise.path)
 
-  # Initial run
   runExercise(currentExercise.path)
-  userState = loadState() # Reload state in case runExercise completed it
+  userState = loadState()
 
   try:
     while true:
-      sleep(1000) # Check every 1 second
+      sleep(1000)
       let modTime = getLastModificationTime(currentExercise.path)
       if modTime > lastModTime:
         echo "\nFile change detected. Re-running exercise..."
         lastModTime = modTime
         runExercise(currentExercise.path)
 
-        # Check if current exercise was completed and suggest next one
-        userState = loadState() # Reload state
+        userState = loadState()
         if currentExercise.path in userState.completedExercises:
           echo "\n🎉 Great job on completing: ", currentExercise.name, "! 🎉"
           currentExerciseOpt = findNextPendingExercise(allExercises, userState)
@@ -259,14 +278,10 @@ proc watch*(exerciseToWatch: string = "") =
             echo "\nNow watching next exercise: ", currentExercise.topic, "/", currentExercise.name
             echo "Path: ", currentExercise.path
             lastModTime = getLastModificationTime(currentExercise.path)
-            # Optionally, run the new exercise immediately
-            # runExercise(currentExercise.path)
           else:
             echo "✨ You've completed all exercises! ✨"
             break
 
-      # Check if state changed externally (e.g. user ran `run` in another terminal)
-      # This is less critical for watch mode but good for robustness
       let freshState = loadState()
       if freshState.completedExercises != userState.completedExercises:
         userState = freshState
@@ -308,7 +323,7 @@ proc status*() =
         let badge = badgeOpt.get
         echo "  ", badge.emoji, " ", badge.name, " - ", badge.description
       else:
-        echo "  Unknown badge ID: ", badgeId # Should not happen if logic is correct
+        echo "  Unknown badge ID: ", badgeId
     echo "---------------------"
   else:
     echo "No badges earned yet. Keep going!"
@@ -323,8 +338,6 @@ proc status*() =
     echo "\nNo exercises found. Add some to the 'exercises' directory!"
   echo "---------------------------"
 
-
-when isMainModule:
 import rdstdin
 
 proc runTemporaryNimCode(userCode: string, context: string, tempFileName: string = "nimlings_repl_temp.nim"): sandbox.SandboxedExecutionResult =
@@ -340,12 +353,10 @@ proc runTemporaryNimCode(userCode: string, context: string, tempFileName: string
 
   let result = sandbox.executeSandboxed(tempFileName, getCurrentDir())
 
-  # Temp file cleanup
-  # For now, simple removal. executeSandboxed already removes its own .exe_temp_sandbox
   if fileExists(tempFileName):
     try:
       removeFile(tempFileName)
-    except OSError: # May fail if executable is still somehow locked, though unlikely
+    except OSError:
       echo "Warning: Could not clean up temporary REPL file: ", tempFileName
 
   return result
@@ -359,9 +370,8 @@ proc shell*() =
   echo "---"
 
   var inputBuffer: string = ""
-  var replContext: string = "" # For storing persistent declarations
+  var replContext: string = ""
 
-  # Helper to check if code likely contains top-level declarations
   proc likelyContainsDeclarations(code: string): bool =
     for line in code.splitLines():
       let stripped = line.strip()
@@ -373,14 +383,13 @@ proc shell*() =
     return false
 
   while true:
-    let prompt = if inputBuffer.len == 0: "nim> " else: "nim| " # Indicate multi-line
+    let prompt = if inputBuffer.len == 0: "nim> " else: "nim| "
     stdout.write(prompt)
     stdout.flushFile()
 
     let line = readLine(stdin)
     let strippedLine = line.strip()
 
-    # Check for commands first
     if strippedLine == ":quit" or strippedLine == ":exit":
       echo "Exiting Nimlings shell. Bye!"
       break
@@ -398,7 +407,7 @@ Nimlings Enhanced REPL Help:
   - :show_context    - Show the persistent REPL context.
   - :clear_context   - Clear the persistent REPL context.
 """
-    elif strippedLine == ":run" or (line.len == 0 and inputBuffer.strip().len > 0) : # :run or blank line with content
+    elif strippedLine == ":run" or (line.len == 0 and inputBuffer.strip().len > 0) :
       if inputBuffer.strip().len > 0:
         let result = runTemporaryNimCode(inputBuffer, replContext)
         if sandbox.CompilationFailed in result.flags:
@@ -409,13 +418,12 @@ Nimlings Enhanced REPL Help:
           echo "Runtime Error:\n", result.runtimeOutput
           if replContext.len > 0:
             echo "Note: An error occurred while using the REPL context. Try `:clear_context` if issues persist."
-        else: # Success
+        else:
           if result.runtimeOutput.len > 0:
             echo result.runtimeOutput
           else:
             echo "OK (No output)"
 
-          # If successful and input likely contained declarations, add to context
           if likelyContainsDeclarations(inputBuffer):
             if replContext.len > 0:
               replContext &= "\n" & inputBuffer
@@ -423,10 +431,9 @@ Nimlings Enhanced REPL Help:
               replContext = inputBuffer
             echo "(Context updated)"
 
-        inputBuffer = "" # Clear buffer after running or attempting to run
-      elif strippedLine == ":run": # :run called on empty buffer
+        inputBuffer = ""
+      elif strippedLine == ":run":
         echo "Buffer is empty. Type some code or :help."
-      # if blank line on empty buffer, just re-prompt (handled by continue below)
     elif strippedLine == ":clear":
       inputBuffer = ""
       echo "Input buffer cleared."
@@ -447,16 +454,14 @@ Nimlings Enhanced REPL Help:
     elif strippedLine == ":clear_context":
       replContext = ""
       echo "REPL context cleared."
-    elif line.len == 0: # Blank line entered on an already empty buffer
-        # Blank line on empty buffer, do nothing, just re-prompt
+    elif line.len == 0:
         continue
-    else: # Regular code line
+    else:
       if inputBuffer.len > 0:
         inputBuffer &= "\n" & line
       else:
         inputBuffer = line
   echo "---"
-
 
 when isMainModule:
   dispatchMulti([hello, version, runExercise, hint, listExercises, watch, status, shell])
