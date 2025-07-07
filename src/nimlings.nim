@@ -21,6 +21,7 @@ import times
 import achievements
 import sequtils
 import ospaths      # For path manipulation in initExercise
+import tui/app as tuiApp # For the TUI mode
 
 proc runExercise*(exerciseNameOrPath: string) =
   ## Compiles and runs the specified exercise using the sandbox module.
@@ -341,7 +342,7 @@ proc initExercise*(exercisePathFragment: string, workspace: string = "nimlings_w
   ##          nimlings init 02_control_flow/if_else_1
   ##          nimlings init exercises/02_control_flow/if_else_1_positive_negative_zero.nim
 
-  let allExercises = discoverExercises() # Needed to resolve path fragment
+  let allExercises = discoverExercises()
   let exerciseOpt = findExercise(exercisePathFragment, allExercises)
 
   if exerciseOpt.isNone:
@@ -350,23 +351,18 @@ proc initExercise*(exercisePathFragment: string, workspace: string = "nimlings_w
     return
 
   let sourceExercise = exerciseOpt.get
-  let sourceExercisePath = sourceExercise.path # This is the full path from discoverExercises
+  let sourceExercisePath = sourceExercise.path
 
-  # Determine the relative path of the exercise within the 'exercises' dir
-  # to replicate the structure in the workspace.
-  # lessons.getExercisesRootPath() gives the root of the exercises dir.
   var relativePath = ""
   let exercisesRoot = lessons.getExercisesRootPath()
   if sourceExercisePath.startsWith(exercisesRoot):
-    # +1 to skip the leading slash if present after removing prefix
     let skipChars = if exercisesRoot.endsWith(DirSep): exercisesRoot.len else: exercisesRoot.len + 1
     relativePath = sourceExercisePath[skipChars .. ^1]
   else:
-    # Fallback if path structure is unexpected, just use filename
     relativePath = sourceExercisePath.extractFilename()
     echo "Warning: Could not determine relative path for exercise. Using filename only in workspace."
 
-  if relativePath.len == 0: # Should not happen if sourceExercisePath is valid
+  if relativePath.len == 0:
       echo "Error: Could not determine a valid relative path for the exercise."
       return
 
@@ -374,7 +370,7 @@ proc initExercise*(exercisePathFragment: string, workspace: string = "nimlings_w
   let targetWorkspaceDir = targetWorkspacePath.parentDir()
 
   try:
-    createDir(targetWorkspaceDir) # Create topic subdirectories if they don't exist
+    createDir(targetWorkspaceDir)
     copyFile(sourceExercisePath, targetWorkspacePath)
     echo "Exercise '", sourceExercise.name, "' initialized in your workspace at:"
     echo "  ", targetWorkspacePath
@@ -382,7 +378,7 @@ proc initExercise*(exercisePathFragment: string, workspace: string = "nimlings_w
     echo "To test your solution in the workspace, you can typically use: nim r ", targetWorkspacePath
   except OSError as e:
     echo "Error initializing exercise in workspace: ", e.msg
-  except CatchableError as e: # For other potential errors
+  except CatchableError as e:
     echo "An unexpected error occurred during init: ", e.msg
 
 import rdstdin
@@ -510,5 +506,10 @@ Nimlings Enhanced REPL Help:
         inputBuffer = line
   echo "---"
 
+proc tui*() =
+  ## Starts the Nimlings Text User Interface (experimental).
+  echo "TUI mode selected. Initializing..."
+  tuiApp.runTuiApp()
+
 when isMainModule:
-  dispatchMulti([hello, version, runExercise, hint, listExercises, watch, status, shell, initExercise])
+  dispatchMulti([hello, version, runExercise, hint, listExercises, watch, status, shell, initExercise, tui])
