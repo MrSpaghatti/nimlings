@@ -20,100 +20,131 @@ import sandbox
 import times
 import achievements
 import sequtils
-import ospaths      # For path manipulation in initExercise
+import ospaths
+import tui/app as tuiApp
 
-proc runExercise*(exerciseNameOrPath: string) =
-  ## Compiles and runs the specified exercise using the sandbox module.
-  ## If the exercise compiles and runs successfully, it's marked as complete.
+# Type to hold structured results from running an exercise
+type
+  ExerciseRunResult* = object # Exported for TUI module
+    exercisePath*: string
+    exerciseName*: string # For convenience
+    success*: bool
+    isCompilationFailure*: bool
+    isRuntimeFailure*: bool
+    isValidationFailure*: bool
+    outputLog*: seq[string]
+    earnedPointsMsg*: string
+    newBadgesMsgs*: seq[string]
+
+proc runExerciseLogic(exercisePathFragment: string): ExerciseRunResult =
+  ## Core logic for running an exercise. Returns a structured result.
   var userState = loadState()
-  let allExercises = discoverExercises()
+  let allExercises = discoverExercises() # discoverExercises needs to be available here
 
-  let exerciseOpt = findExercise(exerciseNameOrPath, allExercises)
+  result.exercisePath = "" # Initialize path
+  result.exerciseName = "Unknown"
+
+  let exerciseOpt = findExercise(exercisePathFragment, allExercises)
   if exerciseOpt.isNone:
-    echo "Error: Exercise '", exerciseNameOrPath, "' not found."
-    echo "Run `nimlings list` to see available exercises."
+    result.outputLog.add("Error: Exercise '" & exercisePathFragment & "' not found.")
+    result.outputLog.add("Run `nimlings list` to see available exercises.")
+    result.success = false
     return
 
   let exercise = exerciseOpt.get
-  echo "Running exercise: ", exercise.topic, "/", exercise.name
-  echo "File: ", exercise.path
-  echo "WARNING: Exercises are run without a secure sandbox. Do not run untrusted exercises."
-  echo "--------------------------------------------------"
+  result.exercisePath = exercise.path # Store full path
+  result.exerciseName = exercise.topic & "/" & exercise.name
+
+  result.outputLog.add("Running exercise: " & result.exerciseName)
+  result.outputLog.add("File: " & exercise.path)
+  result.outputLog.add("WARNING: Exercises are run without a secure sandbox for native execution. WASM PoC is experimental. Do not run untrusted exercises.")
+  result.outputLog.add("--------------------------------------------------")
 
   var sboxResult = sandbox.executeSandboxed(exercise.path, exercise.path.parentDir, preference = exercise.sandboxPreference)
   var overallSuccess = false
-  var validationRunOutput = ""
+  var validationOutputLog: seq[string] # Separate log for validation messages
 
   if sandbox.CompilationFailed in sboxResult.flags:
-    echo "❌ Compilation Failed ❌"
-    echo sboxResult.compilationOutput
+    result.outputLog.add("❌ Compilation Failed ❌")
+    result.outputLog.add(sboxResult.compilationOutput)
+    result.isCompilationFailure = true
   elif sandbox.RuntimeFailed in sboxResult.flags:
-    echo "💥 Runtime Error 💥"
-    echo sboxResult.runtimeOutput
+    result.outputLog.add("💥 Runtime Error 💥")
+    result.outputLog.add(sboxResult.runtimeOutput)
+    result.isRuntimeFailure = true
   else:
-    echo "✅ Compiled and Ran Successfully (according to sandbox)."
-    echo "--- Output from your program ---"
-    echo sboxResult.runtimeOutput
-    echo "--- End of Output ---"
+    result.outputLog.add("✅ Compiled and Ran Successfully (according to sandbox).")
+    result.outputLog.add("--- Output from your program ---")
+    result.outputLog.add(sboxResult.runtimeOutput)
+    result.outputLog.add("--- End of Output ---")
 
     let normalizedRuntimeOutput = sboxResult.runtimeOutput.strip().replace("\r\n", "\n")
-    var currentFlags = sboxResult.flags
+    var currentFlags = sboxResult.flags # These are sandbox flags
 
     if exercise.expectedOutput.isSome:
       let expected = exercise.expectedOutput.get.strip().replace("\r\n", "\n")
-      echo "\n🔍 Validating output..."
+      validationOutputLog.add("\n🔍 Validating output...")
       if normalizedRuntimeOutput == expected:
         currentFlags = {sandbox.Success}
-        validationRunOutput = "Output matches expected output."
+        validationOutputLog.add("Output matches expected output.")
         overallSuccess = true
       else:
         currentFlags = {sandbox.ValidationFailed}
-        validationRunOutput = "Output does not match expected output.\nExpected:\n---\n" & expected &
-                                 "\n---\nGot:\n---\n" & normalizedRuntimeOutput & "\n---"
+        validationOutputLog.add("Output does not match expected output.\nExpected:\n---\n" & expected &
+                                 "\n---\nGot:\n---\n" & normalizedRuntimeOutput & "\n---")
+        result.isValidationFailure = true
     elif exercise.validationScript.isSome:
       let scriptName = exercise.validationScript.get
       let scriptPath = exercise.path.parentDir / scriptName
-      echo "\n🔍 Running validation script: ", scriptPath
+      validationOutputLog.add("\n🔍 Running validation script: " & scriptPath)
       if fileExists(scriptPath):
         var validatorProc = startProcess("nim", args = ["e", "--hints:off", "--stdout:on", scriptPath],
                                          options = {poUsePath, poStdErrToStdOut, poParentStreams},
                                          workingDir = exercise.path.parentDir)
+        var validatorStdout: string
         try:
           validatorProc.inputStream.write(sboxResult.runtimeOutput)
           validatorProc.inputStream.close()
-        except IOError:
-          currentFlags = {sandbox.ValidationFailed}
-          validationRunOutput = "Failed to pipe output to validation script: " & getCurrentExceptionMsg()
+
+          var validatorOutputLines: seq[string]
+          while validatorProc.running:
+              if validatorProc.peekExitCode != -1: break
+              var line = validatorProc.outputStream.readLine()
+              if line.len > 0: validatorOutputLines.add(line)
           validatorProc.close()
+          validatorStdout = validatorOutputLines.join("\n")
 
-        if sandbox.ValidationFailed notin currentFlags:
-            var validatorOutputLines: seq[string]
-            while validatorProc.running:
-                if validatorProc.peekExitCode != -1: break
-                var line = validatorProc.outputStream.readLine()
-                if line.len > 0: validatorOutputLines.add(line)
-            validatorProc.close()
-            validationRunOutput = validatorOutputLines.join("\n")
+          if validatorProc.peekExitCode == 0:
+              currentFlags = {sandbox.Success}
+              overallSuccess = true
+          else:
+              currentFlags = {sandbox.ValidationFailed}
+              result.isValidationFailure = true
+        except IOError as e:
+          currentFlags = {sandbox.ValidationFailed}
+          validatorStdout = "Failed to pipe output to validation script: " & getCurrentExceptionMsg()
+          if validatorProc != nil: validatorProc.close()
+          result.isValidationFailure = true
 
-            if validatorProc.peekExitCode == 0:
-                currentFlags = {sandbox.Success}
-                overallSuccess = true
-            else:
-                currentFlags = {sandbox.ValidationFailed}
+        validationOutputLog.add(validatorStdout)
       else:
         currentFlags = {sandbox.ValidationFailed}
-        validationRunOutput = "Validation script not found: " & scriptPath
-    else:
+        validationOutputLog.add("Validation script not found: " & scriptPath)
+        result.isValidationFailure = true
+    else: # No specific validation, successful sandbox run is enough
       overallSuccess = true
-      currentFlags = {sandbox.Success}
+      currentFlags = {sandbox.Success} # Ensure this is set if no validation was needed
 
-    sboxResult.flags = currentFlags
+    sboxResult.flags = currentFlags # Update sandbox flags with validation outcome
+    result.outputLog.add(validationOutputLog.join("\n"))
 
-  echo "--------------------------------------------------"
+
+  result.outputLog.add("--------------------------------------------------")
+  result.success = overallSuccess
 
   if overallSuccess:
-    echo "🎉 Exercise completed successfully! 🎉"
-    if validationRunOutput.len > 0 : echo "Validation: ", validationRunOutput
+    result.outputLog.add("🎉 Exercise completed successfully! 🎉")
+    # Validation output (if any) is already in result.outputLog from validationOutputLog
 
     var justCompletedExercise = false
     if exercise.path notin userState.completedExercises:
@@ -121,24 +152,35 @@ proc runExercise*(exerciseNameOrPath: string) =
       userState.points += exercise.pointsValue
       justCompletedExercise = true
       saveState(userState)
-      echo "Gained ", exercise.pointsValue, " points! Total points: ", userState.points
-      echo "Progress saved."
+      result.earnedPointsMsg = "Gained " & $exercise.pointsValue & " points! Total points: " & $userState.points
+      result.outputLog.add(result.earnedPointsMsg)
+      result.outputLog.add("Progress saved.")
     else:
-      echo "This exercise was already completed. (No points or new badges from this completion)"
+      result.outputLog.add("This exercise was already completed. (No points or new badges from this completion)")
 
     if justCompletedExercise:
       let allExercisesList = discoverExercises()
-      let newBadges = achievements.checkAndAwardBadges(userState, allExercisesList)
+      let newBadges = achievements.checkAndAwardBadges(userState, allExercisesList) # Modifies userState
       if newBadges.len > 0:
-        echo "\n✨ You've earned new badges! ✨"
+        result.outputLog.add("\n✨ You've earned new badges! ✨")
         for badge in newBadges:
-          echo "  ", badge.emoji, " ", badge.name, " - ", badge.description
+          let badgeMsg = "  " & badge.emoji & " " & badge.name & " - " & badge.description
+          result.outputLog.add(badgeMsg)
+          result.newBadgesMsgs.add(badgeMsg)
         saveState(userState)
-        echo "Badges saved."
+        result.outputLog.add("Badges saved.")
   else:
-    echo "❌ Exercise failed. Please check the compiler messages above and try again."
-    echo "Hint: ", if exercise.hint.len > 0: exercise.hint else: "No hint available for this exercise."
+    result.outputLog.add("❌ Exercise failed. Please check the messages above and try again.")
+    result.outputLog.add("Hint: " & (if exercise.hint.len > 0: exercise.hint else: "No hint available for this exercise."))
 
+# CLI exposed `run` command
+proc runExercise*(exerciseNameOrPath: string) =
+  ## Compiles and runs the specified exercise.
+  let result = runExerciseLogic(exerciseNameOrPath)
+  for line in result.outputLog:
+    echo line
+  # Points and badge messages are already part of outputLog in runExerciseLogic's current form.
+  # If they were separated more strictly, they would be printed here.
 
 proc hint*(exerciseNameOrPath: string) =
   ## Shows a hint for the specified exercise.
@@ -253,7 +295,7 @@ proc watch*(exerciseToWatch: string = "") =
 
   var lastModTime = getLastModificationTime(currentExercise.path)
 
-  runExercise(currentExercise.path)
+  runExercise(currentExercise.path) # This now calls the wrapper that prints
   userState = loadState()
 
   try:
@@ -263,7 +305,7 @@ proc watch*(exerciseToWatch: string = "") =
       if modTime > lastModTime:
         echo "\nFile change detected. Re-running exercise..."
         lastModTime = modTime
-        runExercise(currentExercise.path)
+        runExercise(currentExercise.path) # Wrapper call
 
         userState = loadState()
         if currentExercise.path in userState.completedExercises:
@@ -336,37 +378,26 @@ proc status*() =
 
 proc initExercise*(exercisePathFragment: string, workspace: string = "nimlings_workspace") =
   ## Copies a specified exercise to the user's workspace directory for solving.
-  ## The workspace path can be relative (e.g., "./my_solutions") or absolute.
-  ## Example: nimlings init intro1_helloworld
-  ##          nimlings init 02_control_flow/if_else_1
-  ##          nimlings init exercises/02_control_flow/if_else_1_positive_negative_zero.nim
-
-  let allExercises = discoverExercises() # Needed to resolve path fragment
+  let allExercises = discoverExercises()
   let exerciseOpt = findExercise(exercisePathFragment, allExercises)
 
   if exerciseOpt.isNone:
     echo "Error: Exercise '", exercisePathFragment, "' not found in the Nimlings curriculum."
-    echo "Use `nimlings list` to see available exercises."
     return
 
   let sourceExercise = exerciseOpt.get
-  let sourceExercisePath = sourceExercise.path # This is the full path from discoverExercises
+  let sourceExercisePath = sourceExercise.path
 
-  # Determine the relative path of the exercise within the 'exercises' dir
-  # to replicate the structure in the workspace.
-  # lessons.getExercisesRootPath() gives the root of the exercises dir.
   var relativePath = ""
   let exercisesRoot = lessons.getExercisesRootPath()
   if sourceExercisePath.startsWith(exercisesRoot):
-    # +1 to skip the leading slash if present after removing prefix
     let skipChars = if exercisesRoot.endsWith(DirSep): exercisesRoot.len else: exercisesRoot.len + 1
     relativePath = sourceExercisePath[skipChars .. ^1]
   else:
-    # Fallback if path structure is unexpected, just use filename
     relativePath = sourceExercisePath.extractFilename()
-    echo "Warning: Could not determine relative path for exercise. Using filename only in workspace."
+    echo "Warning: Could not determine relative path for exercise."
 
-  if relativePath.len == 0: # Should not happen if sourceExercisePath is valid
+  if relativePath.len == 0:
       echo "Error: Could not determine a valid relative path for the exercise."
       return
 
@@ -374,16 +405,15 @@ proc initExercise*(exercisePathFragment: string, workspace: string = "nimlings_w
   let targetWorkspaceDir = targetWorkspacePath.parentDir()
 
   try:
-    createDir(targetWorkspaceDir) # Create topic subdirectories if they don't exist
+    createDir(targetWorkspaceDir)
     copyFile(sourceExercisePath, targetWorkspacePath)
-    echo "Exercise '", sourceExercise.name, "' initialized in your workspace at:"
-    echo "  ", targetWorkspacePath
-    echo "\nYou can now edit this file. `nimlings run` currently works with files in the original 'exercises' path."
-    echo "To test your solution in the workspace, you can typically use: nim r ", targetWorkspacePath
+    echo "Exercise '", sourceExercise.name, "' initialized in workspace at:\n  ", targetWorkspacePath
+    echo "\nEdit this file. To test, run: nim r ", targetWorkspacePath.quoteShell()
+    echo "`nimlings run` checks exercises in the original 'exercises' directory."
   except OSError as e:
-    echo "Error initializing exercise in workspace: ", e.msg
-  except CatchableError as e: # For other potential errors
-    echo "An unexpected error occurred during init: ", e.msg
+    echo "Error initializing exercise: ", e.msg
+  except CatchableError as e:
+    echo "Unexpected error during init: ", e.msg
 
 import rdstdin
 
@@ -410,14 +440,12 @@ proc runTemporaryNimCode(userCode: string, context: string, tempFileName: string
 
 proc shell*() =
   ## Opens a basic interactive Nim shell (REPL).
-  ## Type `:quit` or `:exit` to leave the shell.
   echo "Welcome to the Nimlings Interactive Shell (REPL)!"
-  echo "Type Nim code directly. Use `:quit` or `:exit` to leave."
-  echo "WARNING: Code is run via the sandbox module, which is not yet secure."
+  echo "Type Nim code. Use `:quit` or `:exit` to leave."
+  echo "WARNING: Code is run via the sandbox module (not yet fully secure)."
   echo "---"
-
-  var inputBuffer: string = ""
-  var replContext: string = ""
+  var inputBuffer = ""
+  var replContext = ""
 
   proc likelyContainsDeclarations(code: string): bool =
     for line in code.splitLines():
@@ -433,82 +461,56 @@ proc shell*() =
     let prompt = if inputBuffer.len == 0: "nim> " else: "nim| "
     stdout.write(prompt)
     stdout.flushFile()
-
     let line = readLine(stdin)
     let strippedLine = line.strip()
 
-    if strippedLine == ":quit" or strippedLine == ":exit":
-      echo "Exiting Nimlings shell. Bye!"
-      break
+    if strippedLine == ":quit" or strippedLine == ":exit": break
     elif strippedLine == ":help":
-      echo """
-Nimlings Enhanced REPL Help:
-  - Type Nim code. It will be added to a buffer.
-  - Enter a blank line or type `:run` to execute the buffered code.
-  - Multi-line input is supported; lines are collected until you execute.
-  - :quit or :exit   - Exit the shell.
-  - :help            - Show this help message.
-  - :run             - Execute the current code in the buffer.
-  - :show            - Show the current code in the buffer without running.
-  - :clear           - Clear the current code buffer.
-  - :show_context    - Show the persistent REPL context.
-  - :clear_context   - Clear the persistent REPL context.
-"""
+      echo """REPL Commands:
+  :quit, :exit   - Exit the shell.
+  :help            - Show this help.
+  :run             - Execute current buffer (or blank line after input).
+  :show            - Show current buffer.
+  :clear           - Clear current buffer.
+  :show_context    - Show persistent REPL context.
+  :clear_context   - Clear persistent REPL context."""
     elif strippedLine == ":run" or (line.len == 0 and inputBuffer.strip().len > 0) :
       if inputBuffer.strip().len > 0:
         let result = runTemporaryNimCode(inputBuffer, replContext)
+        # Output handling from runTemporaryNimCode (which calls sandbox)
         if sandbox.CompilationFailed in result.flags:
           echo "Compilation Error:\n", result.compilationOutput
-          if replContext.len > 0:
-            echo "Note: An error occurred while using the REPL context. Try `:clear_context` if issues persist."
         elif sandbox.RuntimeFailed in result.flags:
           echo "Runtime Error:\n", result.runtimeOutput
-          if replContext.len > 0:
-            echo "Note: An error occurred while using the REPL context. Try `:clear_context` if issues persist."
-        else:
-          if result.runtimeOutput.len > 0:
-            echo result.runtimeOutput
-          else:
-            echo "OK (No output)"
+        else: # Success from sandbox execution
+          if result.runtimeOutput.len > 0: echo result.runtimeOutput
+          else: echo "OK (No output)"
 
-          if likelyContainsDeclarations(inputBuffer):
-            if replContext.len > 0:
-              replContext &= "\n" & inputBuffer
-            else:
-              replContext = inputBuffer
-            echo "(Context updated)"
-
+        # Context update logic (only if sandbox part was successful)
+        if sandbox.Success in result.flags and likelyContainsDeclarations(inputBuffer):
+          if replContext.len > 0: replContext &= "\n" & inputBuffer
+          else: replContext = inputBuffer
+          echo "(Context updated)"
         inputBuffer = ""
-      elif strippedLine == ":run":
-        echo "Buffer is empty. Type some code or :help."
-    elif strippedLine == ":clear":
-      inputBuffer = ""
-      echo "Input buffer cleared."
+      elif strippedLine == ":run": echo "Buffer is empty."
+    elif strippedLine == ":clear": inputBuffer = ""; echo "Input buffer cleared."
     elif strippedLine == ":show":
-      if inputBuffer.len > 0:
-        echo "--- Current Input Buffer ---"
-        echo inputBuffer
-        echo "--------------------------"
-      else:
-        echo "Input buffer is empty."
+      if inputBuffer.len > 0: echo "--- Buffer ---\n", inputBuffer, "\n--------------"
+      else: echo "Input buffer is empty."
     elif strippedLine == ":show_context":
-      if replContext.len > 0:
-        echo "--- REPL Context ---"
-        echo replContext
-        echo "--------------------"
-      else:
-        echo "REPL context is empty."
-    elif strippedLine == ":clear_context":
-      replContext = ""
-      echo "REPL context cleared."
-    elif line.len == 0:
-        continue
+      if replContext.len > 0: echo "--- Context ---\n", replContext, "\n---------------"
+      else: echo "REPL context is empty."
+    elif strippedLine == ":clear_context": replContext = ""; echo "REPL context cleared."
+    elif line.len == 0: continue
     else:
-      if inputBuffer.len > 0:
-        inputBuffer &= "\n" & line
-      else:
-        inputBuffer = line
+      if inputBuffer.len > 0: inputBuffer &= "\n" & line
+      else: inputBuffer = line
   echo "---"
 
+proc tui*() =
+  ## Starts the Nimlings Text User Interface (experimental).
+  echo "TUI mode selected. Initializing..."
+  tuiApp.runTuiApp()
+
 when isMainModule:
-  dispatchMulti([hello, version, runExercise, hint, listExercises, watch, status, shell, initExercise])
+  dispatchMulti([hello, version, runExercise, hint, listExercises, watch, status, shell, initExercise, tui])
