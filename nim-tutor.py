@@ -166,6 +166,7 @@ def check_nim_installed():
             check=True,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("Hard to teach you Nim if you don't have it installed, genius. Go fix that.")
@@ -177,7 +178,7 @@ def load_progress() -> set:
     if not PROGRESS_FILE.exists():
         return set()
     try:
-        with open(PROGRESS_FILE, "r") as f:
+        with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
             return set(json.load(f))
     except (json.JSONDecodeError, IOError):
         print(f"Warning: Could not read or parse progress file at {PROGRESS_FILE}. Starting fresh.")
@@ -188,7 +189,7 @@ def save_progress(completed_ids: set):
     """Saves the set of completed lesson IDs."""
     try:
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        with open(PROGRESS_FILE, "w") as f:
+        with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
             json.dump(list(completed_ids), f)
     except IOError:
         print(f"Fatal: Could not write progress to {PROGRESS_FILE}. Progress will not be saved.")
@@ -238,7 +239,7 @@ def run_lesson(lesson: dict) -> bool:
             print(f"\nEditor exited with a non-zero status. Not even trying to compile that.")
             return False
 
-        user_code = tmp_filepath.read_text()
+        user_code = tmp_filepath.read_text(encoding="utf-8")
         if not user_code.strip():
             print("\nYou didn't write anything. Can't pass a lesson if you don't try.")
             return False
