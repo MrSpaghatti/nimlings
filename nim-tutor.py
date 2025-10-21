@@ -92,15 +92,15 @@ LESSONS = [
                 "id": "2.3",
                 "name": "Type Inference",
                 "concept": (
-                    "Explicitly writing types is good, but sometimes the compiler can figure it out.\n"
-                    "Using `:=` instead of `=` for the first assignment lets Nim infer the type.\n"
+                    "Explicitly writing types is good, but sometimes the compiler can figure it out on its own.\n"
+                    "When you declare a variable with `let` or `var` and assign a value immediately, Nim infers the type.\n"
                     "`let name = \"Nim\"` is the same as `let name: string = \"Nim\"`.\n"
-                    "`var age := 20` is the same as `var age: int = 20`.\n"
-                    "This only works on the first assignment."
+                    "`var age = 20` is the same as `var age: int = 20`.\n"
+                    "It's clean, simple, and you should use it when the type is obvious."
                 ),
                 "task": "Declare a mutable integer named `counter` with a value of 0 using type inference.",
                 "validation": lambda code, result: result.returncode == 0,
-                "hint": "You need a mutable variable, so use `var`. And for inference, use `:=`.",
+                "hint": "Just use `var counter = 0`. The compiler knows it's an integer.",
             },
         ],
     },
