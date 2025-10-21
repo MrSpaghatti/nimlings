@@ -1,6 +1,6 @@
-# nim-tutor
+# nimlings
 
-`nim-tutor` is an interactive command-line application designed to teach the basics of the Nim programming language. It's a single, self-contained Python script that you can run directly.
+`nimlings` is an interactive command-line application designed to teach the basics of the Nim programming language. It's a single, self-contained Python script that you can run directly.
 
 The tutor presents you with a concept, gives you a coding task, and then opens your default text editor for you to write a solution. It then compiles and runs your code, providing immediate feedback. All in a cynical, no-bullshit tone.
 
@@ -13,11 +13,11 @@ The tutor presents you with a concept, gives you a coding task, and then opens y
 
 1.  **Make the script executable**:
     ```sh
-    chmod +x nim-tutor.py
+    chmod +x nimlings.py
     ```
 
 2.  **Run a command**:
-    The script is executed as `./nim-tutor.py` followed by one of the commands below.
+    The script is executed as `./nimlings.py` followed by one of the commands below.
 
 ## Commands
 
@@ -26,9 +26,9 @@ The tutor presents you with a concept, gives you a coding task, and then opens y
 Starts the tutorial or resumes from your last uncompleted lesson. If you run the script with no command, `learn` is used by default.
 
 ```sh
-./nim-tutor.py learn
+./nimlings.py learn
 # or simply
-./nim-tutor.py
+./nimlings.py
 ```
 
 ### `list`
@@ -36,13 +36,13 @@ Starts the tutorial or resumes from your last uncompleted lesson. If you run the
 Lists all the modules and lessons in the curriculum. Lessons you have already completed will be marked with `[x]`.
 
 ```sh
-./nim-tutor.py list
+./nimlings.py list
 ```
 
 ### `reset`
 
-Deletes all your progress, allowing you to start the tutorial from the very beginning. It will ask for confirmation before wiping your progress file (`~/.config/nim-tutor/progress.json`).
+Deletes all your progress, allowing you to start the tutorial from the very beginning. It will ask for confirmation before wiping your progress file (`~/.config/nimlings/progress.json`).
 
 ```sh
-./nim-tutor.py reset
+./nimlings.py reset
 ```
