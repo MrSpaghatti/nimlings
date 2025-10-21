@@ -239,7 +239,7 @@ def run_lesson(lesson: dict) -> bool:
             print(f"\nEditor exited with a non-zero status. Not even trying to compile that.")
             return False
 
-        user_code = tmp_filepath.read_text()
+        user_code = tmp_filepath.read_text(encoding='utf-8')
         if not user_code.strip():
             print("\nYou didn't write anything. Can't pass a lesson if you don't try.")
             return False
