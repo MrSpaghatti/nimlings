@@ -273,28 +273,27 @@ def run_lesson(lesson: dict) -> bool:
 def handle_learn(progress: set):
     """Starts the tutorial from the next uncompleted lesson."""
     print("Welcome to nim-tutor. Let's see what you know, or more likely, what you don't.")
-    next_lesson = None
-    for module in LESSONS:
-        for lesson in module["lessons"]:
-            if lesson["id"] not in progress:
-                next_lesson = lesson
+    while True:
+        next_lesson = None
+        for module in LESSONS:
+            for lesson in module["lessons"]:
+                if lesson["id"] not in progress:
+                    next_lesson = lesson
+                    break
+            if next_lesson:
                 break
-        if next_lesson:
-            break
 
-    if not next_lesson:
-        print("\nWell, look at you. You actually finished everything. Now go build something.")
-        return
+        if not next_lesson:
+            print("\nWell, look at you. You actually finished everything. Now go build something.")
+            return
 
-    if run_lesson(next_lesson):
-        progress.add(next_lesson["id"])
-        save_progress(progress)
-        print("\nLesson complete. Moving on.")
-        handle_learn(progress) # Recurse to start the next lesson automatically
-    else:
-        print("\nLesson failed. Come back when you're ready to try again.")
-
-
+        if run_lesson(next_lesson):
+            progress.add(next_lesson["id"])
+            save_progress(progress)
+            print("\nLesson complete. Moving on.")
+        else:
+            print("\nLesson failed. Come back when you're ready to try again.")
+            return
 def handle_list(progress: set):
     """Lists all lessons and their completion status."""
     print("Here's the curriculum. `[x]` means you managed to get it right.")
