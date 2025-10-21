@@ -212,6 +212,18 @@ LESSONS = [
                 "validation": lambda code, result: result.stdout.strip() == "Go",
                 "hint": "Define the enum, then: `let light = tlGreen`. The case statement looks like: `case light\nof tlGreen:\n  echo \"Go\"\nelse: discard`.",
             },
+            {
+                "id": "4.5",
+                "name": "Option Type",
+                "concept": (
+                    "What happens when a procedure might not be able to return a value? Use the `Option` type.\n"
+                    "It's an enum that can be either `Some(value)` or `None`. This forces you to handle the 'no value' case at compile time, avoiding runtime errors.\n"
+                    "You need to `import options` to use it."
+                ),
+                "task": "Import `options`. Write a `proc` that returns `Some(42)`. Use `get()` to unwrap the value and `echo` it.",
+                "validation": lambda code, result: result.stdout.strip() == "42",
+                "hint": "Start with `import options`. Your proc should be `proc getValue(): Option[int] = Some(42)`. Then call it and use `.get()` to extract the value.",
+            },
         ],
     },
     {
@@ -242,6 +254,17 @@ LESSONS = [
                 ),
                 "validation": lambda code, result: "Hello, " in result.stdout.strip(),
                 "hint": "Define your proc, create a person `let p = Person(name: \"Carly\")`, then call the proc like this: `p.greet()`.",
+            },
+            {
+                "id": "5.3",
+                "name": "Iterators",
+                "concept": (
+                    "An `iterator` is a procedure that can 'yield' a value and be resumed later, making it perfect for custom loops.\n"
+                    "They're memory-efficient because they produce values one at a time, instead of all at once."
+                ),
+                "task": "Write an iterator `countTo(n: int)` that yields numbers from 1 up to `n`. Use it in a `for` loop to `echo` numbers up to 3.",
+                "validation": lambda code, result: result.stdout.strip() == "1\n2\n3",
+                "hint": "Define it as `iterator countTo(n: int): int = ...`. Inside, use a `var` counter and a `while` loop that `yield`s the value.",
             },
         ],
     },
@@ -327,6 +350,17 @@ LESSONS = [
                 ),
                 "task": "Just read this and press Enter. Go on.",
             },
+            {
+                "id": "8.3",
+                "name": "Creating Modules",
+                "concept": (
+                    "Any Nim file can be a module. To expose a `proc` to other files, you mark it with an asterisk (`*`).\n"
+                    "This is Nim's way of marking things as 'public' so they can be exported."
+                ),
+                "task": "This is a bit tricky in our setup. Write a single file that simulates two modules:\n1. A `greeter.nim` module with an exported `greet*` proc.\n2. A `main.nim` module that imports `greeter` and calls the proc.\nComment the file names (`# main.nim`) in your code to show the separation.",
+                "validation": lambda code, result: "Hello from a module" in result.stdout.strip(),
+                "hint": "Use comments to separate the files. In `greeter`, define `proc greet*() = ...`. In `main`, `import greeter` and `greet()`.",
+            },
         ],
     },
     {
@@ -341,6 +375,34 @@ LESSONS = [
                     "This is a deep topic, so we're just scratching the surface here. The main takeaway is that concurrency in Nim is a first-class citizen."
                 ),
                 "task": "Just read this and press Enter. You've reached the end for now.",
+            },
+            {
+                "id": "9.2",
+                "name": "FlowVar",
+                "concept": (
+                    "Running a `proc` in another thread is cool, but how do you get a result back?\n"
+                    "A `FlowVar[T]` is a special type that acts as a container for a value that will be computed concurrently.\n"
+                    "You can `^` to wait for the result and retrieve it."
+                ),
+                "task": "Import `threadpool`. Write a `proc` that returns `42`. `spawn` it into a `FlowVar[int]` and `echo` the result.",
+                "validation": lambda code, result: result.stdout.strip() == "42",
+                "hint": "`import threadpool`. `proc calc(): int = 42`. Then `var result = spawn calc()`. Finally, `echo ^result`.",
+            },
+        ],
+    },
+    {
+        "module": "10: Metaprogramming (\"Code That Writes Code\")",
+        "lessons": [
+            {
+                "id": "10.1",
+                "name": "Templates",
+                "concept": (
+                    "Metaprogramming is writing code that generates other code. Nim has powerful metaprogramming features, with `template` being the simplest.\n"
+                    "A template is like a super-powered macro. It substitutes code at compile time, which can reduce boilerplate and improve performance."
+                ),
+                "task": "Create a template `shout(msg: string)` that takes a string and echoes it with an exclamation mark. Use it to shout \"Hello\".",
+                "validation": lambda code, result: result.stdout.strip() == "Hello!",
+                "hint": "The syntax is `template shout(msg: string) = echo msg, \"!\"`. Then you can call it like a regular proc: `shout(\"Hello\")`.",
             },
         ],
     },
