@@ -229,6 +229,7 @@ def run_lesson(lesson: dict) -> bool:
 
     editor = get_editor()
     with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".nim", encoding='utf-8') as tmp_file:
+        tmp_file.write("# Write your Nim code here\n")
         tmp_filepath = Path(tmp_file.name)
 
     try:
