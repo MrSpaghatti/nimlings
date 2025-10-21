@@ -166,6 +166,7 @@ def check_nim_installed():
             check=True,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("Hard to teach you Nim if you don't have it installed, genius. Go fix that.")
