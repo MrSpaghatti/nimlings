@@ -93,9 +93,9 @@ LESSONS = [
                 "name": "Type Inference",
                 "concept": (
                     "Explicitly writing types is good, but sometimes the compiler can figure it out.\n"
-                    "Using `=` for the first assignment lets Nim infer the type.\n"
+                    "Using `:=` instead of `=` for the first assignment lets Nim infer the type.\n"
                     "`let name = \"Nim\"` is the same as `let name: string = \"Nim\"`.\n"
-                    "`var age = 20` is the same as `var age: int = 20`.\n"
+                    "`var age := 20` is the same as `var age: int = 20`.\n"
                     "This only works on the first assignment."
                 ),
                 "task": "Declare a mutable integer named `counter` with a value of 0 using type inference.",
@@ -229,7 +229,6 @@ def run_lesson(lesson: dict) -> bool:
 
     editor = get_editor()
     with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".nim", encoding='utf-8') as tmp_file:
-        tmp_file.write("# Write your Nim code here\n")
         tmp_filepath = Path(tmp_file.name)
 
     try:
@@ -239,7 +238,7 @@ def run_lesson(lesson: dict) -> bool:
             print(f"\nEditor exited with a non-zero status. Not even trying to compile that.")
             return False
 
-        user_code = tmp_filepath.read_text(encoding='utf-8')
+        user_code = tmp_filepath.read_text()
         if not user_code.strip():
             print("\nYou didn't write anything. Can't pass a lesson if you don't try.")
             return False
@@ -273,27 +272,28 @@ def run_lesson(lesson: dict) -> bool:
 def handle_learn(progress: set):
     """Starts the tutorial from the next uncompleted lesson."""
     print("Welcome to nim-tutor. Let's see what you know, or more likely, what you don't.")
-    while True:
-        next_lesson = None
-        for module in LESSONS:
-            for lesson in module["lessons"]:
-                if lesson["id"] not in progress:
-                    next_lesson = lesson
-                    break
-            if next_lesson:
+    next_lesson = None
+    for module in LESSONS:
+        for lesson in module["lessons"]:
+            if lesson["id"] not in progress:
+                next_lesson = lesson
                 break
+        if next_lesson:
+            break
 
-        if not next_lesson:
-            print("\nWell, look at you. You actually finished everything. Now go build something.")
-            return
+    if not next_lesson:
+        print("\nWell, look at you. You actually finished everything. Now go build something.")
+        return
 
-        if run_lesson(next_lesson):
-            progress.add(next_lesson["id"])
-            save_progress(progress)
-            print("\nLesson complete. Moving on.")
-        else:
-            print("\nLesson failed. Come back when you're ready to try again.")
-            return
+    if run_lesson(next_lesson):
+        progress.add(next_lesson["id"])
+        save_progress(progress)
+        print("\nLesson complete. Moving on.")
+        handle_learn(progress) # Recurse to start the next lesson automatically
+    else:
+        print("\nLesson failed. Come back when you're ready to try again.")
+
+
 def handle_list(progress: set):
     """Lists all lessons and their completion status."""
     print("Here's the curriculum. `[x]` means you managed to get it right.")
