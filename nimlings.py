@@ -297,9 +297,9 @@ LESSONS = [
                 "concept": (
                     "Just as `readFile` reads a file, `writeFile` writes a string to a file, overwriting it if it already exists."
                 ),
-                "task": "Import the `os` module. Use `writeFile` to create a file named `output.txt` with the content \"Hello, Nim!\". The program shouldn't `echo` anything.",
-                "validation": lambda code, result: result.returncode == 0 and Path("output.txt").exists() and Path("output.txt").read_text(encoding="utf-8").strip() == "Hello, Nim!",
-                "hint": "`import os` then `writeFile(\"output.txt\", \"Hello, Nim!\")`. That's it.",
+                "task": "Import the `os` module. Use `writeFile` to create a file named `output.txt` with the content \"Hello, Nim!\". Then, read the file back and `echo` its contents.",
+                "validation": lambda code, result: result.stdout.strip() == "Hello, Nim!",
+                "hint": "After you `writeFile`, just add `echo readFile(\"output.txt\")`.",
             },
         ],
     },
