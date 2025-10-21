@@ -154,6 +154,196 @@ LESSONS = [
             },
         ],
     },
+    {
+        "module": "4: Complex Data Types (\"More Junk To Store\")",
+        "lessons": [
+            {
+                "id": "4.1",
+                "name": "Tuples",
+                "concept": (
+                    "Tuples are fixed-size, ordered collections of values that can have different types.\n"
+                    "They're useful for grouping related data without creating a full-blown object.\n"
+                    "Syntax: `let myTuple = (\"some string\", 42)`.\n"
+                    "You access their fields by index: `myTuple[0]`, `myTuple[1]`."
+                ),
+                "task": "Declare a tuple named `person` containing a string \"Alice\" and an integer 30. Then, `echo` both fields, each on a new line.",
+                "validation": lambda code, result: result.stdout.strip() == "Alice\n30",
+                "hint": "Declare it with `let person = (\"Alice\", 30)`. Then use `echo person[0]` and `echo person[1]`.",
+            },
+            {
+                "id": "4.2",
+                "name": "Objects",
+                "concept": (
+                    "Objects are custom data types that group named fields. They're like structs in other languages.\n"
+                    "You define them with the `type` keyword.\n"
+                    "type Person = object\n"
+                    "  name: string\n"
+                    "  age: int"
+                ),
+                "task": "Define a `Person` object type with a `name` (string) and `age` (int). Create an instance of it, but don't print anything.",
+                "validation": lambda code, result: result.returncode == 0,
+                "hint": "After defining the type, create an instance: `let p = Person(name: \"Bob\", age: 25)`.",
+            },
+            {
+                "id": "4.3",
+                "name": "Sequences",
+                "concept": (
+                    "Sequences, or `seq`, are dynamic-sized arrays. They're Nim's version of Python's lists or C++'s vectors.\n"
+                    "You can add to them, remove from them, and they'll grow as needed.\n"
+                    "Syntax: `var numbers = @[10, 20, 30]`."
+                ),
+                "task": "Create a sequence of integers containing 1, 2, and 3. Use a `for` loop to iterate over it and `echo` each number.",
+                "validation": lambda code, result: result.stdout.strip() == "1\n2\n3",
+                "hint": "Use `var numbers = @[1, 2, 3]` and then `for n in numbers: echo n`.",
+            },
+            {
+                "id": "4.4",
+                "name": "Enums & Case Statements",
+                "concept": (
+                    "Enumerations (`enum`) are for when you have a variable that can only be one of a few possible values.\n"
+                    "They're great for state machines and making your code type-safe.\n"
+                    "The `case` statement is like a switch statement, perfect for handling each possible enum value."
+                ),
+                "task": (
+                    "Define an enum `TrafficLight` with values `tlRed`, `tlYellow`, `tlGreen`.\n"
+                    "Create a variable of this type and set it to `tlGreen`.\n"
+                    "Use a `case` statement to `echo` \"Go\" if the light is green."
+                ),
+                "validation": lambda code, result: result.stdout.strip() == "Go",
+                "hint": "Define the enum, then: `let light = tlGreen`. The case statement looks like: `case light\nof tlGreen:\n  echo \"Go\"\nelse: discard`.",
+            },
+        ],
+    },
+    {
+        "module": "5: Advanced Procedures (\"Reusable Recipes\")",
+        "lessons": [
+            {
+                "id": "5.1",
+                "name": "Generics",
+                "concept": (
+                    "Generics let you write procedures that can work with different types.\n"
+                    "Instead of a specific type like `int`, you use a placeholder, like `T`.\n"
+                    "Syntax: `proc echoFirst[T](items: seq[T]) =`"
+                ),
+                "task": "Write a generic procedure `echoFirst` that takes a sequence of any type and echoes the first element. Call it with a sequence of strings `@[ \"a\", \"b\"]`.",
+                "validation": lambda code, result: result.stdout.strip() == "a",
+                "hint": "Define the proc as `proc echoFirst[T](items: seq[T]) = echo items[0]`. Then call it.",
+            },
+            {
+                "id": "5.2",
+                "name": "Method Call Syntax",
+                "concept": (
+                    "Nim lets you call procedures in two ways: `procName(obj, arg)` or `obj.procName(arg)`.\n"
+                    "The second one is called 'method call syntax' and is just syntactic sugar. It makes code look more object-oriented."
+                ),
+                "task": (
+                    "Define a `Person` object and a `proc greet(p: Person)` that echoes \"Hello, \" followed by the person's name.\n"
+                    "Create a `Person` instance and call `greet` using method call syntax."
+                ),
+                "validation": lambda code, result: "Hello, " in result.stdout.strip(),
+                "hint": "Define your proc, create a person `let p = Person(name: \"Carly\")`, then call the proc like this: `p.greet()`.",
+            },
+        ],
+    },
+    {
+        "module": "6: Memory Management (\"Not Leaking Everywhere\")",
+        "lessons": [
+            {
+                "id": "6.1",
+                "name": "Ref Types",
+                "concept": (
+                    "Sometimes you need multiple variables to point to the *same* object in memory.\n"
+                    "A `ref` type is a reference to an object. When you pass a `ref`, you're not passing a copy, you're passing a pointer to the original.\n"
+                    "This is how you get shared, mutable state."
+                ),
+                "task": (
+                    "Define a `Person` object. Create a `ref Person` variable `p1`.\n"
+                    "Create a second variable `p2` and assign `p1` to it.\n"
+                    "Modify the `name` of the person through `p2`.\n"
+                    "Echo the name through `p1` to see that it changed."
+                ),
+                "validation": lambda code, result: result.stdout.strip() != "John" and len(result.stdout.strip()) > 0,
+                "hint": "Use `type Person = ref object of RootObj; var p1 = Person(name: \"John\"); var p2 = p1; p2.name = \"Jane\"; echo p1.name`",
+            },
+        ],
+    },
+    {
+        "module": "7: Error Handling & File I/O (\"Things Go Wrong\")",
+        "lessons": [
+            {
+                "id": "7.1",
+                "name": "Try/Except",
+                "concept": (
+                    "When things go wrong, Nim raises exceptions. You can handle them with a `try`/`except` block.\n"
+                    "This prevents your program from crashing when something unexpected happens, like dividing by zero."
+                ),
+                "task": "Write a `try` block that attempts to divide 10 by 0. In the `except DivByZeroError` block, `echo` the message \"Cannot divide by zero\".",
+                "validation": lambda code, result: result.stdout.strip() == "Cannot divide by zero",
+                "hint": "The structure is `try:\n  discard 10 / 0\nexcept DivByZeroError:\n  echo \"Cannot divide by zero\"`.",
+            },
+            {
+                "id": "7.2",
+                "name": "File Reading",
+                "concept": (
+                    "The `os` module provides functions for interacting with the file system. `readFile` is the simplest way to get the contents of a file as a string."
+                ),
+                "task": "Import the `os` module. Create a temporary file named `test.txt` with `writeFile(\"test.txt\", \"hello\")`. Then, use `readFile(\"test.txt\")` and `echo` its contents.",
+                "validation": lambda code, result: result.stdout.strip() == "hello",
+                "hint": "Don't forget to `import os`. Use `writeFile` first, then `echo readFile(\"test.txt\")`.",
+            },
+            {
+                "id": "7.3",
+                "name": "File Writing",
+                "concept": (
+                    "Just as `readFile` reads a file, `writeFile` writes a string to a file, overwriting it if it already exists."
+                ),
+                "task": "Import the `os` module. Use `writeFile` to create a file named `output.txt` with the content \"Hello, Nim!\". The program shouldn't `echo` anything.",
+                "validation": lambda code, result: result.returncode == 0 and Path("output.txt").exists() and Path("output.txt").read_text(encoding="utf-8").strip() == "Hello, Nim!",
+                "hint": "`import os` then `writeFile(\"output.txt\", \"Hello, Nim!\")`. That's it.",
+            },
+        ],
+    },
+    {
+        "module": "8: Modules and Packages (\"Using Other People's Code\")",
+        "lessons": [
+            {
+                "id": "8.1",
+                "name": "Import",
+                "concept": (
+                    "You can't fit everything in one file. The `import` statement lets you use code from other files, called modules.\n"
+                    "Nim has a rich standard library with modules for math, string handling, OS interaction, and more."
+                ),
+                "task": "Import the `math` module and `echo` the result of `sqrt(25.0)`.",
+                "validation": lambda code, result: result.stdout.strip() == "5.0",
+                "hint": "Start with `import math`. Then `echo sqrt(25.0)`.",
+            },
+            {
+                "id": "8.2",
+                "name": "Nimble Intro",
+                "concept": (
+                    "Nimble is Nim's package manager. It's how you install and manage third-party libraries.\n"
+                    "You'll use it for everything from web frameworks to game engines.\n"
+                    "This is just a heads-up; you won't be using it in this tutorial."
+                ),
+                "task": "Just read this and press Enter. Go on.",
+            },
+        ],
+    },
+    {
+        "module": "9: Concurrency (\"Doing Two Things at Once\")",
+        "lessons": [
+            {
+                "id": "9.1",
+                "name": "Spawn Intro",
+                "concept": (
+                    "Nim has powerful and easy-to-use concurrency features built into the language.\n"
+                    "The `spawn` keyword can run a procedure in a separate thread.\n"
+                    "This is a deep topic, so we're just scratching the surface here. The main takeaway is that concurrency in Nim is a first-class citizen."
+                ),
+                "task": "Just read this and press Enter. You've reached the end for now.",
+            },
+        ],
+    },
 ]
 
 # --- Core Application Logic ---
