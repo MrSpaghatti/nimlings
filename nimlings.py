@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-nim-tutor: An interactive command-line tutor for the Nim programming language.
+nimlings: An interactive command-line tutor for the Nim programming language.
 """
 
 import argparse
@@ -14,7 +14,7 @@ from pathlib import Path
 
 # --- Configuration ---
 
-CONFIG_DIR = Path.home() / ".config" / "nim-tutor"
+CONFIG_DIR = Path.home() / ".config" / "nimlings"
 PROGRESS_FILE = CONFIG_DIR / "progress.json"
 
 # --- Tutorial Content ---
@@ -211,11 +211,8 @@ def run_code(filepath: Path) -> subprocess.CompletedProcess:
     )
 
 
-def run_lesson(lesson: dict) -> bool:
-    """
-    Guides the user through a single lesson.
-    Returns True if the lesson was completed, False otherwise.
-    """
+def _present_lesson(lesson: dict):
+    """Prints the lesson's concept and task."""
     print("---")
     print(f"Module {lesson['id'].split('.')[0]} - Lesson {lesson['id']}: {lesson['name']}")
     print("---\n")
@@ -224,45 +221,65 @@ def run_lesson(lesson: dict) -> bool:
     print("TASK:", lesson["task"])
     print("=" * 20 + "\n")
 
-    if not lesson.get("validation"): # For intro-style lessons
+
+def _get_code_from_editor(tmp_filepath: Path):
+    """Opens the user's editor and returns the code they wrote."""
+    editor = get_editor()
+    print(f"Opening your editor ({editor}). Save and close the file when you're done.")
+    proc = subprocess.run([editor, str(tmp_filepath)], check=False)
+    if proc.returncode != 0:
+        print(f"\nEditor exited with a non-zero status. Not even trying to compile that.")
+        return None
+
+    user_code = tmp_filepath.read_text(encoding="utf-8")
+    if not user_code.strip():
+        print("\nYou didn't write anything. Can't pass a lesson if you don't try.")
+        return None
+    return user_code
+
+
+def _check_solution(lesson: dict, user_code: str, result: subprocess.CompletedProcess) -> bool:
+    """Checks the user's solution and prints feedback."""
+    if result.returncode != 0:
+        print("\n--- COMPILE ERROR ---")
+        print("Yeah, that didn't work. The compiler spit this back at you:")
+        print(result.stderr)
+        print("\nHINT:", lesson["hint"])
+        return False
+
+    if lesson["validation"](user_code, result):
+        print("\nAlright, that works. Don't get cocky.")
+        return True
+
+    print("\n--- LOGIC ERROR ---")
+    print("It compiled, but it's wrong. Your code produced this output:")
+    print(f"```\n{result.stdout.strip()}\n```")
+    print("\nThat's not what was asked for. Try again.")
+    return False
+
+
+def run_lesson(lesson: dict) -> bool:
+    """
+    Guides the user through a single lesson.
+    Returns True if the lesson was completed, False otherwise.
+    """
+    _present_lesson(lesson)
+
+    if not lesson.get("validation"):  # For intro-style lessons
         input("Press Enter to continue...")
         return True
 
-    editor = get_editor()
     with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".nim", encoding='utf-8') as tmp_file:
         tmp_filepath = Path(tmp_file.name)
 
     try:
-        print(f"Opening your editor ({editor}). Save and close the file when you're done.")
-        proc = subprocess.run([editor, str(tmp_filepath)], check=False)
-        if proc.returncode != 0:
-            print(f"\nEditor exited with a non-zero status. Not even trying to compile that.")
-            return False
-
-        user_code = tmp_filepath.read_text(encoding="utf-8")
-        if not user_code.strip():
-            print("\nYou didn't write anything. Can't pass a lesson if you don't try.")
+        user_code = _get_code_from_editor(tmp_filepath)
+        if user_code is None:
             return False
 
         print("Compiling and running your masterpiece...")
         result = run_code(tmp_filepath)
-
-        if result.returncode != 0:
-            print("\n--- COMPILE ERROR ---")
-            print("Yeah, that didn't work. The compiler spit this back at you:")
-            print(result.stderr)
-            print("\nHINT:", lesson["hint"])
-            return False
-
-        if lesson["validation"](user_code, result):
-            print("\nAlright, that works. Don't get cocky.")
-            return True
-        else:
-            print("\n--- LOGIC ERROR ---")
-            print("It compiled, but it's wrong. Your code produced this output:")
-            print(f"```\n{result.stdout.strip()}\n```")
-            print("\nThat's not what was asked for. Try again.")
-            return False
+        return _check_solution(lesson, user_code, result)
 
     finally:
         if tmp_filepath.exists():
@@ -272,7 +289,7 @@ def run_lesson(lesson: dict) -> bool:
 
 def handle_learn(progress: set):
     """Starts the tutorial from the next uncompleted lesson."""
-    print("Welcome to nim-tutor. Let's see what you know, or more likely, what you don't.")
+    print("Welcome to nimlings. Let's see what you know, or more likely, what you don't.")
     next_lesson = None
     for module in LESSONS:
         for lesson in module["lessons"]:
@@ -326,8 +343,8 @@ def main():
     check_nim_installed()
 
     parser = argparse.ArgumentParser(
-        description="nim-tutor: An interactive tutor for the Nim programming language.",
-        epilog="Run `nim-tutor` with no arguments to start or resume your learning."
+        description="nimlings: An interactive tutor for the Nim programming language.",
+        epilog="Run `nimlings` with no arguments to start or resume your learning."
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
