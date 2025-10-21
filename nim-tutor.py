@@ -93,9 +93,9 @@ LESSONS = [
                 "name": "Type Inference",
                 "concept": (
                     "Explicitly writing types is good, but sometimes the compiler can figure it out.\n"
-                    "Using `:=` instead of `=` for the first assignment lets Nim infer the type.\n"
+                    "Using `=` for the first assignment lets Nim infer the type.\n"
                     "`let name = \"Nim\"` is the same as `let name: string = \"Nim\"`.\n"
-                    "`var age := 20` is the same as `var age: int = 20`.\n"
+                    "`var age = 20` is the same as `var age: int = 20`.\n"
                     "This only works on the first assignment."
                 ),
                 "task": "Declare a mutable integer named `counter` with a value of 0 using type inference.",
