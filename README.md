@@ -21,14 +21,16 @@ The tutor presents you with a concept, gives you a coding task, and then opens y
 
 ## Commands
 
-### `learn` (Default)
+### `learn [lesson_id]` (Default)
 
-Starts the tutorial or resumes from your last uncompleted lesson. If you run the script with no command, `learn` is used by default.
+Starts the tutorial or resumes from your last active lesson. You can optionally provide a lesson ID (e.g., `2.1`) to jump directly to that lesson.
 
 ```sh
-./nimlings.py learn
-# or simply
+# Start or resume
 ./nimlings.py
+
+# Jump to a specific lesson
+./nimlings.py learn 4.2
 ```
 
 ### `list`
@@ -39,10 +41,42 @@ Lists all the modules and lessons in the curriculum. Lessons you have already co
 ./nimlings.py list
 ```
 
+### `hint [lesson_id]`
+
+Provides a hint for a specific lesson. If no lesson ID is provided, it will show a hint for the last lesson you were working on.
+
+```sh
+# Get a hint for your current lesson
+./nimlings.py hint
+
+# Get a hint for a specific lesson
+./nimlings.py hint 3.1
+```
+
+### `solution [lesson_id]`
+
+Shows the solution for a specific lesson. If no lesson ID is provided, it will show the solution for the last lesson you were working on.
+
+```sh
+# Get the solution for your current lesson
+./nimlings.py solution
+
+# Get the solution for a specific lesson
+./nimlings.py solution 3.1
+```
+
 ### `reset`
 
-Deletes all your progress, allowing you to start the tutorial from the very beginning. It will ask for confirmation before wiping your progress file (`~/.config/nimlings/progress.json`).
+Deletes all your progress and state, allowing you to start the tutorial from the very beginning. It will ask for confirmation.
 
 ```sh
 ./nimlings.py reset
+```
+
+### `test`
+
+Runs an internal test suite that validates the solution for every lesson in the curriculum. This is a developer tool to ensure all lessons are working correctly.
+
+```sh
+./nimlings.py test
 ```
