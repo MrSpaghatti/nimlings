@@ -16,6 +16,7 @@ from pathlib import Path
 
 CONFIG_DIR = Path.home() / ".config" / "nimlings"
 PROGRESS_FILE = CONFIG_DIR / "progress.json"
+STATE_FILE = CONFIG_DIR / "state.json"
 
 # --- Tutorial Content ---
 
@@ -43,6 +44,7 @@ LESSONS = [
                 ),
                 "task": "Write a single line of Nim code that prints the string \"Hello, Nim!\".",
                 "validation": lambda code, result: result.stdout.strip() == "Hello, Nim!",
+                "solution": "echo \"Hello, Nim!\"",
                 "hint": "Just `echo` the exact string. With quotes. You can figure this out.",
             },
             {
@@ -56,6 +58,7 @@ LESSONS = [
                 ),
                 "task": "Write a program that prints the number 42.",
                 "validation": lambda code, result: result.stdout.strip() == "42",
+                "solution": "echo 42",
                 "hint": "Same as before. `echo` the number. No quotes this time, genius.",
             },
         ],
@@ -74,6 +77,7 @@ LESSONS = [
                 ),
                 "task": "Declare an immutable string named `name` with the value \"Nim\" and a mutable integer `age` with the value 15. The program shouldn't print anything.",
                 "validation": lambda code, result: result.returncode == 0,
+                "solution": "let name = \"Nim\"\nvar age = 15",
                 "hint": "The syntax is `let name = \"value\"` and `var age = 15`. If it compiles, you did it right.",
             },
             {
@@ -86,6 +90,7 @@ LESSONS = [
                 ),
                 "task": "Declare four `var` variables, one of each basic type: an `int` named `i`, a `string` named `s`, a `float` named `f`, and a `bool` named `b`. Assign them any valid values. No output needed.",
                 "validation": lambda code, result: result.returncode == 0,
+                "solution": "var i: int = 1\nvar s: string = \"a\"\nvar f: float = 1.0\nvar b: bool = true",
                 "hint": "Example: `var i: int = 10`. Do that for all four types.",
             },
             {
@@ -100,6 +105,7 @@ LESSONS = [
                 ),
                 "task": "Declare a mutable integer named `counter` with a value of 0 using type inference.",
                 "validation": lambda code, result: result.returncode == 0,
+                "solution": "var counter = 0",
                 "hint": "Just use `var counter = 0`. The compiler knows it's an integer.",
             },
         ],
@@ -117,6 +123,7 @@ LESSONS = [
                 ),
                 "task": "Write a procedure named `addNumbers` that takes two integers (`a` and `b`) and returns their sum. Then, call it with `5` and `10` and `echo` the result.",
                 "validation": lambda code, result: result.stdout.strip() == "15",
+                "solution": "proc addNumbers(a: int, b: int): int = a + b\necho addNumbers(5, 10)",
                 "hint": "Define the proc first. `proc addNumbers(a: int, b: int): int = a + b`. Then, on a new line, `echo addNumbers(5, 10)`.",
             },
             {
@@ -139,6 +146,7 @@ LESSONS = [
                     "Call your procedure with the number -5."
                 ),
                 "validation": lambda code, result: result.stdout.strip() == "Negative",
+                "solution": "proc checkSign(num: int) =\n  if num > 0:\n    echo \"Positive\"\n  elif num < 0:\n    echo \"Negative\"\n  else:\n    echo \"Zero\"\ncheckSign(-5)",
                 "hint": "Your `if` condition should be `num > 0`, `elif` should be `num < 0`, and `else` handles the rest.",
             },
             {
@@ -150,6 +158,7 @@ LESSONS = [
                 ),
                 "task": "Write a `for` loop that prints the numbers from 1 to 5, each on a new line.",
                 "validation": lambda code, result: result.stdout.strip() == "1\n2\n3\n4\n5",
+                "solution": "for i in 1..5:\n  echo i",
                 "hint": "Use `for num in 1..5:`. Inside the loop, `echo num`.",
             },
         ],
@@ -168,6 +177,7 @@ LESSONS = [
                 ),
                 "task": "Declare a tuple named `person` containing a string \"Alice\" and an integer 30. Then, `echo` both fields, each on a new line.",
                 "validation": lambda code, result: result.stdout.strip() == "Alice\n30",
+                "solution": "let person = (\"Alice\", 30)\necho person[0]\necho person[1]",
                 "hint": "Declare it with `let person = (\"Alice\", 30)`. Then use `echo person[0]` and `echo person[1]`.",
             },
             {
@@ -182,6 +192,7 @@ LESSONS = [
                 ),
                 "task": "Define a `Person` object type with a `name` (string) and `age` (int). Create an instance of it, but don't print anything.",
                 "validation": lambda code, result: result.returncode == 0,
+                "solution": "type Person = object\n  name: string\n  age: int\nlet p = Person(name: \"Bob\", age: 25)",
                 "hint": "After defining the type, create an instance: `let p = Person(name: \"Bob\", age: 25)`.",
             },
             {
@@ -194,6 +205,7 @@ LESSONS = [
                 ),
                 "task": "Create a sequence of integers containing 1, 2, and 3. Use a `for` loop to iterate over it and `echo` each number.",
                 "validation": lambda code, result: result.stdout.strip() == "1\n2\n3",
+                "solution": "var numbers = @[1, 2, 3]\nfor n in numbers: echo n",
                 "hint": "Use `var numbers = @[1, 2, 3]` and then `for n in numbers: echo n`.",
             },
             {
@@ -210,6 +222,7 @@ LESSONS = [
                     "Use a `case` statement to `echo` \"Go\" if the light is green."
                 ),
                 "validation": lambda code, result: result.stdout.strip() == "Go",
+                "solution": "type TrafficLight = enum\n  tlRed, tlYellow, tlGreen\nlet light = tlGreen\ncase light\nof tlGreen:\n  echo \"Go\"\nelse: discard",
                 "hint": "Define the enum, then: `let light = tlGreen`. The case statement looks like: `case light\nof tlGreen:\n  echo \"Go\"\nelse: discard`.",
             },
             {
@@ -222,6 +235,7 @@ LESSONS = [
                 ),
                 "task": "Import `options`. Write a `proc` that returns `Some(42)`. Use `get()` to unwrap the value and `echo` it.",
                 "validation": lambda code, result: result.stdout.strip() == "42",
+                "solution": "import options\nproc getValue(): Option[int] = some(42)\necho getValue().get()",
                 "hint": "Start with `import options`. Your proc should be `proc getValue(): Option[int] = Some(42)`. Then call it and use `.get()` to extract the value.",
             },
         ],
@@ -239,6 +253,7 @@ LESSONS = [
                 ),
                 "task": "Write a generic procedure `echoFirst` that takes a sequence of any type and echoes the first element. Call it with a sequence of strings `@[ \"a\", \"b\"]`.",
                 "validation": lambda code, result: result.stdout.strip() == "a",
+                "solution": "proc echoFirst[T](items: seq[T]) = echo items[0]\nechoFirst(@[\"a\", \"b\"])",
                 "hint": "Define the proc as `proc echoFirst[T](items: seq[T]) = echo items[0]`. Then call it.",
             },
             {
@@ -253,6 +268,7 @@ LESSONS = [
                     "Create a `Person` instance and call `greet` using method call syntax."
                 ),
                 "validation": lambda code, result: "Hello, " in result.stdout.strip(),
+                "solution": "type Person = object\n  name: string\nproc greet(p: Person) = echo \"Hello, \", p.name\nlet p = Person(name: \"Carly\")\np.greet()",
                 "hint": "Define your proc, create a person `let p = Person(name: \"Carly\")`, then call the proc like this: `p.greet()`.",
             },
             {
@@ -264,6 +280,7 @@ LESSONS = [
                 ),
                 "task": "Write an iterator `countTo(n: int)` that yields numbers from 1 up to `n`. Use it in a `for` loop to `echo` numbers up to 3.",
                 "validation": lambda code, result: result.stdout.strip() == "1\n2\n3",
+                "solution": "iterator countTo(n: int): int =\n  var i = 1\n  while i <= n:\n    yield i\n    i += 1\nfor i in countTo(3): echo i",
                 "hint": "Define it as `iterator countTo(n: int): int = ...`. Inside, use a `var` counter and a `while` loop that `yield`s the value.",
             },
         ],
@@ -286,6 +303,7 @@ LESSONS = [
                     "Echo the name through `p1` to see that it changed."
                 ),
                 "validation": lambda code, result: result.stdout.strip() != "John" and len(result.stdout.strip()) > 0,
+                "solution": "type Person = ref object\n  name: string\nvar p1 = Person(name: \"John\")\nvar p2 = p1\np2.name = \"Jane\"\necho p1.name",
                 "hint": "Use `type Person = ref object of RootObj; var p1 = Person(name: \"John\"); var p2 = p1; p2.name = \"Jane\"; echo p1.name`",
             },
         ],
@@ -298,11 +316,12 @@ LESSONS = [
                 "name": "Try/Except",
                 "concept": (
                     "When things go wrong, Nim raises exceptions. You can handle them with a `try`/`except` block.\n"
-                    "This prevents your program from crashing when something unexpected happens, like dividing by zero."
+                    "This prevents your program from crashing when something unexpected happens, like accessing a bad array index."
                 ),
-                "task": "Write a `try` block that attempts to divide 10 by 0. In the `except DivByZeroError` block, `echo` the message \"Cannot divide by zero\".",
-                "validation": lambda code, result: result.stdout.strip() == "Cannot divide by zero",
-                "hint": "The structure is `try:\n  discard 10 / 0\nexcept DivByZeroError:\n  echo \"Cannot divide by zero\"`.",
+                "task": "Create a small array. In a `try` block, attempt to access an index that is out of bounds. In the `except IndexDefect` block, `echo` the message \"Bad index!\".",
+                "validation": lambda code, result: result.stdout.strip() == "Bad index!",
+                "solution": "var a: array[0..2, int]\nlet badIndex = 10\ntry:\n  discard a[badIndex]\nexcept IndexDefect:\n  echo \"Bad index!\"",
+                "hint": "The structure is `try:\n  discard a[10]\nexcept IndexDefect:\n  echo \"Bad index!\"`.",
             },
             {
                 "id": "7.2",
@@ -312,6 +331,7 @@ LESSONS = [
                 ),
                 "task": "Import the `os` module. Create a temporary file named `test.txt` with `writeFile(\"test.txt\", \"hello\")`. Then, use `readFile(\"test.txt\")` and `echo` its contents.",
                 "validation": lambda code, result: result.stdout.strip() == "hello",
+                "solution": "import os\nwriteFile(\"test.txt\", \"hello\")\necho readFile(\"test.txt\")",
                 "hint": "Don't forget to `import os`. Use `writeFile` first, then `echo readFile(\"test.txt\")`.",
             },
             {
@@ -322,6 +342,7 @@ LESSONS = [
                 ),
                 "task": "Import the `os` module. Use `writeFile` to create a file named `output.txt` with the content \"Hello, Nim!\". Then, read the file back and `echo` its contents.",
                 "validation": lambda code, result: result.stdout.strip() == "Hello, Nim!",
+                "solution": "import os\nwriteFile(\"output.txt\", \"Hello, Nim!\")\necho readFile(\"output.txt\")",
                 "hint": "After you `writeFile`, just add `echo readFile(\"output.txt\")`.",
             },
         ],
@@ -338,6 +359,7 @@ LESSONS = [
                 ),
                 "task": "Import the `math` module and `echo` the result of `sqrt(25.0)`.",
                 "validation": lambda code, result: result.stdout.strip() == "5.0",
+                "solution": "import math\necho sqrt(25.0)",
                 "hint": "Start with `import math`. Then `echo sqrt(25.0)`.",
             },
             {
@@ -357,9 +379,7 @@ LESSONS = [
                     "Any Nim file can be a module. To expose a `proc` to other files, you mark it with an asterisk (`*`).\n"
                     "This is Nim's way of marking things as 'public' so they can be exported."
                 ),
-                "task": "This is a bit tricky in our setup. Write a single file that simulates two modules:\n1. A `greeter.nim` module with an exported `greet*` proc.\n2. A `main.nim` module that imports `greeter` and calls the proc.\nComment the file names (`# main.nim`) in your code to show the separation.",
-                "validation": lambda code, result: "Hello from a module" in result.stdout.strip(),
-                "hint": "Use comments to separate the files. In `greeter`, define `proc greet*() = ...`. In `main`, `import greeter` and `greet()`.",
+                "task": "Just read this and press Enter. Go on.",
             },
         ],
     },
@@ -386,6 +406,7 @@ LESSONS = [
                 ),
                 "task": "Import `threadpool`. Write a `proc` that returns `42`. `spawn` it into a `FlowVar[int]` and `echo` the result.",
                 "validation": lambda code, result: result.stdout.strip() == "42",
+                "solution": "import threadpool\nproc calc(): int = 42\nvar result = spawn calc()\necho ^result",
                 "hint": "`import threadpool`. `proc calc(): int = 42`. Then `var result = spawn calc()`. Finally, `echo ^result`.",
             },
         ],
@@ -402,6 +423,7 @@ LESSONS = [
                 ),
                 "task": "Create a template `shout(msg: string)` that takes a string and echoes it with an exclamation mark. Use it to shout \"Hello\".",
                 "validation": lambda code, result: result.stdout.strip() == "Hello!",
+                "solution": "template shout(msg: string) = echo msg, \"!\"\nshout(\"Hello\")",
                 "hint": "The syntax is `template shout(msg: string) = echo msg, \"!\"`. Then you can call it like a regular proc: `shout(\"Hello\")`.",
             },
         ],
@@ -448,6 +470,27 @@ def save_progress(completed_ids: set):
         sys.exit(1)
 
 
+def load_state() -> dict:
+    """Loads the user's last active lesson state."""
+    if not STATE_FILE.exists():
+        return {}
+    try:
+        with open(STATE_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return {}
+
+
+def save_state(lesson_id: str):
+    """Saves the user's last active lesson state."""
+    try:
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        with open(STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump({"last_lesson": lesson_id}, f)
+    except IOError:
+        print(f"Warning: Could not write state to {STATE_FILE}. Hint functionality may be impaired.")
+
+
 def get_editor() -> str:
     """Returns the user's preferred text editor, defaulting to nano."""
     return os.environ.get("EDITOR", "nano")
@@ -456,7 +499,7 @@ def get_editor() -> str:
 def run_code(filepath: Path) -> subprocess.CompletedProcess:
     """Compiles and runs a Nim source file."""
     return subprocess.run(
-        ["nim", "c", "-r", str(filepath)],
+        ["nim", "c", "-r", "--threads:on", str(filepath)],
         capture_output=True,
         text=True,
         encoding='utf-8',
@@ -490,24 +533,36 @@ def _get_code_from_editor(tmp_filepath: Path):
     return user_code
 
 
-def _check_solution(lesson: dict, user_code: str, result: subprocess.CompletedProcess) -> bool:
+def _check_solution(lesson: dict, user_code: str, result: subprocess.CompletedProcess, quiet: bool = False) -> bool:
     """Checks the user's solution and prints feedback."""
     if result.returncode != 0:
         print("\n--- COMPILE ERROR ---")
+        print("You wrote:\n---\n" + user_code + "\n---")
         print("Yeah, that didn't work. The compiler spit this back at you:")
         print(result.stderr)
         print("\nHINT:", lesson["hint"])
         return False
 
     if lesson["validation"](user_code, result):
-        print("\nAlright, that works. Don't get cocky.")
+        if not quiet:
+            print("\nAlright, that works. Don't get cocky.")
         return True
 
     print("\n--- LOGIC ERROR ---")
+    print("You wrote:\n---\n" + user_code + "\n---")
     print("It compiled, but it's wrong. Your code produced this output:")
     print(f"```\n{result.stdout.strip()}\n```")
     print("\nThat's not what was asked for. Try again.")
     return False
+
+
+def _get_lesson_by_id(lesson_id: str) -> dict | None:
+    """Finds a lesson by its ID."""
+    for module in LESSONS:
+        for lesson in module["lessons"]:
+            if lesson["id"] == lesson_id:
+                return lesson
+    return None
 
 
 def run_lesson(lesson: dict) -> bool:
@@ -539,29 +594,109 @@ def run_lesson(lesson: dict) -> bool:
 
 # --- Command Handlers ---
 
-def handle_learn(progress: set):
-    """Starts the tutorial from the next uncompleted lesson."""
-    print("Welcome to nimlings. Let's see what you know, or more likely, what you don't.")
-    next_lesson = None
-    for module in LESSONS:
-        for lesson in module["lessons"]:
-            if lesson["id"] not in progress:
-                next_lesson = lesson
-                break
-        if next_lesson:
-            break
+def handle_learn(progress: set, lesson_id: str | None):
+    """Starts the tutorial from the next uncompleted lesson or a specific one."""
+    lesson_to_run = None
+    if lesson_id:
+        lesson_to_run = _get_lesson_by_id(lesson_id)
+        if not lesson_to_run:
+            print(f"Lesson '{lesson_id}' not found. What are you even trying to do?")
+            return
+    else:
+        state = load_state()
+        last_lesson_id = state.get("last_lesson")
+        if last_lesson_id:
+             lesson_to_run = _get_lesson_by_id(last_lesson_id)
 
-    if not next_lesson:
+        if not lesson_to_run:
+            for module in LESSONS:
+                for lesson in module["lessons"]:
+                    if lesson["id"] not in progress:
+                        lesson_to_run = lesson
+                        break
+                if lesson_to_run:
+                    break
+
+    if not lesson_to_run:
         print("\nWell, look at you. You actually finished everything. Now go build something.")
         return
 
-    if run_lesson(next_lesson):
-        progress.add(next_lesson["id"])
+    save_state(lesson_to_run["id"])
+
+    if run_lesson(lesson_to_run):
+        progress.add(lesson_to_run["id"])
         save_progress(progress)
         print("\nLesson complete. Moving on.")
-        handle_learn(progress) # Recurse to start the next lesson automatically
+        # Find and run the next lesson automatically
+        current_index = -1
+        flat_lessons = [lesson for module in LESSONS for lesson in module["lessons"]]
+        for i, lesson in enumerate(flat_lessons):
+            if lesson["id"] == lesson_to_run["id"]:
+                current_index = i
+                break
+
+        if current_index != -1 and current_index + 1 < len(flat_lessons):
+            next_lesson_id = flat_lessons[current_index + 1]["id"]
+            handle_learn(progress, next_lesson_id)
+        else:
+            handle_learn(progress, None) # Reached the end, check for any missed lessons
     else:
         print("\nLesson failed. Come back when you're ready to try again.")
+
+
+def handle_test():
+    """Runs the solution for every lesson and validates it."""
+    print("Running internal tests...")
+    failed_lessons = []
+    flat_lessons = [lesson for module in LESSONS for lesson in module["lessons"]]
+
+    for lesson in flat_lessons:
+        if not lesson.get("validation"):
+            continue
+
+        print(f"Testing {lesson['id']}: {lesson['name']}...")
+        solution_code = lesson.get("solution")
+        if not solution_code:
+            print(f"SKIPPED: No solution provided for {lesson['id']}")
+            continue
+
+        # Use a static name in the temp dir to ensure valid module names
+        tmp_filepath = Path(tempfile.gettempdir()) / "nimlings_test.nim"
+        tmp_filepath.write_text(solution_code, encoding='utf-8')
+
+        try:
+            result = run_code(tmp_filepath)
+            if not _check_solution(lesson, solution_code, result, quiet=True):
+                failed_lessons.append(lesson["id"])
+        finally:
+            if tmp_filepath.exists():
+                tmp_filepath.unlink()
+
+    if not failed_lessons:
+        print("\nAll lessons passed. Nice.")
+    else:
+        print(f"\nTest failed for the following lessons: {', '.join(failed_lessons)}")
+
+
+def handle_hint(lesson_id: str | None):
+    """Shows a hint for the current or a specific lesson."""
+    lesson_to_hint = None
+    if lesson_id:
+        lesson_to_hint = _get_lesson_by_id(lesson_id)
+    else:
+        state = load_state()
+        last_lesson_id = state.get("last_lesson")
+        if last_lesson_id:
+            lesson_to_hint = _get_lesson_by_id(last_lesson_id)
+
+    if not lesson_to_hint:
+        print("Not sure what you want a hint for. Try `nimlings learn` first.")
+        return
+
+    if "hint" in lesson_to_hint:
+        print(f"HINT for {lesson_to_hint['id']}: {lesson_to_hint['hint']}")
+    else:
+        print(f"Lesson {lesson_to_hint['id']} doesn't have a hint. You're on your own, kid.")
 
 
 def handle_list(progress: set):
@@ -578,12 +713,17 @@ def handle_reset():
     """Deletes the user's progress."""
     confirm = input("Really nuke all your progress? This can't be undone. (y/n): ").lower()
     if confirm == "y":
-        if PROGRESS_FILE.exists():
-            try:
-                PROGRESS_FILE.unlink()
-                print("Progress wiped. Back to square one.")
-            except IOError:
-                print(f"Error: Could not delete {PROGRESS_FILE}.")
+        files_removed = False
+        for f in [PROGRESS_FILE, STATE_FILE]:
+            if f.exists():
+                try:
+                    f.unlink()
+                    files_removed = True
+                except IOError:
+                    print(f"Error: Could not delete {f}.")
+
+        if files_removed:
+            print("Progress wiped. Back to square one.")
         else:
             print("You had no progress to wipe. So, uh, I did nothing.")
     else:
@@ -600,9 +740,13 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    subparsers.add_parser("learn", help="Start or resume the tutorial (default).")
+    learn_parser = subparsers.add_parser("learn", help="Start or resume the tutorial (default).")
+    learn_parser.add_argument("lesson_id", nargs="?", help="Jump to a specific lesson.")
+    hint_parser = subparsers.add_parser("hint", help="Get a hint for a lesson.")
+    hint_parser.add_argument("lesson_id", nargs="?", help="Get a hint for a specific lesson.")
     subparsers.add_parser("list", help="List all lessons and your progress.")
     subparsers.add_parser("reset", help="Reset your progress.")
+    subparsers.add_parser("test", help="Run the internal lesson tests.")
 
     args = parser.parse_args()
     command = args.command if args.command else "learn"
@@ -610,11 +754,16 @@ def main():
     progress = load_progress()
 
     if command == "learn":
-        handle_learn(progress)
+        print("Welcome to nimlings. Let's see what you know, or more likely, what you don't.")
+        handle_learn(progress, args.lesson_id)
     elif command == "list":
         handle_list(progress)
+    elif command == "hint":
+        handle_hint(args.lesson_id)
     elif command == "reset":
         handle_reset()
+    elif command == "test":
+        handle_test()
     else:
         parser.print_help()
 
