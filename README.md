@@ -53,6 +53,18 @@ Provides a hint for a specific lesson. If no lesson ID is provided, it will show
 ./nimlings.py hint 3.1
 ```
 
+### `solution [lesson_id]`
+
+Shows the solution for a specific lesson. If no lesson ID is provided, it will show the solution for the last lesson you were working on.
+
+```sh
+# Get the solution for your current lesson
+./nimlings.py solution
+
+# Get the solution for a specific lesson
+./nimlings.py solution 3.1
+```
+
 ### `reset`
 
 Deletes all your progress and state, allowing you to start the tutorial from the very beginning. It will ask for confirmation.
