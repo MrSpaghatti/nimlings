@@ -17,10 +17,31 @@ from lessons import LESSONS
 # --- Configuration ---
 
 CONFIG_DIR = Path.home() / ".config" / "nimlings"
+PROJECTS_DIR = CONFIG_DIR / "projects"
 PROGRESS_FILE = CONFIG_DIR / "progress.json"
 STATE_FILE = CONFIG_DIR / "state.json"
 
 # --- Tutorial Content ---
+
+def scaffold_project(lesson: dict) -> Path:
+    """Creates the project directory and files for a 'project' lesson."""
+    project_path = PROJECTS_DIR / lesson['id']
+    print(f"DEBUG: Stubbed v2.0 project scaffold at {project_path}")
+    # STUB: This is where we will create the dir and write lesson['scaffold'] files
+    project_path.mkdir(parents=True, exist_ok=True)
+    return project_path
+
+def run_project_test(project_path: Path) -> subprocess.CompletedProcess:
+    """Runs `nimble test` in the given project directory."""
+    print(f"DEBUG: Stubbed v2.0 test run in {project_path}")
+    # STUB: This is where we will `os.chdir` and run `nimble test`
+    # For now, return dummy success so `handle_test` doesn't break
+    return subprocess.CompletedProcess(
+        args=["nimble", "test"],
+        returncode=0,
+        stdout="STUB: 1 tests passed.",
+        stderr=""
+    )
 
 # --- Core Application Logic ---
 
@@ -132,25 +153,31 @@ def _get_code_from_editor(tmp_filepath: Path):
 
 def _check_solution(lesson: dict, user_code: str, result: subprocess.CompletedProcess, quiet: bool = False) -> bool:
     """Checks the user's solution and prints feedback."""
-    if result.returncode != 0:
-        print("\n--- COMPILE ERROR ---")
+    if lesson.get("type", "single_file") == "single_file":
+        if result.returncode != 0:
+            print("\n--- COMPILE ERROR ---")
+            print("You wrote:\n---\n" + user_code + "\n---")
+            print("Yeah, that didn't work. The compiler spit this back at you:")
+            print(result.stderr)
+            print("\nHINT:", lesson["hint"])
+            return False
+
+        if lesson["validation"](user_code, result):
+            if not quiet:
+                print("\nAlright, that works. Don't get cocky.")
+            return True
+
+        print("\n--- LOGIC ERROR ---")
         print("You wrote:\n---\n" + user_code + "\n---")
-        print("Yeah, that didn't work. The compiler spit this back at you:")
-        print(result.stderr)
-        print("\nHINT:", lesson["hint"])
+        print("It compiled, but it's wrong. Your code produced this output:")
+        print(f"```\n{result.stdout.strip()}\n```")
+        print("\nThat's not what was asked for. Try again.")
         return False
-
-    if lesson["validation"](user_code, result):
+    elif lesson['type'] == 'project':
+        # STUB: v2.0 validation will go here (e.g., check for "PASS" in stdout)
         if not quiet:
-            print("\nAlright, that works. Don't get cocky.")
+            print("DEBUG: v2.0 'project' validation stub. Auto-passing.")
         return True
-
-    print("\n--- LOGIC ERROR ---")
-    print("You wrote:\n---\n" + user_code + "\n---")
-    print("It compiled, but it's wrong. Your code produced this output:")
-    print(f"```\n{result.stdout.strip()}\n```")
-    print("\nThat's not what was asked for. Try again.")
-    return False
 
 
 def _get_lesson_by_id(lesson_id: str) -> dict | None:
@@ -173,21 +200,22 @@ def run_lesson(lesson: dict) -> bool:
         input("Press Enter to continue...")
         return True
 
-    with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".nim", encoding='utf-8') as tmp_file:
-        tmp_filepath = Path(tmp_file.name)
+    if lesson.get("type", "single_file") == "single_file":
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sanitized_id = lesson['id'].replace('.', '_')
+            tmp_filepath = Path(tmpdir) / f"lesson_{sanitized_id}.nim"
+            tmp_filepath.touch() # Create the file
 
-    try:
-        user_code = _get_code_from_editor(tmp_filepath)
-        if user_code is None:
-            return False
+            user_code = _get_code_from_editor(tmp_filepath)
+            if user_code is None:
+                return False
 
-        print("Compiling and running your masterpiece...")
-        result = run_code(tmp_filepath)
-        return _check_solution(lesson, user_code, result)
-
-    finally:
-        if tmp_filepath.exists():
-            tmp_filepath.unlink()
+            print("Compiling and running your masterpiece...")
+            result = run_code(tmp_filepath)
+            return _check_solution(lesson, user_code, result)
+    elif lesson['type'] == 'project':
+        print("DEBUG: v2.0 'project' lesson type recognized but not implemented. Skipping.")
+        return True # Auto-pass for now
 
 # --- Command Handlers ---
 
@@ -252,21 +280,31 @@ def handle_test():
 
         print(f"Testing {lesson['id']}: {lesson['name']}...")
         solution_code = lesson.get("solution")
-        if not solution_code:
+        if not solution_code and lesson.get("type", "single_file") == "single_file":
             print(f"SKIPPED: No solution provided for {lesson['id']}")
             continue
 
-        with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".nim", encoding='utf-8', prefix="nimlings_test_") as tmp_file:
-            tmp_filepath = Path(tmp_file.name)
-            tmp_filepath.write_text(solution_code, encoding='utf-8')
+        if lesson.get("type", "single_file") == "single_file":
+            with tempfile.TemporaryDirectory() as tmpdir:
+                sanitized_id = lesson['id'].replace('.', '_')
+                tmp_filepath = Path(tmpdir) / f"lesson_{sanitized_id}.nim"
+                tmp_filepath.write_text(solution_code, encoding='utf-8')
 
-        try:
-            result = run_code(tmp_filepath)
-            if not _check_solution(lesson, solution_code, result, quiet=True):
-                failed_lessons.append(lesson["id"])
-        finally:
-            if tmp_filepath.exists():
-                tmp_filepath.unlink()
+                result = run_code(tmp_filepath)
+                if not _check_solution(lesson, solution_code, result, quiet=True):
+                    failed_lessons.append(lesson["id"])
+        elif lesson['type'] == 'project':
+            # This logic won't be fully tested until we have a project lesson,
+            # but it needs to be in place.
+            try:
+                project_path = scaffold_project(lesson)
+                # We don't need to write the solution; scaffolding does it.
+                result = run_project_test(project_path)
+                if not _check_solution(lesson, "", result, quiet=True):
+                    failed_lessons.append(lesson["id"])
+            finally:
+                # We'll need a way to clean up projects later, but not now.
+                pass
 
     if not failed_lessons:
         print("\nAll lessons passed. Nice.")

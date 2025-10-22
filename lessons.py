@@ -4,6 +4,7 @@ LESSONS = [
         "lessons": [
             {
                 "id": "1.1",
+                "type": "single_file",
                 "name": "Intro",
                 "concept": (
                     "Alright, let's get this over with. You're here to learn Nim.\n"
@@ -15,6 +16,7 @@ LESSONS = [
             },
             {
                 "id": "1.2",
+                "type": "single_file",
                 "name": "Hello World",
                 "concept": (
                     "Your first rite of passage. In Nim, the `echo` procedure prints stuff to the console.\n"
@@ -27,6 +29,7 @@ LESSONS = [
             },
             {
                 "id": "1.3",
+                "type": "single_file",
                 "name": "Compiling & Running",
                 "concept": (
                     "Nim is a compiled language. The command `nim c -r your_file.nim` does two things:\n"
@@ -46,6 +49,7 @@ LESSONS = [
         "lessons": [
             {
                 "id": "2.1",
+                "type": "single_file",
                 "name": "let vs var",
                 "concept": (
                     "Nim has two ways to declare variables: `let` and `var`.\n"
@@ -60,6 +64,7 @@ LESSONS = [
             },
             {
                 "id": "2.2",
+                "type": "single_file",
                 "name": "Basic Types",
                 "concept": (
                     "Nim is statically typed. You can, and often should, declare types explicitly.\n"
@@ -73,6 +78,7 @@ LESSONS = [
             },
             {
                 "id": "2.3",
+                "type": "single_file",
                 "name": "Type Inference",
                 "concept": (
                     "Explicitly writing types is good, but sometimes the compiler can figure it out on its own.\n"
@@ -93,6 +99,7 @@ LESSONS = [
         "lessons": [
             {
                 "id": "3.1",
+                "type": "single_file",
                 "name": "Procedures (proc)",
                 "concept": (
                     "Procedures, or `proc`, are Nim's functions. They take arguments and can return a value.\n"
@@ -106,6 +113,7 @@ LESSONS = [
             },
             {
                 "id": "3.2",
+                "type": "single_file",
                 "name": "if/else/elif",
                 "concept": (
                     "Conditional logic. You've seen this before in other languages. It's not complicated.\n"
@@ -129,6 +137,7 @@ LESSONS = [
             },
             {
                 "id": "3.3",
+                "type": "single_file",
                 "name": "for Loops",
                 "concept": (
                     "Looping. `for i in a..b:` will loop from `a` to `b`, inclusive.\n"
@@ -146,6 +155,7 @@ LESSONS = [
         "lessons": [
             {
                 "id": "4.1",
+                "type": "single_file",
                 "name": "Tuples",
                 "concept": (
                     "Tuples are fixed-size, ordered collections of values that can have different types.\n"
@@ -160,6 +170,7 @@ LESSONS = [
             },
             {
                 "id": "4.2",
+                "type": "single_file",
                 "name": "Objects",
                 "concept": (
                     "Objects are custom data types that group named fields. They're like structs in other languages.\n"
@@ -175,6 +186,7 @@ LESSONS = [
             },
             {
                 "id": "4.3",
+                "type": "single_file",
                 "name": "Sequences",
                 "concept": (
                     "Sequences, or `seq`, are dynamic-sized arrays. They're Nim's version of Python's lists or C++'s vectors.\n"
@@ -188,6 +200,7 @@ LESSONS = [
             },
             {
                 "id": "4.4",
+                "type": "single_file",
                 "name": "Enums & Case Statements",
                 "concept": (
                     "Enumerations (`enum`) are for when you have a variable that can only be one of a few possible values.\n"
@@ -205,6 +218,7 @@ LESSONS = [
             },
             {
                 "id": "4.5",
+                "type": "single_file",
                 "name": "Option Type",
                 "concept": (
                     "What happens when a procedure might not be able to return a value? Use the `Option` type.\n"
@@ -223,6 +237,7 @@ LESSONS = [
         "lessons": [
             {
                 "id": "5.1",
+                "type": "single_file",
                 "name": "Generics",
                 "concept": (
                     "Generics let you write procedures that can work with different types.\n"
@@ -236,6 +251,7 @@ LESSONS = [
             },
             {
                 "id": "5.2",
+                "type": "single_file",
                 "name": "Method Call Syntax",
                 "concept": (
                     "Nim lets you call procedures in two ways: `procName(obj, arg)` or `obj.procName(arg)`.\n"
@@ -251,6 +267,7 @@ LESSONS = [
             },
             {
                 "id": "5.3",
+                "type": "single_file",
                 "name": "Iterators",
                 "concept": (
                     "An `iterator` is a procedure that can 'yield' a value and be resumed later, making it perfect for custom loops.\n"
@@ -268,6 +285,7 @@ LESSONS = [
         "lessons": [
             {
                 "id": "6.1",
+                "type": "single_file",
                 "name": "Ref Types",
                 "concept": (
                     "Sometimes you need multiple variables to point to the *same* object in memory.\n"
@@ -291,6 +309,7 @@ LESSONS = [
         "lessons": [
             {
                 "id": "7.1",
+                "type": "single_file",
                 "name": "Try/Except",
                 "concept": (
                     "When things go wrong, Nim raises exceptions. You can handle them with a `try`/`except` block.\n"
@@ -303,6 +322,7 @@ LESSONS = [
             },
             {
                 "id": "7.2",
+                "type": "single_file",
                 "name": "File Reading",
                 "concept": (
                     "The `os` module provides functions for interacting with the file system. `readFile` is the simplest way to get the contents of a file as a string."
@@ -314,6 +334,7 @@ LESSONS = [
             },
             {
                 "id": "7.3",
+                "type": "single_file",
                 "name": "File Writing",
                 "concept": (
                     "Just as `readFile` reads a file, `writeFile` writes a string to a file, overwriting it if it already exists."
@@ -330,6 +351,7 @@ LESSONS = [
         "lessons": [
             {
                 "id": "8.1",
+                "type": "single_file",
                 "name": "Import",
                 "concept": (
                     "You can't fit everything in one file. The `import` statement lets you use code from other files, called modules.\n"
@@ -342,6 +364,7 @@ LESSONS = [
             },
             {
                 "id": "8.2",
+                "type": "single_file",
                 "name": "Nimble Intro",
                 "concept": (
                     "Nimble is Nim's package manager. It's how you install and manage third-party libraries.\n"
@@ -352,6 +375,7 @@ LESSONS = [
             },
             {
                 "id": "8.3",
+                "type": "single_file",
                 "name": "Creating Modules",
                 "concept": (
                     "Any Nim file can be a module. To expose a `proc` to other files, you mark it with an asterisk (`*`).\n"
@@ -366,6 +390,7 @@ LESSONS = [
         "lessons": [
             {
                 "id": "9.1",
+                "type": "single_file",
                 "name": "Spawn Intro",
                 "concept": (
                     "Nim has powerful and easy-to-use concurrency features built into the language.\n"
@@ -376,6 +401,7 @@ LESSONS = [
             },
             {
                 "id": "9.2",
+                "type": "single_file",
                 "name": "FlowVar",
                 "concept": (
                     "Running a `proc` in another thread is cool, but how do you get a result back?\n"
@@ -394,6 +420,7 @@ LESSONS = [
         "lessons": [
             {
                 "id": "10.1",
+                "type": "single_file",
                 "name": "Templates",
                 "concept": (
                     "Metaprogramming is writing code that generates other code. Nim has powerful metaprogramming features, with `template` being the simplest.\n"
