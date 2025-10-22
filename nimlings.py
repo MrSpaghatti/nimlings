@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+import shutil
 
 # --- Configuration ---
 
@@ -304,7 +305,7 @@ LESSONS = [
                 ),
                 "validation": lambda code, result: result.stdout.strip() != "John" and len(result.stdout.strip()) > 0,
                 "solution": "type Person = ref object\n  name: string\nvar p1 = Person(name: \"John\")\nvar p2 = p1\np2.name = \"Jane\"\necho p1.name",
-                "hint": "Use `type Person = ref object of RootObj; var p1 = Person(name: \"John\"); var p2 = p1; p2.name = \"Jane\"; echo p1.name`",
+                "hint": "Use `type Person = ref object; var p1 = Person(name: \"John\"); var p2 = p1; p2.name = \"Jane\"; echo p1.name`",
             },
         ],
     },
@@ -493,7 +494,12 @@ def save_state(lesson_id: str):
 
 def get_editor() -> str:
     """Returns the user's preferred text editor, defaulting to nano."""
-    return os.environ.get("EDITOR", "nano")
+    editor = os.environ.get("EDITOR")
+    if editor:
+        return editor
+    if shutil.which("vim"):
+        return "vim"
+    return "nano"
 
 
 def run_code(filepath: Path) -> subprocess.CompletedProcess:
@@ -594,14 +600,17 @@ def run_lesson(lesson: dict) -> bool:
 
 # --- Command Handlers ---
 
-def handle_learn(progress: set, lesson_id: str | None):
-    """Starts the tutorial from the next uncompleted lesson or a specific one."""
+def handle_learn(progress: set, lesson_id: str | None) -> str | None:
+    """
+    Determines which lesson to run, runs it, and returns the next lesson's ID.
+    Returns None if the tutorial is complete or if the lesson fails.
+    """
     lesson_to_run = None
     if lesson_id:
         lesson_to_run = _get_lesson_by_id(lesson_id)
         if not lesson_to_run:
             print(f"Lesson '{lesson_id}' not found. What are you even trying to do?")
-            return
+            return None
     else:
         state = load_state()
         last_lesson_id = state.get("last_lesson")
@@ -619,7 +628,7 @@ def handle_learn(progress: set, lesson_id: str | None):
 
     if not lesson_to_run:
         print("\nWell, look at you. You actually finished everything. Now go build something.")
-        return
+        return None
 
     save_state(lesson_to_run["id"])
 
@@ -627,21 +636,17 @@ def handle_learn(progress: set, lesson_id: str | None):
         progress.add(lesson_to_run["id"])
         save_progress(progress)
         print("\nLesson complete. Moving on.")
-        # Find and run the next lesson automatically
-        current_index = -1
+
         flat_lessons = [lesson for module in LESSONS for lesson in module["lessons"]]
-        for i, lesson in enumerate(flat_lessons):
-            if lesson["id"] == lesson_to_run["id"]:
-                current_index = i
-                break
+        current_index = next((i for i, lesson in enumerate(flat_lessons) if lesson["id"] == lesson_to_run["id"]), -1)
 
         if current_index != -1 and current_index + 1 < len(flat_lessons):
-            next_lesson_id = flat_lessons[current_index + 1]["id"]
-            handle_learn(progress, next_lesson_id)
+            return flat_lessons[current_index + 1]["id"]
         else:
-            handle_learn(progress, None) # Reached the end, check for any missed lessons
+            return None # End of the line
     else:
         print("\nLesson failed. Come back when you're ready to try again.")
+        return None
 
 
 def handle_test():
@@ -660,9 +665,9 @@ def handle_test():
             print(f"SKIPPED: No solution provided for {lesson['id']}")
             continue
 
-        # Use a static name in the temp dir to ensure valid module names
-        tmp_filepath = Path(tempfile.gettempdir()) / "nimlings_test.nim"
-        tmp_filepath.write_text(solution_code, encoding='utf-8')
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".nim", encoding='utf-8', prefix="nimlings_test_") as tmp_file:
+            tmp_filepath = Path(tmp_file.name)
+            tmp_filepath.write_text(solution_code, encoding='utf-8')
 
         try:
             result = run_code(tmp_filepath)
@@ -755,7 +760,14 @@ def main():
 
     if command == "learn":
         print("Welcome to nimlings. Let's see what you know, or more likely, what you don't.")
-        handle_learn(progress, args.lesson_id)
+        next_lesson_id = args.lesson_id
+        while True:
+            next_lesson_id = handle_learn(progress, next_lesson_id)
+            if next_lesson_id is None:
+                break
+            # If a specific lesson was requested, don't loop
+            if args.lesson_id:
+                break
     elif command == "list":
         handle_list(progress)
     elif command == "hint":
