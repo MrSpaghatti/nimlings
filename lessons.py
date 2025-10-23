@@ -433,4 +433,44 @@ LESSONS = [
             },
         ],
     },
+    {
+        "module": "11: Project-Based Learning (\"Building Real Tools\")",
+        "lessons": [
+            {
+                "id": "11.1",
+                "name": "Hello, Nimble",
+                "type": "project",
+                "concept": (
+                    "Welcome to v2.0. We're done with single files. Real work happens in projects.\n"
+                    "Nim uses a package manager called `nimble`. The `your_project.nimble` file defines your project, its dependencies, and how it's built.\n"
+                    "By default, code goes in a `src/` directory and tests go in a `tests/` directory.\n"
+                    "This is the structure all 'hireable' developers use. Get used to it."
+                ),
+                "task": "I've scaffolded a basic Nimble project. It has a `hello_nimble.nimble` file, a `src/hello_nimble.nim` library, and a `tests/test1.nim` file.\nYour task is to modify `src/hello_nimble.nim` so that the `sayHello` proc returns the string \"Hello, Nimble!\" instead of an empty string.",
+                "scaffold": {
+                    "hello_nimble.nimble": (
+                        "version       = \"0.1.0\"\n"
+                        "author        = \"nimlings user\"\n"
+                        "description   = \"A test project for nimlings\"\n"
+                        "license       = \"MIT\"\n"
+                        "srcDir        = \"src\"\n\n"
+                        "requires \"nim >= 1.6.0\"\n"
+                        "requires \"testament >= 0.2.0\"\n"
+                    ),
+                    "src/hello_nimble.nim": (
+                        "proc sayHello*(): string =\n"
+                        "  # TASK: Fix this proc to return \"Hello, Nimble!\"\n"
+                        "  result = \"\"\n"
+                    ),
+                    "tests/test1.nim": (
+                        "import testament\n"
+                        "import hello_nimble\n\n"
+                        "test \"Test the sayHello proc\":\n"
+                        "  check: sayHello() == \"Hello, Nimble!\"\n"
+                    )
+                },
+                "file_to_edit": "src/hello_nimble.nim"
+            }
+        ]
+    }
 ]
