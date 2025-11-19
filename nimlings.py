@@ -63,11 +63,22 @@ def main():
             
             import tempfile
             with tempfile.TemporaryDirectory() as tmp_dir:
-                tmp_path = Path(tmp_dir) / "test_sol.nim"
+                fname = lesson.get("filename", "test_sol.nim")
+                tmp_path = Path(tmp_dir) / fname
+                tmp_path.parent.mkdir(parents=True, exist_ok=True)
                 tmp_path.write_text(solution_code, encoding='utf-8')
-                result = engine.run_code(tmp_path, lesson.get("args"))
+                result = engine.run_code(
+                    tmp_path,
+                    args=lesson.get("args"),
+                    project_files=lesson.get("files"),
+                    compile_cmd=lesson.get("cmd", "c"),
+                    project_root=Path(tmp_dir),
+                    skip_run=lesson.get("skip_run", False),
+                    compiler_args=lesson.get("compiler_args")
+                )
                 success, msg = engine.validate_lesson(lesson, solution_code, result)
                 if not success:
+                    print(f"FAIL {lesson['id']}: {msg}")
                     failed_lessons.append(lesson["id"])
         
         if failed_lessons:

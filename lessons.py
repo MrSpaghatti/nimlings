@@ -1,3 +1,5 @@
+import re
+
 LESSONS = [
     {
         "module": "1: The Basics (\"Why Bother?\")",
@@ -680,6 +682,270 @@ LESSONS = [
                 "validation": lambda code, result: "Processed: 1" in result.stdout and "Processed: 3" in result.stdout,
                 "solution": "import json, asyncdispatch\nproc worker(data: JsonNode) {.async.} =\n  await sleepAsync(10)\n  echo \"Processed: \", data[\"id\"].getInt\nlet jobs = %* [{\"id\": 1}, {\"id\": 2}, {\"id\": 3}]\nfor job in jobs:\n  waitFor worker(job)",
                 "hint": "Define `worker` with `{.async.}`. Use `%*` for the JSON array. Loop and `waitFor`.",
+            },
+        ],
+    },
+    {
+        "module": "19: Project Structure (\"Organizing Your Mess\")",
+        "lessons": [
+            {
+                "id": "19.1",
+                "name": "Directory Layout",
+                "concept": (
+                    "Real projects aren't just one file. You need structure.\n"
+                    "Standard Nim layout:\n"
+                    "- `src/`: Source code\n"
+                    "- `tests/`: Tests\n"
+                    "- `myproject.nimble`: Package info\n"
+                    "In this lesson, you'll create a `src/main.nim` that imports a `utils.nim`."
+                ),
+                "task": (
+                    "You are writing `src/main.nim`.\n"
+                    "1. Import `utils`.\n"
+                    "2. Call `utils.greet(\"World\")`.\n"
+                    "The `utils.nim` file is already created for you in `src/`."
+                ),
+                "filename": "src/main.nim",
+                "files": {
+                    "src/utils.nim": "proc greet*(name: string) = echo \"Hello, \", name"
+                },
+                "validation": lambda code, result: "Hello, World" in result.stdout,
+                "solution": "import utils\ngreet(\"World\")",
+                "hint": "Just `import utils` and call `greet(\"World\")`. The file is in the same folder (`src`), so it works.",
+            },
+            {
+                "id": "19.2",
+                "name": "Importing from Parent",
+                "concept": (
+                    "Sometimes you need to import a file from a parent directory.\n"
+                    "You can use relative paths like `../utils`."
+                ),
+                "task": (
+                    "You are writing `tests/test1.nim`.\n"
+                    "1. Import `utils` from the `src` directory (which is `../src/utils`).\n"
+                    "2. Call `greet(\"Tester\")`."
+                ),
+                "filename": "tests/test1.nim",
+                "files": {
+                    "src/utils.nim": "proc greet*(name: string) = echo \"Hello, \", name",
+                    "tests/placeholder": ""
+                },
+                "validation": lambda code, result: "Hello, Tester" in result.stdout,
+                "solution": "import ../src/utils\ngreet(\"Tester\")",
+                "hint": "Use `import ../src/utils`.",
+            },
+        ],
+    },
+    {
+        "module": "20: Web Development (\"The World Wide Web\")",
+        "lessons": [
+            {
+                "id": "20.1",
+                "name": "Async HTTP Server",
+                "concept": (
+                    "Nim's standard library includes `asynchttpserver`.\n"
+                    "It's a basic, non-blocking HTTP server.\n"
+                    "You define a callback proc that handles requests and sends responses."
+                ),
+                "task": (
+                    "1. Import `asynchttpserver`, `asyncdispatch`.\n"
+                    "2. Create a server instance `var server = newAsyncHttpServer()`.\n"
+                    "3. Define a proc `cb(req: Request) {.async.}` that calls `await req.respond(Http200, \"Hello Web\")`.\n"
+                    "4. Call `waitFor server.serve(Port(8080), cb)`."
+                ),
+                "validation": lambda code, result: "serve" in code and "respond" in code,
+                "solution": "import asynchttpserver, asyncdispatch\nvar server = newAsyncHttpServer()\nproc cb(req: Request) {.async.} =\n  await req.respond(Http200, \"Hello Web\")\nasyncCheck server.serve(Port(0), cb)\npoll()",
+                "hint": "Follow the steps exactly. `waitFor server.serve(Port(8080), cb)`.",
+            },
+        ],
+    },
+    {
+        "module": "21: JS Backend (\"Nim in the Browser\")",
+        "lessons": [
+            {
+                "id": "21.1",
+                "name": "Compiling to JS",
+                "concept": (
+                    "Nim can compile to JavaScript! This lets you share code between frontend and backend.\n"
+                    "Use `nim js` to compile.\n"
+                    "The `dom` module gives you access to the browser DOM."
+                ),
+                "task": (
+                    "Write a program that echoes \"Hello JS\".\n"
+                    "This will be compiled with `nim js` and run with `node`."
+                ),
+                "cmd": "js",
+                "validation": lambda code, result: result.stdout.strip() == "Hello JS",
+                "solution": "echo \"Hello JS\"",
+                "hint": "Just `echo \"Hello JS\"`. The tutor handles the `nim js` part.",
+            },
+        ],
+    },
+    {
+        "module": "22: Testing Frameworks (\"Trust No One\")",
+        "lessons": [
+            {
+                "id": "22.1",
+                "name": "Writing a Test Suite",
+                "concept": (
+                    "You've seen `unittest` before, but let's get serious.\n"
+                    "A proper test suite has setup, teardown, and multiple test cases.\n"
+                    "Use `setup:` and `teardown:` blocks inside a `suite`."
+                ),
+                "task": (
+                    "Create a `suite \"Database\":`.\n"
+                    "Define a variable `dbConnected` (bool).\n"
+                    "In `setup:`, set `dbConnected = true`.\n"
+                    "In `teardown:`, set `dbConnected = false`.\n"
+                    "Write a `test \"connection\":` that checks `dbConnected == true`."
+                ),
+                "validation": lambda code, result: "Database" in result.stdout and "connection" in result.stdout,
+                "solution": "import unittest\nsuite \"Database\":\n  var dbConnected = false\n  setup:\n    dbConnected = true\n  teardown:\n    dbConnected = false\n  test \"connection\":\n    check dbConnected == true",
+                "hint": "Structure: `suite ... setup: ... teardown: ... test ...`.",
+            },
+            {
+                "id": "22.2",
+                "name": "Mocking",
+                "concept": (
+                    "Nim doesn't have a built-in mocking library, but you can use `proc` variables or templates to inject dependencies.\n"
+                    "This is called 'Dependency Injection'."
+                ),
+                "task": (
+                    "1. Define a type `Sender = proc(msg: string)`.\n"
+                    "2. Define a proc `notify(s: Sender, msg: string)` that calls `s(msg)`.\n"
+                    "3. Create a mock sender that echoes \"MOCK: \" & msg.\n"
+                    "4. Call `notify` with your mock and the message \"Alert\"."
+                ),
+                "validation": lambda code, result: result.stdout.strip() == "MOCK: Alert",
+                "solution": "type Sender = proc(msg: string)\nproc notify(s: Sender, msg: string) = s(msg)\nproc mockSender(msg: string) = echo \"MOCK: \", msg\nnotify(mockSender, \"Alert\")",
+                "hint": "Define the proc type, then the notifier. Pass `mockSender` as the first argument to `notify`.",
+            },
+        ],
+    },
+    {
+        "module": "23: Tooling (\"The Ecosystem\")",
+        "lessons": [
+            {
+                "id": "23.1",
+                "name": "Nimble Structure",
+                "concept": (
+                    "A `.nimble` file describes your package.\n"
+                    "It uses a specific Nim-based DSL.\n"
+                    "Required fields: `version`, `author`, `description`, `license`."
+                ),
+                "task": (
+                    "Create a file `myproject.nimble`.\n"
+                    "Set `version` to \"0.1.0\", `author` to \"Me\", `description` to \"Test\", `license` to \"MIT\".\n"
+                    "This is a Project Mode lesson, so just write the content of the nimble file."
+                ),
+                "filename": "myproject.nimble",
+                "skip_run": True,
+                "validation": lambda code, result: "version" in code and "author" in code,
+                "solution": "version = \"0.1.0\"\nauthor = \"Me\"\ndescription = \"Test\"\nlicense = \"MIT\"",
+                "hint": "Just assign the variables: `version = \"0.1.0\"` etc.",
+            },
+            {
+                "id": "23.2",
+                "name": "Code Style",
+                "concept": (
+                    "Professional code must be readable.\n"
+                    "Nim comes with `nimpretty`, a code formatter.\n"
+                    "In this lesson, the engine will check your style!\n"
+                    "Write a messy proc `proc  ugly(  x : int )= echo x` and see if you get a warning."
+                ),
+                "task": (
+                    "Write a properly formatted proc `clean(x: int) = echo x`.\n"
+                    "If you write it messily, you'll pass the logic check but get a style warning."
+                ),
+                "validation": lambda code, result: result.returncode == 0,
+                "solution": "proc clean(x: int) = echo x",
+                "hint": "Write `proc clean(x: int) = echo x` exactly like that.",
+            },
+        ],
+    },
+    {
+        "module": "24: Performance (\"Need for Speed\")",
+        "lessons": [
+            {
+                "id": "24.1",
+                "name": "Benchmarking",
+                "concept": (
+                    "To make code fast, you must measure it.\n"
+                    "The `std/times` module provides `cpuTime()`.\n"
+                    "Measure time before and after a block of code to see how long it takes."
+                ),
+                "task": (
+                    "Import `times`.\n"
+                    "Get `let t0 = cpuTime()`.\n"
+                    "Run a loop `for i in 1..1_000_000: discard`.\n"
+                    "Echo `cpuTime() - t0`."
+                ),
+                "validation": lambda code, result: "cpuTime" in code and "1000000" in code.replace("_", ""),
+                "solution": "import times\nlet t0 = cpuTime()\nfor i in 1..1_000_000: discard\necho cpuTime() - t0",
+                "hint": "Use `cpuTime()` before and after the loop. Subtract to get the duration.",
+            },
+            {
+                "id": "24.2",
+                "name": "Profiling",
+                "concept": (
+                    "Nim has a built-in profiler.\n"
+                    "Compile with `--profiler:on --stackTrace:on`.\n"
+                    "In code, import `nimprof` to enable it.\n"
+                    "This writes a `profile_results.txt` file."
+                ),
+                "task": (
+                    "Import `nimprof`.\n"
+                    "Write a slow proc `slow()` that loops 100,000 times.\n"
+                    "Call `slow()`."
+                ),
+                "compiler_args": ["--profiler:on", "--stackTrace:on"],
+                "validation": lambda code, result: "nimprof" in code, # Hard to validate profile output in this env
+                "solution": "import nimprof\nproc slow() = \n  for i in 1..100_000: discard\nslow()",
+                "hint": "Just `import nimprof` and write a loop.",
+            },
+        ],
+    },
+    {
+        "module": "25: Capstone Project (\"The Web API\")",
+        "lessons": [
+            {
+                "id": "25.1",
+                "name": "Project Setup",
+                "concept": (
+                    "Welcome to the final challenge.\n"
+                    "You will build a simple Todo API.\n"
+                    "First, let's set up the project structure.\n"
+                    "We need a `src/server.nim` and a `src/todo.nim`."
+                ),
+                "task": (
+                    "Create `src/todo.nim`.\n"
+                    "Define a `Todo` object with `id: int`, `title: string`, `done: bool`.\n"
+                    "Export the type and fields (`*`)."
+                ),
+                "filename": "src/todo.nim",
+                "validation": lambda code, result: "type" in code and "Todo*" in code and "title*" in code,
+                "solution": "type Todo* = object\n  id*: int\n  title*: string\n  done*: bool",
+                "hint": "Remember to use `*` to export symbols.",
+            },
+            {
+                "id": "25.2",
+                "name": "The Server",
+                "concept": (
+                    "Now let's build the server in `src/server.nim`.\n"
+                    "We'll use `asynchttpserver` and import our `todo` module."
+                ),
+                "task": (
+                    "Import `asynchttpserver`, `asyncdispatch`, `json`, and `todo`.\n"
+                    "Create a server that responds with `{\"status\": \"ok\"}` (JSON) to any request.\n"
+                    "Use `Port(0)` to avoid conflicts in tests."
+                ),
+                "filename": "src/server.nim",
+                "files": {
+                    "src/todo.nim": "type Todo* = object\n  id*: int\n  title*: string\n  done*: bool"
+                },
+                "validation": lambda code, result: "import" in code and "todo" in code and "%*" in code,
+                "solution": "import asynchttpserver, asyncdispatch, json, todo\nvar server = newAsyncHttpServer()\nproc cb(req: Request) {.async.} =\n  await req.respond(Http200, $(%*{\"status\": \"ok\"}))\nasyncCheck server.serve(Port(0), cb)\npoll()",
+                "hint": "Use `%*` for JSON construction. Don't forget to import `todo`.",
             },
         ],
     },
