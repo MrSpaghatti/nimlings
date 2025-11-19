@@ -20,6 +20,7 @@ class Engine:
         self.config_dir = CONFIG_DIR
         self.progress_file = PROGRESS_FILE
         self.state_file = STATE_FILE
+        self.lessons = LESSONS
         self._ensure_config_dir()
 
     def _ensure_config_dir(self):
@@ -90,32 +91,10 @@ class Engine:
 
     def get_lesson_by_id(self, lesson_id: str) -> Optional[Dict[str, Any]]:
         """Finds a lesson by its ID."""
-        for module in LESSONS:
+        for module in self.lessons:
             for lesson in module["lessons"]:
                 if lesson["id"] == lesson_id:
                     return lesson
-        return None
-
-    def get_next_lesson(self, progress: set, current_lesson_id: str = None) -> Optional[Dict[str, Any]]:
-        """Determines the next lesson to run."""
-        flat_lessons = [lesson for module in LESSONS for lesson in module["lessons"]]
-        
-        if current_lesson_id:
-            # Try to find the one after current
-            idx = next((i for i, l in enumerate(flat_lessons) if l["id"] == current_lesson_id), -1)
-            if idx != -1 and idx + 1 < len(flat_lessons):
-                return flat_lessons[idx + 1]
-            elif idx == -1:
-                 # Current id not found? Fallback to first uncompleted
-                 pass
-            else:
-                return None # Completed everything
-        
-        # If no current lesson, finds first uncompleted
-        for lesson in flat_lessons:
-            if lesson["id"] not in progress:
-                return lesson
-        
         return None
 
     def run_code(self, filepath: Path, args: list[str] | None = None, timeout: int = 5) -> subprocess.CompletedProcess:

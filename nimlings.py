@@ -36,12 +36,8 @@ def main():
     # Handle CLI-only commands
     if command == "list":
         progress = engine.load_progress()
-        # Need access to lessons. Engine logic needed.
-        # We can just import LESSONS here or add a method to Engine.
-        # Engine doesn't export LESSONS directly.
-        from lessons import LESSONS
         print("Here's the curriculum. `[x]` means you managed to get it right.")
-        for module in LESSONS:
+        for module in engine.lessons:
             print(f"\n{module['module']}")
             for lesson in module["lessons"]:
                 marker = "[x]" if lesson["id"] in progress else "[ ]"
@@ -57,8 +53,7 @@ def main():
         # Re-implement test logic using Engine
         print("Running internal tests...")
         failed_lessons = []
-        from lessons import LESSONS
-        flat_lessons = [lesson for module in LESSONS for lesson in module["lessons"]]
+        flat_lessons = [lesson for module in engine.lessons for lesson in module["lessons"]]
         
         for lesson in flat_lessons:
             if not lesson.get("validation"): continue
