@@ -219,6 +219,30 @@ LESSONS = [
         ],
     },
     {
+        "module": "BOSS FIGHT 1: The RPG Party",
+        "lessons": [
+            {
+                "id": "B1.1",
+                "name": "The Gatekeeper",
+                "concept": (
+                    "Time to put it all together. You're building a simple RPG party system.\n"
+                    "You'll need Enums, Objects, Sequences, and Procs.\n"
+                    "This is a comprehensive test of Phase 1."
+                ),
+                "task": (
+                    "1. Define an Enum `Class` with values `Warrior`, `Mage`, `Rogue`.\n"
+                    "2. Define an Object `Character` with `name` (string), `class` (Class), and `level` (int).\n"
+                    "3. Create a sequence of Characters named `party`.\n"
+                    "4. Add a Level 10 Warrior named \"Gimli\" and a Level 8 Mage named \"Gandalf\" to the party.\n"
+                    "5. Iterate through the party and echo \"[Name] the [Class] is level [Level]\" for each."
+                ),
+                "validation": lambda code, result: "Gimli the Warrior is level 10" in result.stdout and "Gandalf the Mage is level 8" in result.stdout,
+                "solution": "type\n  Class = enum Warrior, Mage, Rogue\n  Character = object\n    name: string\n    class: Class\n    level: int\nvar party: seq[Character]\nparty.add(Character(name: \"Gimli\", class: Warrior, level: 10))\nparty.add(Character(name: \"Gandalf\", class: Mage, level: 8))\nfor c in party:\n  echo c.name, \" the \", c.class, \" is level \", c.level",
+                "hint": "Break it down. Enum first. Then Object. Then `var party: seq[Character]`. Then `party.add(...)`. Finally the loop.",
+            },
+        ],
+    },
+    {
         "module": "5: Advanced Procedures (\"Reusable Recipes\")",
         "lessons": [
             {
@@ -403,6 +427,259 @@ LESSONS = [
                 "validation": lambda code, result: result.stdout.strip() == "Hello!",
                 "solution": "template shout(msg: string) = echo msg, \"!\"\nshout(\"Hello\")",
                 "hint": "The syntax is `template shout(msg: string) = echo msg, \"!\". Then you can call it like a regular proc: `shout(\"Hello\")`.",
+            },
+        ],
+    },
+    {
+        "module": "BOSS FIGHT 2: The Generic Logger",
+        "lessons": [
+            {
+                "id": "B2.1",
+                "name": "The Architect",
+                "concept": (
+                    "Phase 2 tested your ability to write reusable and structural code.\n"
+                    "Now you must build a generic logging system using Templates and Generics."
+                ),
+                "task": (
+                    "1. Define a template `log(msg)` that echoes \"[LOG]: \" followed by `msg`.\n"
+                    "2. Define a Generic proc `process[T](val: T)`.\n"
+                    "3. Inside `process`, use `log` to print \"Processing...\" and then echo `val`.\n"
+                    "4. Call `process` with the string \"Data\" and the integer `100`."
+                ),
+                "validation": lambda code, result: "[LOG]: Processing..." in result.stdout and "Data" in result.stdout and "100" in result.stdout,
+                "solution": "template log(msg) = echo \"[LOG]: \", msg\nproc process[T](val: T) =\n  log(\"Processing...\")\n  echo val\nprocess(\"Data\")\nprocess(100)",
+                "hint": "Template comes first. Then `proc process[T](val: T) = ...`. Call `process` twice.",
+            },
+        ],
+    },
+    {
+        "module": "11: Asynchronous IO (\"Don't Block the Thread\")",
+        "lessons": [
+            {
+                "id": "11.1",
+                "name": "Async/Await",
+                "concept": (
+                    "Modern applications need to handle many things at once without freezing.\n"
+                    "Nim uses `asyncdispatch` for this. You mark a proc with `{.async.}` and it returns a `Future[T]`.\n"
+                    "Inside, you use `await` to pause execution until a future completes.\n"
+                    "To run an async proc from the main synchronous scope, use `waitFor`."
+                ),
+                "task": "Import `asyncdispatch`. Create an async proc `tick()` that waits for 100ms (`await sleepAsync(100)`) then echoes \"Tock\". Call it using `waitFor`.",
+                "validation": lambda code, result: result.stdout.strip() == "Tock",
+                "solution": "import asyncdispatch\nproc tick() {.async.} =\n  await sleepAsync(100)\n  echo \"Tock\"\nwaitFor tick()",
+                "hint": "Import `asyncdispatch`. `proc tick() {.async.} = await sleepAsync(100); echo \"Tock\"`. End with `waitFor tick()`.",
+            },
+        ],
+    },
+    {
+        "module": "12: Macros (\"The Dark Arts\")",
+        "lessons": [
+            {
+                "id": "12.1",
+                "name": "The AST",
+                "concept": (
+                    "Nim code is parsed into an Abstract Syntax Tree (AST) before compilation.\n"
+                    "Macros let you manipulate this tree directly.\n"
+                    "The `dumpTree:` statement prints the AST of the code inside it. This is how you learn what the tree looks like."
+                ),
+                "task": "Import `macros`. Use `dumpTree:` to inspect the code `echo 1`. (This will print to the output/compiler logs).",
+                "validation": lambda code, result: "StmtList" in result.stdout or "StmtList" in result.stderr,
+                "solution": "import macros\ndumpTree:\n  echo 1",
+                "hint": "Just wrap the code in `dumpTree:`: `dumpTree:\n  echo 1`.",
+            },
+        ],
+    },
+    {
+        "module": "13: C Interoperability (\"The Secret Weapon\")",
+        "lessons": [
+            {
+                "id": "13.1",
+                "name": "C Types",
+                "concept": (
+                    "Nim compiles to C, so interacting with C is trivial.\n"
+                    "Nim strings are objects with length and capacity. C strings are just pointers (`char*`).\n"
+                    "In Nim, C strings are `cstring`. Conversion is automatic in many cases, or explicit via `cstring(myString)`."
+                ),
+                "task": "Declare a `cstring` variable initialized with \"Hello C\". Echo it.",
+                "validation": lambda code, result: result.stdout.strip() == "Hello C",
+                "solution": "var s: cstring = \"Hello C\"\necho s",
+                "hint": "`var s: cstring = \"Hello C\"`.",
+            },
+            {
+                "id": "13.2",
+                "name": "Wrapping C Functions",
+                "concept": (
+                    "To call a C function, you just tell Nim it exists using the `importc` pragma.\n"
+                    "You also usually specify the header file with `header`."
+                ),
+                "task": "Define a proc `c_puts(s: cstring)` that maps to the C function `puts`. Use `{.importc: \"puts\", header: \"<stdio.h>\"}`. Call it with \"Native call\".",
+                "validation": lambda code, result: result.stdout.strip() == "Native call",
+                "solution": "proc c_puts(s: cstring) {.importc: \"puts\", header: \"<stdio.h>\"}\nc_puts(\"Native call\")",
+                "hint": "The pragma goes after the arguments: `proc c_puts(s: cstring) {.importc: ... .}`.",
+            },
+        ],
+    },
+    {
+        "module": "14: Testing (\"Trust, but Verify\")",
+        "lessons": [
+            {
+                "id": "14.1",
+                "name": "Unittest",
+                "concept": (
+                    "Nim has a built-in `unittest` module.\n"
+                    "You organize tests into a `suite` and individual `test` blocks.\n"
+                    "Use `check` to assert conditions. If a check fails, the test fails, but execution continues."
+                ),
+                "task": "Import `unittest`. Create a `suite \"Math\":` and a `test \"addition\":`. Inside, `check(1 + 1 == 2)`.",
+                "validation": lambda code, result: "Math" in result.stdout and "addition" in result.stdout,
+                "solution": "import unittest\nsuite \"Math\":\n  test \"addition\":\n    check(1 + 1 == 2)",
+                "hint": "`suite \"Name\":` then indent `test \"Name\":` then indent `check(...)`.",
+            },
+        ],
+    },
+    {
+        "module": "15: JSON (\"The Lingua Franca\")",
+        "lessons": [
+            {
+                "id": "15.1",
+                "name": "Creating JSON",
+                "concept": (
+                    "JSON is everywhere. Nim handles it with the `json` module.\n"
+                    "The `%*` macro is the magic wand. It converts complex data structures into a `JsonNode`.\n"
+                    "Example: `let j = %* {\"key\": \"value\", \"list\": [1, 2]}`"
+                ),
+                "task": "Import `json`. Create a JSON object representing a person with `name` \"Neo\" and `chosen` `true`. Echo the resulting `JsonNode`.",
+                "validation": lambda code, result: "\"Neo\"" in result.stdout and "true" in result.stdout,
+                "solution": "import json\nlet j = %* {\"name\": \"Neo\", \"chosen\": true}\necho j",
+                "hint": "Use `import json`. Then `let j = %* ...`. Finally `echo j`.",
+            },
+            {
+                "id": "15.2",
+                "name": "Parsing JSON",
+                "concept": (
+                    "To read JSON strings, use `parseJson(string)`.\n"
+                    "You can access fields using `[]` keys or `.` dot syntax if you know the structure.\n"
+                    "Values are wrapped in `JsonNode`, so use helper procs like `.getStr`, `.getInt` to extract raw values."
+                ),
+                "task": "Parse the string `{\"status\": \"ok\", \"code\": 200}`. Extract and echo the \"status\" string.",
+                "validation": lambda code, result: result.stdout.strip() == "ok",
+                "solution": "import json\nlet data = parseJson(\"{\\\"status\\\": \\\"ok\\\", \\\"code\\\": 200}\")\necho data[\"status\"].getStr",
+                "hint": "Parse it into a variable. Then access `[\"status\"]` and call `.getStr` on it.",
+            },
+            {
+                "id": "15.3",
+                "name": "Marshalling",
+                "concept": (
+                    "Manually traversing JSON nodes is tedious. Marshalling lets you convert JSON directly into Nim objects and vice versa.\n"
+                    "Use `to(node, Type)` to convert JSON to an object.\n"
+                    "Use `%` to convert an object to JSON (if you don't use the `%*` macro)."
+                ),
+                "task": "Define a `User` object with a `name` string. Parse `{\"name\": \"Trinity\"}` and convert it to a `User` object. Echo the `name` field of the object.",
+                "validation": lambda code, result: result.stdout.strip() == "Trinity",
+                "solution": "import json\ntype User = object\n  name: string\nlet node = parseJson(\"{\\\"name\\\": \\\"Trinity\\\"}\")\nlet u = node.to(User)\necho u.name",
+                "hint": "Define `type User = object ...`. Parse the json. Then `let u = node.to(User)`.",
+            },
+        ],
+    },
+    {
+        "module": "16: Command Line Parsing (\"Talk to the Shell\")",
+        "lessons": [
+            {
+                "id": "16.1",
+                "name": "Raw Arguments",
+                "concept": (
+                    "The `os` module gives you `paramCount()` and `paramStr(i)`.\n"
+                    "It's the raw way to read arguments passed to your program."
+                ),
+                "task": "Import `os`. Iterate from 1 to `paramCount()` and echo each argument using `paramStr()`.",
+                "args": ["arg1", "arg2", "arg3"],
+                "validation": lambda code, result: "arg1" in result.stdout and "arg2" in result.stdout and "arg3" in result.stdout,
+                "solution": "import os\nfor i in 1..paramCount():\n  echo paramStr(i)",
+                "hint": "Loop `for i in 1..paramCount():`. Inside, `echo paramStr(i)`.",
+            },
+            {
+                "id": "16.2",
+                "name": "Parseopt",
+                "concept": (
+                    "For real CLI tools, use `std/parseopt`. It handles flags (`-f`), long options (`--file`), and arguments.\n"
+                    "It provides an iterator `getopt()` that yields `kind`, `key`, and `val`."
+                ),
+                "task": "Import `parseopt`. Use the `getopt()` iterator. If `kind` is `cmdLongOption` and `key` is \"name\", echo the `val`.",
+                "args": ["--name:Morpheus"],
+                "validation": lambda code, result: result.stdout.strip() == "Morpheus",
+                "solution": "import parseopt\nfor kind, key, val in getopt():\n  if kind == cmdLongOption and key == \"name\":\n    echo val",
+                "hint": "Loop with `for kind, key, val in getopt():`. Check if `key == \"name\"`.",
+            },
+        ],
+    },
+    {
+        "module": "17: Useful Utils (\"Batteries Included\")",
+        "lessons": [
+            {
+                "id": "17.1",
+                "name": "Base64",
+                "concept": (
+                    "Nim's standard library is huge. Need to encode data? Use `base64`.\n"
+                    "It provides `encode` and `decode` procedures."
+                ),
+                "task": "Import `base64`. Encode the string \"Nim\" and echo the result.",
+                "validation": lambda code, result: result.stdout.strip() == "Tmlt",
+                "solution": "import base64\necho encode(\"Nim\")",
+                "hint": "`import base64`. `echo encode(\"Nim\")`.",
+            },
+            {
+                "id": "17.2",
+                "name": "Parsing Configs",
+                "concept": (
+                    "Need to read an INI file? `parsecfg` has you covered.\n"
+                    "It works similarly to `parseopt`, iterating over the file structure."
+                ),
+                "task": "Import `parsecfg`, `streams`. Create a stream from string \"[Section]\\nkey=val\". Open it with `newConfigParser`. Loop `next(p)` and if the event kind is `cfgKeyValuePair`, echo the key.",
+                "validation": lambda code, result: "key" in result.stdout,
+                "solution": "import parsecfg, streams\nvar p: CfgParser\nlet s = newStringStream(\"[Section]\\nkey=val\")\nopen(p, s, \"test.ini\")\nwhile true:\n  var e = next(p)\n  if e.kind == cfgEof: break\n  if e.kind == cfgKeyValuePair: echo e.key",
+                "hint": "Check `e.kind`. Only access `e.key` if it's a key-value pair.",
+            },
+        ],
+    },
+    {
+        "module": "18: Build Modes (\"Speed vs Safety\")",
+        "lessons": [
+            {
+                "id": "18.1",
+                "name": "Release Mode",
+                "concept": (
+                    "By default, Nim compiles in debug mode (slow, safe, stack traces).\n"
+                    "Passing `-d:release` turns on optimizations and turns off some runtime checks.\n"
+                    "You can check for this in code using `when defined(release):`."
+                ),
+                "task": "Write a program that echoes \"Fast\" if `defined(release)` is true, and \"Slow\" otherwise. (Note: This tutor runs in debug mode, so expect \"Slow\").",
+                "validation": lambda code, result: result.stdout.strip() == "Slow",
+                "solution": "if defined(release):\n  echo \"Fast\"\nelse:\n  echo \"Slow\"",
+                "hint": "Use `if defined(release): ... else: ...`.",
+            },
+        ],
+    },
+    {
+        "module": "BOSS FIGHT 3: The Async Service",
+        "lessons": [
+            {
+                "id": "B3.1",
+                "name": "The Professional",
+                "concept": (
+                    "You have reached the end. This is the final test.\n"
+                    "You must build a simulated async microservice that handles JSON data.\n"
+                    "Combine `json`, `asyncdispatch`, and your wits."
+                ),
+                "task": (
+                    "1. Import `json` and `asyncdispatch`.\n"
+                    "2. Define an async proc `worker(data: JsonNode)`.\n"
+                    "3. Inside, `await sleepAsync(10)` and then echo \"Processed: \" & data[\"id\"].getInt.\n"
+                    "4. Create a JSON array `jobs` with 3 objects: `[{\"id\": 1}, {\"id\": 2}, {\"id\": 3}]`.\n"
+                    "5. Iterate over `jobs` and call `waitFor worker(item)` for each one."
+                ),
+                "validation": lambda code, result: "Processed: 1" in result.stdout and "Processed: 3" in result.stdout,
+                "solution": "import json, asyncdispatch\nproc worker(data: JsonNode) {.async.} =\n  await sleepAsync(10)\n  echo \"Processed: \", data[\"id\"].getInt\nlet jobs = %* [{\"id\": 1}, {\"id\": 2}, {\"id\": 3}]\nfor job in jobs:\n  waitFor worker(job)",
+                "hint": "Define `worker` with `{.async.}`. Use `%*` for the JSON array. Loop and `waitFor`.",
             },
         ],
     },

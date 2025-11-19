@@ -1,8 +1,19 @@
 # nimlings
 
-`nimlings` is an interactive command-line application designed to teach the basics of the Nim programming language. It's a single, self-contained Python script that you can run directly.
+`nimlings` is an interactive command-line application designed to take you from zero to professional in the Nim programming language. It's a single, self-contained Python script that you can run directly.
 
 The tutor presents you with a concept, gives you a coding task, and then opens your default text editor for you to write a solution. It then compiles and runs your code, providing immediate feedback. All in a cynical, no-bullshit tone.
+
+## What You Will Learn
+
+The curriculum is divided into three major phases, each capped with a comprehensive "Boss Fight":
+
+1.  **The Basics**: Variables, Control Flow, Procedures, and Data Structures.
+    *   *Boss Fight 1: The RPG Party*
+2.  **Intermediate Concepts**: Generics, Templates, Concurrency, and Modules.
+    *   *Boss Fight 2: The Generic Logger*
+3.  **Professional Tooling**: Async/Await, Macros, C Interop, JSON, CLI Parsing, and Testing.
+    *   *Boss Fight 3: The Async Service*
 
 ## Prerequisites
 
