@@ -6,88 +6,122 @@ The tutor presents you with a concept, gives you a coding task, and then opens y
 
 ## What You Will Learn
 
-The curriculum is divided into three major phases, each capped with a comprehensive "Boss Fight":
+An interactive, hands-on tutor for learning the **Nim programming language** through structured lessons and challenges in your terminal.
 
-1.  **The Basics**: Variables, Control Flow, Procedures, and Data Structures.
-    *   *Boss Fight 1: The RPG Party*
-2.  **Intermediate Concepts**: Generics, Templates, Concurrency, and Modules.
-    *   *Boss Fight 2: The Generic Logger*
-3.  **Professional Tooling**: Async/Await, Macros, C Interop, JSON, CLI Parsing, and Testing.
-    *   *Boss Fight 3: The Async Service*
+## What is nimlings?
+
+nimlings is a guided, progressive learning tool designed to teach you Nim from zero to hero. It presents a curriculum of carefully structured lessons in an interactive TUI (text user interface), where you write code, get instant feedback, and build real understanding.
+
+**Goal:** By completing nimlings, you will be able to write professional-grade Nim code with confidence.
+
+## Features
+
+- **Interactive TUI**: Code editor with Vim-like keybindings, syntax-aware navigation, and instant feedback
+- **25 Modules**: From "Hello World" to web servers, covering the full Nim ecosystem
+- **Smart Validation**: Each lesson validates your code logic and style
+- **Progress Tracking**: Your progress is automatically saved
+- **Helpful Feedback**: Clear error messages with actionable fix instructions
+- **Built-in Cheatsheet**: Press `Ctrl+/` to see all keyboard shortcuts
 
 ## Prerequisites
 
-1.  **Python 3**: The script is written in Python 3. You'll need it installed to run the tutor.
-2.  **Nim Compiler**: The tutor uses the `nim` compiler to check your code. You must have Nim installed and available in your system's `PATH`. You can find installation instructions on the [official Nim website](https://nim-lang.org/install.html).
+- **Nim compiler** installed and available in your PATH
+  - Install from https://nim-lang.org/install.html
+  - Or use your package manager: `sudo apt install nim` / `brew install nim`
+- **Python 3.8+**
+- **Terminal** with Unicode support
 
-## How to Use
+## Installation
 
-1.  **Make the script executable**:
-    ```sh
-    chmod +x nimlings.py
-    ```
-
-2.  **Run a command**:
-    The script is executed as `./nimlings.py` followed by one of the commands below.
-
-## Commands
-
-### `learn [lesson_id]` (Default)
-
-Starts the tutorial or resumes from your last active lesson. You can optionally provide a lesson ID (e.g., `2.1`) to jump directly to that lesson.
-
-```sh
-# Start or resume
-./nimlings.py
-
-# Jump to a specific lesson
-./nimlings.py learn 4.2
+```bash
+git clone https://github.com/yourusername/nimlings.git
+cd nimlings
+python3 nimlings.py learn
 ```
 
-### `list`
+## Usage
 
-Lists all the modules and lessons in the curriculum. Lessons you have already completed will be marked with `[x]`.
+### Start the Interactive Tutor
 
-```sh
-./nimlings.py list
+```bash
+python3 nimlings.py learn
 ```
 
-### `hint [lesson_id]`
+### Navigation
 
-Provides a hint for a specific lesson. If no lesson ID is provided, it will show a hint for the last lesson you were working on.
+- **Tab**: Cycle through panes (Tree → Content → Output → Editor)
+- **Shift+Tab**: Cycle backwards
+- **Ctrl+w + h/j/k/l**: Vim-style pane switching
+- **Arrow keys / hjkl**: Navigate within panes
+- **Enter**: Select lesson (from tree)
+- **e**: Focus editor
+- **r**: Run code
+- **q**: Quit (when not in editor)
 
-```sh
-# Get a hint for your current lesson
-./nimlings.py hint
+### Editor (Vim-like)
 
-# Get a hint for a specific lesson
-./nimlings.py hint 3.1
+- **i**: Enter Insert mode
+- **ESC**: Return to Normal mode
+- **v / V**: Visual / Visual Line mode
+- **dd**: Delete line
+- **yy**: Yank (copy) line
+- **p**: Paste
+- **u**: Undo
+- **w / b**: Jump forward/backward by word
+- **^ / $** or **Home/End**: Jump to start/end of line
+- **Ctrl+/**: Toggle keyboard cheatsheet
+
+### CLI Commands
+
+```bash
+python3 nimlings.py list        # List all lessons and progress
+python3 nimlings.py reset       # Reset progress
+python3 nimlings.py test        # Run internal tests
+python3 nimlings.py hint <id>   # Get hint for a lesson
+python3 nimlings.py solution <id>  # Show solution
 ```
 
-### `solution [lesson_id]`
+## Curriculum
 
-Shows the solution for a specific lesson. If no lesson ID is provided, it will show the solution for the last lesson you were working on.
+The curriculum is divided into **three phases**:
 
-```sh
-# Get the solution for your current lesson
-./nimlings.py solution
+### Phase 1: Foundation (Modules 1-6)
+Learn Nim basics: syntax, types, control flow, functions, and core data structures.
 
-# Get the solution for a specific lesson
-./nimlings.py solution 3.1
+### Phase 2: Intermediate (Modules 7-18)
+Explore advanced features: generics, async/await, macros, FFI, JSON, CLI tools, and optimization.
+
+### Phase 3: Professional (Modules 19-25)
+Build real-world skills: project structure, web development, testing, tooling, performance profiling, and a capstone web API project.
+
+**Total**: 50+ lessons across 25 modules.
+
+## Project Structure
+
+```
+nimlings/
+├── nimlings.py          # CLI entry point
+├── src/
+│   ├── engine.py        # Core logic (lesson validation, Nim execution)
+│   ├── tui.py           # Text UI with Vim-like editor
+│   ├── lessons.py       # All lesson definitions
+│   └── exceptions.py    # Custom error handling
+├── tests/               # Test files
+└── README.md
 ```
 
-### `reset`
+## Contributing
 
-Deletes all your progress and state, allowing you to start the tutorial from the very beginning. It will ask for confirmation.
+Contributions are welcome! Feel free to:
+- Report bugs
+- Suggest new lessons
+- Improve error messages
+- Add features
 
-```sh
-./nimlings.py reset
-```
+## License
 
-### `test`
+This project is open source. See LICENSE for details.
 
-Runs an internal test suite that validates the solution for every lesson in the curriculum. This is a developer tool to ensure all lessons are working correctly.
+## Acknowledgments
 
-```sh
-./nimlings.py test
-```
+Inspired by rustlings and similar interactive learning tools.
