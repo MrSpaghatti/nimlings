@@ -120,7 +120,7 @@ Contributions are welcome! Feel free to:
 
 ## License
 
-This project is open source. See LICENSE for details.
+This project is open source.
 
 ## Acknowledgments
 
