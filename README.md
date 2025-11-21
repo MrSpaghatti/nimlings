@@ -17,7 +17,7 @@ The tutor presents you with a concept, gives you a coding task, and then opens y
 
 ## Prerequisites
 
-- **Nim compiler** installed and available in your PATH.
+- **Nim compiler** (1.6 or higher) installed and available in your PATH.
   - Install from https://nim-lang.org/install.html
 - **Terminal** with Unicode support.
 
@@ -27,7 +27,7 @@ The tutor presents you with a concept, gives you a coding task, and then opens y
 git clone https://github.com/yourusername/nimlings.git
 cd nimlings
 nimble install -y illwill
-nim c -d:release --threads:on src/nimlings.nim
+nim c src/nimlings.nim
 ```
 
 ## Usage
@@ -64,6 +64,7 @@ The tutor monitors the current exercise file. As soon as you save your changes i
 nimlings/
 ├── src/
 │   ├── nimlings.nim     # CLI entry point
+│   ├── nimlings.nims    # Build configuration (threads, release mode)
 │   ├── engine.nim       # Core logic (compilation, validation)
 │   ├── tui.nim          # Terminal UI (using illwill)
 │   ├── content.nim      # Generated lesson content

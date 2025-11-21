@@ -2,6 +2,9 @@
 import os, parseopt, strutils, std/sets
 import engine, tui, types, content, models
 
+when NimMajor < 1 or (NimMajor == 1 and NimMinor < 6):
+  {.error: "Nim 1.6 or higher is required to build nimlings.".}
+
 proc printHelp() =
   echo "nimlings: An interactive tutor for the Nim programming language."
   echo ""
