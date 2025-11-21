@@ -179,12 +179,45 @@ class TUIApp:
         curses.set_escdelay(25)
         curses.curs_set(0)
         curses.start_color()
-        curses.use_default_colors()
-        curses.init_pair(1, curses.COLOR_GREEN, -1) # Completed
-        curses.init_pair(2, curses.COLOR_CYAN, -1)  # Selected
-        curses.init_pair(3, curses.COLOR_RED, -1)   # Error
-        curses.init_pair(4, curses.COLOR_YELLOW, -1) # Warning/Hint
-        curses.init_pair(5, curses.COLOR_WHITE, curses.COLOR_BLUE) # Visual Selection
+
+        # Initialize Gruvbox colors
+        # We try to use specific 256-color indices if available, otherwise fallback
+        if curses.COLORS >= 256:
+            # Gruvbox approximations in Xterm 256 colors
+            bg_color = 235     # Dark0
+            fg_color = 223     # Light1
+            red = 124
+            green = 106
+            yellow = 172
+            blue = 66
+            purple = 132
+            aqua = 72
+            orange = 166
+
+            # Try to set background if possible, otherwise assume terminal theme
+            if curses.can_change_color():
+                 # We won't mess with init_color to avoid breaking terminals
+                 pass
+
+            curses.init_pair(1, green, -1)    # Completed / Success
+            curses.init_pair(2, yellow, -1)   # Selected / Highlight
+            curses.init_pair(3, red, -1)      # Error
+            curses.init_pair(4, orange, -1)   # Warning/Hint
+            curses.init_pair(5, bg_color, blue) # Visual Selection (blue bg)
+            curses.init_pair(6, purple, -1)   # Special/Keyword
+            curses.init_pair(7, aqua, -1)     # Info
+
+            # Set default color (for borders etc) not explicitly, just use stdscr
+            # stdscr.bkgd(' ', curses.color_pair(0))
+        else:
+            curses.use_default_colors()
+            curses.init_pair(1, curses.COLOR_GREEN, -1)
+            curses.init_pair(2, curses.COLOR_CYAN, -1)
+            curses.init_pair(3, curses.COLOR_RED, -1)
+            curses.init_pair(4, curses.COLOR_YELLOW, -1)
+            curses.init_pair(5, curses.COLOR_WHITE, curses.COLOR_BLUE)
+            curses.init_pair(6, curses.COLOR_MAGENTA, -1)
+            curses.init_pair(7, curses.COLOR_BLUE, -1)
 
         # Load state
         state = self.engine.load_state()
@@ -430,7 +463,14 @@ class TUIApp:
              clean_line = self._strip_ansi(line)
              if len(clean_line) > w - 4:
                  clean_line = clean_line[:w-4]
-             win.addstr(i + 1, 2, clean_line)
+             # Apply color to common output patterns if possible
+             attr = curses.A_NORMAL
+             if "Error" in clean_line or "failed" in clean_line.lower():
+                 attr = curses.color_pair(3)
+             elif "Hint" in clean_line or "Warning" in clean_line:
+                 attr = curses.color_pair(4)
+
+             win.addstr(i + 1, 2, clean_line, attr)
 
         win.noutrefresh()
 
@@ -450,7 +490,7 @@ class TUIApp:
         if self.window_command_mode:
             status += " [W-CMD]"
         if len(status) > w - 2: status = status[:w-2]
-        win.addstr(h - 1, 1, status, curses.A_REVERSE)
+        win.addstr(h - 1, 1, status, curses.A_REVERSE | curses.color_pair(2))
         
         if self.show_help:
             self._draw_help(win, h, w)
