@@ -64,7 +64,15 @@ proc openInEditor(lesson: Lesson) =
   illwillInit(fullscreen=true)
   hideCursor()
   state.tb = newTerminalBuffer(terminalWidth(), terminalHeight())
+
+  # FORCE FULL REDRAW sequence to fix ghosting/blank screens
+  # 1. Clear internal buffer to spaces
   state.tb.clear()
+  # 2. Write the empty buffer to screen. This forces illwill to diff (Current Garbage) vs (Empty),
+  #    emitting ANSI clear codes for the whole screen.
+  state.tb.display()
+
+  # 3. Main loop will now draw UI on top of this known empty state.
 
   try:
     state.lastModTime = getLastModificationTime(path)
