@@ -64,11 +64,8 @@ proc openInEditor(lesson: Lesson) =
   illwillInit(fullscreen=true)
   hideCursor()
   state.tb = newTerminalBuffer(terminalWidth(), terminalHeight())
-  # Force redraw
   state.tb.clear()
 
-  # Update mod time after edit to avoid immediate trigger if not changed significantly
-  # or set it to 0 to force re-check? No, better to just update it.
   try:
     state.lastModTime = getLastModificationTime(path)
   except:
@@ -83,9 +80,6 @@ proc startCheck(lesson: Lesson) =
   state.outputBuffer = @["Checking..."]
   state.isChecking = true
 
-  # Spawn runCode
-  # Warning: Lesson object must be thread safe or copied.
-  # runCode takes (Lesson, string).
   state.checkFuture = spawn runCode(lesson, code)
 
 proc pollCheckResult() =
@@ -95,14 +89,7 @@ proc pollCheckResult() =
     let res = ^state.checkFuture
     state.isChecking = false
 
-    # Validate
     let lesson = state.flatLessons[state.currentLessonIdx]
-    # Note: We assume lesson hasn't changed index while checking.
-    # If user moved, we might verify the wrong lesson against the result.
-    # But let's assume it's fine for now or lock UI?
-    # Or better: Store the lesson ID in the future? Complex.
-    # We'll just check against current active lesson for simplicity.
-
     let path = ensureLessonFile(lesson)
     let code = readFile(path)
 
@@ -122,9 +109,7 @@ proc checkFileWatcher() =
     let t = getLastModificationTime(state.watchedFile)
     if t > state.lastModTime:
       state.lastModTime = t
-      # Trigger check
       let lesson = state.flatLessons[state.currentLessonIdx]
-      # Verify watched file belongs to current lesson
       if state.watchedFile.endsWith(lesson.filename):
          startCheck(lesson)
   except:
@@ -133,8 +118,10 @@ proc checkFileWatcher() =
 # --- Drawing ---
 
 proc drawTree(x, y, w, h: int) =
+  # Reset style for the box
+  state.tb.fill(x, y, x+w-1, y+h-1, " ")
   state.tb.drawRect(x, y, x+w-1, y+h-1)
-  state.tb.write(x+2, y, " Curriculum ")
+  state.tb.write(x+2, y, " Curriculum ", fgYellow)
 
   let maxItems = h - 2
   let startIdx = max(0, state.currentLessonIdx - (maxItems div 2))
@@ -144,59 +131,72 @@ proc drawTree(x, y, w, h: int) =
     let lesson = state.flatLessons[i]
     let row = y + 1 + (i - startIdx)
     var prefix = "[ ] "
-    if lesson.id in state.completed: prefix = "[x] "
+    var color = fgWhite
+    if lesson.id in state.completed:
+      prefix = "[x] "
+      color = fgGreen
 
     var style: set[Style] = {}
     if i == state.currentLessonIdx:
       style = {styleReverse}
       if state.activeView == vTree:
-        # Highlight active focus
         state.tb.write(x+1, row, ">", fgCyan)
 
     var text = prefix & lesson.id & ": " & lesson.name
     if text.len > w - 3: text = text[0 ..< w-3] & "..."
 
-    state.tb.write(x+2, row, style, text)
+    state.tb.write(x+2, row, color, style, text, resetStyle)
 
 proc drawContent(x, y, w, h: int) =
+  state.tb.fill(x, y, x+w-1, y+h-1, " ")
   state.tb.drawRect(x, y, x+w-1, y+h-1)
-  state.tb.write(x+2, y, " Lesson ")
+  state.tb.write(x+2, y, " Lesson ", fgYellow)
 
   let lesson = state.flatLessons[state.currentLessonIdx]
-  var lines: seq[string] = @[]
-  lines.add "ID: " & lesson.id
-  lines.add "Name: " & lesson.name
-  lines.add ""
-  lines.add "--- Concept ---"
-  # Simple wrapping
+  var lines: seq[(string, ForegroundColor)] = @[]
+  lines.add ("ID: " & lesson.id, fgCyan)
+  lines.add ("Name: " & lesson.name, fgWhite)
+  lines.add ("", fgWhite)
+  lines.add ("--- Concept ---", fgYellow)
+
   for line in lesson.conceptText.splitLines:
-    if line.len < w - 4: lines.add line
-    else: lines.add line[0 ..< w-4] # TODO: Better wrap
+    if line.len < w - 4: lines.add (line, fgWhite)
+    else: lines.add (line[0 ..< w-4], fgWhite)
 
-  lines.add ""
-  lines.add "--- Task ---"
+  lines.add ("", fgWhite)
+  lines.add ("--- Task ---", fgYellow)
   for line in lesson.task.splitLines:
-    if line.len < w - 4: lines.add line
-    else: lines.add line[0 ..< w-4]
+    if line.len < w - 4: lines.add (line, fgWhite)
+    else: lines.add (line[0 ..< w-4], fgWhite)
 
-  lines.add ""
-  lines.add "--- Instructions ---"
-  lines.add "Press 'e' or Enter to edit."
-  lines.add "Auto-check on save is enabled."
+  lines.add ("", fgWhite)
+  lines.add ("--- Instructions ---", fgYellow)
+  lines.add ("Press 'e' or Enter to edit.", fgWhite)
+  lines.add ("Auto-check on save is enabled.", fgWhite)
 
-  for i, line in lines:
+  for i, (text, color) in lines:
     if i >= h - 2: break
-    state.tb.write(x+2, y+1+i, line)
+    state.tb.write(x+2, y+1+i, color, text, resetStyle)
 
 proc drawOutput(x, y, w, h: int) =
+  state.tb.fill(x, y, x+w-1, y+h-1, " ")
   state.tb.drawRect(x, y, x+w-1, y+h-1)
   var title = " Output "
   if state.isChecking: title &= "(Checking...) "
-  state.tb.write(x+2, y, title)
+
+  var titleColor = fgYellow
+  if state.isChecking: titleColor = fgMagenta
+
+  state.tb.write(x+2, y, titleColor, title)
 
   for i, line in state.outputBuffer:
     if i >= h - 2: break
-    state.tb.write(x+2, y+1+i, line)
+    var color = fgWhite
+    if "Error" in line or "failed" in line.toLowerAscii: color = fgRed
+    elif "Success" in line or "Correct" in line: color = fgGreen
+    elif "Hint" in line: color = fgCyan
+
+    state.tb.write(x+2, y+1+i, color, line, resetStyle)
 
 # --- Main ---
 
@@ -211,7 +211,6 @@ proc runTUI*() =
   hideCursor()
 
   initLessons()
-  # Flatten lessons
   state.flatLessons = @[]
   for m in modules:
     for l in m.lessons:
@@ -221,11 +220,9 @@ proc runTUI*() =
   state.activeView = vTree
   state.isChecking = false
 
-  # Load progress
   let saved = loadProgress()
   for s in saved: state.completed.add(s)
 
-  # Init watcher for first lesson
   if state.flatLessons.len > 0:
     let l = state.flatLessons[state.currentLessonIdx]
     let path = ensureLessonFile(l)
@@ -239,7 +236,7 @@ proc runTUI*() =
     let h = terminalHeight()
 
     let treeW = (w.float * 0.3).int
-    let contentH = (h.float * 0.6).int # More space for content since editor is gone
+    let contentH = (h.float * 0.6).int
     let rightW = w - treeW
     let outputH = h - contentH
 
@@ -249,42 +246,44 @@ proc runTUI*() =
 
     state.tb.display()
 
+    # Input Drain Loop
+    while true:
+      var key = getKey()
+      if key == Key.None: break
+
+      case key
+      of Key.Q:
+        exitProc()
+      of Key.Tab:
+        if state.activeView == vTree: state.activeView = vContent
+        elif state.activeView == vContent: state.activeView = vOutput
+        else: state.activeView = vTree
+      of Key.E, Key.Enter:
+         openInEditor(state.flatLessons[state.currentLessonIdx])
+      of Key.R:
+         startCheck(state.flatLessons[state.currentLessonIdx])
+      of Key.J, Key.Down:
+        if state.activeView == vTree:
+          state.currentLessonIdx = min(state.flatLessons.len - 1, state.currentLessonIdx + 1)
+          # Update watcher
+          let l = state.flatLessons[state.currentLessonIdx]
+          let path = ensureLessonFile(l)
+          state.watchedFile = path
+          try: state.lastModTime = getLastModificationTime(path)
+          except: discard
+      of Key.K, Key.Up:
+        if state.activeView == vTree:
+          state.currentLessonIdx = max(0, state.currentLessonIdx - 1)
+          # Update watcher
+          let l = state.flatLessons[state.currentLessonIdx]
+          let path = ensureLessonFile(l)
+          state.watchedFile = path
+          try: state.lastModTime = getLastModificationTime(path)
+          except: discard
+      else: discard
+
+    # Logic Updates
     pollCheckResult()
     checkFileWatcher()
 
-    var key = getKey()
-    case key
-    of Key.Q:
-      exitProc()
-    of Key.Tab:
-      # Cycle views
-      if state.activeView == vTree: state.activeView = vContent
-      elif state.activeView == vContent: state.activeView = vOutput
-      else: state.activeView = vTree
-    of Key.E, Key.Enter:
-       openInEditor(state.flatLessons[state.currentLessonIdx])
-    of Key.R:
-       # Manual run
-       startCheck(state.flatLessons[state.currentLessonIdx])
-    of Key.J, Key.Down:
-      if state.activeView == vTree:
-        state.currentLessonIdx = min(state.flatLessons.len - 1, state.currentLessonIdx + 1)
-        # Update watcher
-        let l = state.flatLessons[state.currentLessonIdx]
-        let path = ensureLessonFile(l)
-        state.watchedFile = path
-        try: state.lastModTime = getLastModificationTime(path)
-        except: discard
-    of Key.K, Key.Up:
-      if state.activeView == vTree:
-        state.currentLessonIdx = max(0, state.currentLessonIdx - 1)
-        # Update watcher
-        let l = state.flatLessons[state.currentLessonIdx]
-        let path = ensureLessonFile(l)
-        state.watchedFile = path
-        try: state.lastModTime = getLastModificationTime(path)
-        except: discard
-
-    else: discard
-
-    sleep(50) # Slightly slower loop to save CPU, 20ms is fast
+    sleep(20) # Low sleep for responsiveness
