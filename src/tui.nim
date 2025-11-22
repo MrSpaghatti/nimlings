@@ -91,8 +91,11 @@ proc startCheck(lesson: Lesson) =
   state.checkFuture = spawn runCode(lesson, code)
 
 proc showHint(lesson: Lesson) =
-  # Append the hint to the output buffer
-  state.outputBuffer = @["--- HINT ---", lesson.hint, ""]
+  # Append the hint to the output buffer instead of overwriting
+  state.outputBuffer.add("")
+  state.outputBuffer.add("--- HINT ---")
+  state.outputBuffer.add(lesson.hint)
+  state.outputBuffer.add("")
 
 proc pollCheckResult() =
   if not state.isChecking: return

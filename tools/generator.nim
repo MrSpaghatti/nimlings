@@ -4,6 +4,9 @@ const LessonFile = "src/lessons.json"
 const OutputFile = "src/content.nim"
 
 proc main() =
+  if not fileExists(LessonFile):
+    quit("Error: " & LessonFile & " not found!")
+
   let jsonContent = readFile(LessonFile)
   let modulesJson = parseJson(jsonContent)
 
@@ -50,8 +53,8 @@ proc main() =
         var pairs: seq[string] = @[]
         for k, v in lesson["files"].pairs:
            # k is string, v is JsonNode (string)
-           # We use & concatenation instead of fmt inside loop to be safe
-           pairs.add(k.escapeJson & ": " & $v)
+           # Use %k to create a JsonNode, then $ to stringify it (adding quotes)
+           pairs.add(($ %k) & ": " & $v)
         files_nim = "{" & pairs.join(", ") & "}.toTable"
 
       # Compiler args

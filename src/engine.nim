@@ -58,11 +58,11 @@ proc runWithTimeout(cmd: string, workingDir: string): tuple[output: string, exit
   let p = startProcess(cmd, workingDir = workingDir, options = {poStdErrToStdOut, poUsePath, poEvalCommand})
   defer: p.close()
 
-  let t0 = cpuTime()
+  let t0 = epochTime()
   var output = ""
 
   while p.running:
-    if cpuTime() - t0 > (RunTimeout / 1000.0):
+    if epochTime() - t0 > (RunTimeout / 1000.0):
       p.terminate()
       # Give it a moment to die
       os.sleep(100)
