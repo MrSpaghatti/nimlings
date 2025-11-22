@@ -1,23 +1,26 @@
 import json, strutils, strformat, os, tables
 
 const LessonFile = "src/lessons.json"
+const OutputFile = "src/content.nim"
 
 proc main() =
   let jsonContent = readFile(LessonFile)
   let modulesJson = parseJson(jsonContent)
 
-  echo "import json, tables, strutils"
-  echo "import types"
-  echo ""
-  echo "var modules*: seq[Module]"
-  echo ""
-  echo "proc initLessons*() ="
-  echo "  modules = @[]"
-  echo "  var m_lessons: seq[Lesson]"
-  echo ""
+  var output = newSeq[string]()
+
+  output.add "import json, tables, strutils"
+  output.add "import types"
+  output.add ""
+  output.add "var modules*: seq[Module]"
+  output.add ""
+  output.add "proc initLessons*() ="
+  output.add "  modules = @[]"
+  output.add "  var m_lessons: seq[Lesson]"
+  output.add ""
 
   for module in modulesJson:
-    echo "  m_lessons = @[]"
+    output.add "  m_lessons = @[]"
     let lessons = module["lessons"]
     for lesson in lessons:
       let id = lesson["id"].getStr()
@@ -38,8 +41,8 @@ proc main() =
       val_code = val_code.replace(" and ", " and ").replace(" or ", " or ")
 
       let proc_name = fmt"validate_{id_safe}"
-      echo fmt"  proc {proc_name}(code: string, output: string, stderr: string, exitCode: int): bool ="
-      echo fmt"    return {val_code}"
+      output.add fmt"  proc {proc_name}(code: string, output: string, stderr: string, exitCode: int): bool ="
+      output.add fmt"    return {val_code}"
 
       # Files handling
       var files_nim = "initTable[string, string]()"
@@ -69,21 +72,23 @@ proc main() =
       if lesson.hasKey("skip_run"):
         skipRun = $lesson["skip_run"].getBool()
 
-      echo "  m_lessons.add(Lesson("
-      echo "    id: " & $lesson["id"] & ","
-      echo "    name: " & $lesson["name"] & ","
-      echo "    conceptText: " & $lesson["concept"] & ","
-      echo "    task: " & $lesson["task"] & ","
-      echo "    solution: " & solution & ","
-      echo "    hint: " & hint & ","
-      echo "    filename: " & filename & ","
-      echo "    files: " & files_nim & ","
-      echo "    cmd: " & cmd & ","
-      echo "    compilerArgs: " & comp_args & ","
-      echo "    skipRun: " & skipRun & ","
-      echo "    validate: " & proc_name
-      echo "  ))"
+      output.add "  m_lessons.add(Lesson("
+      output.add "    id: " & $lesson["id"] & ","
+      output.add "    name: " & $lesson["name"] & ","
+      output.add "    conceptText: " & $lesson["concept"] & ","
+      output.add "    task: " & $lesson["task"] & ","
+      output.add "    solution: " & solution & ","
+      output.add "    hint: " & hint & ","
+      output.add "    filename: " & filename & ","
+      output.add "    files: " & files_nim & ","
+      output.add "    cmd: " & cmd & ","
+      output.add "    compilerArgs: " & comp_args & ","
+      output.add "    skipRun: " & skipRun & ","
+      output.add "    validate: " & proc_name
+      output.add "  ))"
 
-    echo "  modules.add(Module(name: " & $module["module"] & ", lessons: m_lessons))"
+    output.add "  modules.add(Module(name: " & $module["module"] & ", lessons: m_lessons))"
+
+  writeFile(OutputFile, output.join("\n"))
 
 main()

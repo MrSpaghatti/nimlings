@@ -1,5 +1,5 @@
 
-import os, parseopt, strutils, std/sets, times, threadpool
+import os, parseopt, strutils, std/sets, times, threadpool, json
 import engine, tui, types, content, models
 
 when NimMajor < 1 or (NimMajor == 1 and NimMinor < 6):
@@ -16,6 +16,8 @@ proc printHelp() =
   echo "  nimlings test                Run internal tests"
   echo "  nimlings hint <id>           Show hint"
   echo "  nimlings solution <id>       Show solution"
+  echo "  nimlings export              Export progress to stdout"
+  echo "  nimlings import [file]       Import progress from file (or stdin)"
 
 # --- Watch Mode Logic ---
 proc findLesson(id: string): (bool, Lesson) =
@@ -180,6 +182,50 @@ proc main() =
           echo l.solution
           return
     echo "Lesson not found."
+  of "export":
+    # Read progress manually to print raw json
+    let cd = getHomeDir() / ".config" / "nimlings"
+    if fileExists(cd / "progress.json"):
+      echo readFile(cd / "progress.json")
+    else:
+      echo "[]"
+  of "import":
+    var content = ""
+    if arg != "":
+      # Import from file
+      if fileExists(arg):
+        content = readFile(arg)
+      else:
+        echo "Error: File not found: ", arg
+        quit(1)
+    else:
+      # Import from stdin
+      try:
+        content = stdin.readAll()
+      except EOFError:
+        echo "Error: No input provided."
+        quit(1)
+
+    try:
+      let imported = parseJson(content)
+      if imported.kind != JArray:
+        echo "Error: Invalid JSON format (expected array)"
+        quit(1)
+
+      var p = loadProgress()
+      var count = 0
+      for item in imported.getElems():
+        if item.kind == JString:
+          let id = item.getStr()
+          if id notin p:
+            p.incl(id)
+            count.inc()
+
+      saveProgress(p)
+      echo "Imported ", count, " new progress items."
+    except JsonParsingError:
+      echo "Error: Invalid JSON"
+      quit(1)
   else:
     printHelp()
 

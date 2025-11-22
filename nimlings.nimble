@@ -15,12 +15,10 @@ requires "illwill >= 0.3.0"
 
 # Tasks
 
-task build_generator, "Builds the content generator tool":
-  exec "nim c -o:tools/generator tools/generator.nim"
-
 task generate_content, "Generates content.nim from lessons.json":
-  build_generatorTask()
-  exec "./tools/generator > src/content.nim"
+  # Run the generator script using the nim interpreter directly
+  # This avoids compiling an intermediate binary and handles platform differences
+  exec "nim c -r tools/generator.nim"
 
 before build:
   generate_contentTask()
