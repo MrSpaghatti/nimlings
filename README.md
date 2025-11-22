@@ -2,23 +2,25 @@
 
 `nimlings` is an interactive command-line application designed to take you from zero to professional in the Nim programming language.
 
-**Now rewritten in 100% Nim!**
+**Now rewritten in 100% Pure Nim!**
 
-The tutor presents you with a concept, gives you a coding task, and then opens your default text editor for you to write a solution. It then compiles and runs your code, providing immediate feedback. All in a cynical, no-bullshit tone.
+The tutor presents you with a concept, gives you a coding task, and then opens your default text editor for you to write a solution. It then compiles and runs your code in a sandboxed environment, providing immediate feedback. All in a cynical, no-bullshit tone.
 
 ## Features
 
 - **Interactive TUI**: Navigate lessons and view feedback in a terminal interface.
 - **Bring Your Own Editor**: Seamlessly integrates with your favorite editor (Vim, VS Code, Nano, etc.).
 - **Auto-Check**: Automatically detects file changes and verifies your solution in the background.
+- **Sandboxed Execution**: User code runs with a 5-second timeout to prevent infinite loops.
+- **Smart Hints**: Parses scary compiler errors into friendly (or cynical) hints.
 - **25 Modules**: From "Hello World" to web servers, covering the full Nim ecosystem.
-- **Smart Validation**: Each lesson validates your code logic.
-- **Progress Tracking**: Your progress is automatically saved.
+- **Progress Persistence**: Export/Import your progress to move between machines.
 
 ## Prerequisites
 
 - **Nim compiler** (1.6 or higher) installed and available in your PATH.
   - Install from https://nim-lang.org/install.html
+- **Nimble** (usually comes with Nim).
 - **Terminal** with Unicode support.
 
 ## Installation
@@ -26,23 +28,29 @@ The tutor presents you with a concept, gives you a coding task, and then opens y
 ```bash
 git clone https://github.com/yourusername/nimlings.git
 cd nimlings
-nimble install -y illwill
-nim c src/nimlings.nim
+
+# Build the application (this will also generate lesson content)
+nimble build -y
 ```
+
+This produces a `nimlings` binary in the current directory (or where nimble places binaries).
 
 ## Usage
 
 ### Start the Interactive Tutor
 
 ```bash
-./src/nimlings learn
+./nimlings
+# OR explicitly
+./nimlings learn
 ```
 
-### Navigation
+### Navigation (TUI)
 
 - **Arrow keys / j/k**: Navigate lesson list.
 - **Enter / e**: Open the current lesson in your `$EDITOR`.
 - **r**: Manually trigger verification.
+- **h / ?**: Show hint.
 - **Tab**: Cycle through views (Curriculum -> Lesson -> Output).
 - **q**: Quit.
 
@@ -51,11 +59,14 @@ The tutor monitors the current exercise file. As soon as you save your changes i
 ### CLI Commands
 
 ```bash
-./src/nimlings list        # List all lessons and progress
-./src/nimlings reset       # Reset progress
-./src/nimlings test        # Run internal tests
-./src/nimlings hint <id>   # Get hint for a lesson
-./src/nimlings solution <id>  # Show solution
+./nimlings watch [id]     # Start in Watch Mode (CLI only, no TUI)
+./nimlings list           # List all lessons and progress
+./nimlings reset          # Reset progress
+./nimlings test           # Run internal tests
+./nimlings hint <id>      # Get hint for a lesson
+./nimlings solution <id>  # Show solution
+./nimlings export         # Export progress to JSON (stdout)
+./nimlings import [file]  # Import progress from JSON file
 ```
 
 ## Project Structure
@@ -64,22 +75,22 @@ The tutor monitors the current exercise file. As soon as you save your changes i
 nimlings/
 ├── src/
 │   ├── nimlings.nim     # CLI entry point
-│   ├── nimlings.nims    # Build configuration (threads, release mode)
-│   ├── engine.nim       # Core logic (compilation, validation)
+│   ├── engine.nim       # Core logic (compilation, validation, sandboxing)
 │   ├── tui.nim          # Terminal UI (using illwill)
-│   ├── content.nim      # Generated lesson content
 │   ├── models.nim       # Data models & persistence
-│   └── types.nim        # Type definitions
+│   ├── types.nim        # Type definitions
+│   └── lessons.json     # Raw lesson data
 ├── tools/
-│   └── generate_content.py # Tool to generate content.nim from JSON/Python
+│   └── generator.nim    # Tool to generate src/content.nim from lessons.json
+├── nimlings.nimble      # Package & Build definition
 └── README.md
 ```
 
 ## Contributing
 
 Contributions are welcome!
-To add lessons, edit `src/lessons.json` (if you have it) or modify the generator `tools/generate_content.py`.
+To add lessons, edit `src/lessons.json`. The build system (`nimble build`) automatically runs the generator to update the application logic.
 
 ## License
 
-This project is open source.
+This project is open source (MIT).

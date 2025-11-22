@@ -90,6 +90,13 @@ proc startCheck(lesson: Lesson) =
 
   state.checkFuture = spawn runCode(lesson, code)
 
+proc showHint(lesson: Lesson) =
+  # Append the hint to the output buffer instead of overwriting
+  state.outputBuffer.add("")
+  state.outputBuffer.add("--- HINT ---")
+  state.outputBuffer.add(lesson.hint)
+  state.outputBuffer.add("")
+
 proc pollCheckResult() =
   if not state.isChecking: return
 
@@ -179,7 +186,7 @@ proc drawContent(x, y, w, h: int) =
 
   lines.add ("", fgWhite)
   lines.add ("--- Instructions ---", fgYellow)
-  lines.add ("Press 'e' or Enter to edit.", fgWhite)
+  lines.add ("'e': edit  'r': run  'h': hint", fgWhite)
   lines.add ("Auto-check on save is enabled.", fgWhite)
 
   for i, (text, color) in lines:
@@ -270,6 +277,8 @@ proc runTUI*() =
          openInEditor(state.flatLessons[state.currentLessonIdx])
       of Key.R:
          startCheck(state.flatLessons[state.currentLessonIdx])
+      of Key.H, Key.QuestionMark:
+         showHint(state.flatLessons[state.currentLessonIdx])
       of Key.J, Key.Down:
         if state.activeView == vTree:
           state.currentLessonIdx = min(state.flatLessons.len - 1, state.currentLessonIdx + 1)
