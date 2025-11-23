@@ -62,9 +62,11 @@ proc runWithTimeout(cmd: string, workingDir: string): tuple[output: string, exit
   var output = ""
 
   while p.running:
-    # Read any available output incrementally
-    if p.outputStream.atEnd == false:
-      output.add(p.outputStream.read(p.outputStream.available))
+    # Note: We cannot read incrementally from p.outputStream easily without blocking
+    # or using async, because `available` is not part of the standard Stream interface.
+    # To avoid blocking the timeout loop, we wait for the process to finish or timeout,
+    # and then read all output. The timeout ensures we don't hang forever.
+
     if epochTime() - t0 > (RunTimeout / 1000.0):
       p.terminate()
       # Give it a moment to die
@@ -104,20 +106,26 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
     return RunResult(stdout: "", stderr: "", exitCode: 0)
 
   # Build Command
-  var cmd = "nim " & lesson.cmd
-  if lesson.cmd == "c":
-    cmd.add " -r --threads:on --hints:off"
+  var cmd = ""
+  if lesson.lessonType == "project":
+    # For project lessons, we run nimble test
+    # We expect a .nimble file to be present in the files list
+    cmd = "nimble test"
+  else:
+    cmd = "nim " & lesson.cmd
+    if lesson.cmd == "c":
+      cmd.add " -r --threads:on --hints:off"
 
-  for arg in lesson.compilerArgs:
-    cmd.add " " & arg
+    for arg in lesson.compilerArgs:
+      cmd.add " " & arg
 
-  cmd.add " " & quoteShell(lesson.filename)
+    cmd.add " " & quoteShell(lesson.filename)
 
-  if lesson.cmd == "js":
-    # For JS, we compile then run with node
-    # TODO: Implement JS run logic (compile to .js then node)
-    # For now, just compile
-    cmd.add " -o:" & quoteShell(changeFileExt(lesson.filename, "js"))
+    if lesson.cmd == "js":
+      # For JS, we compile then run with node
+      # TODO: Implement JS run logic (compile to .js then node)
+      # For now, just compile
+      cmd.add " -o:" & quoteShell(changeFileExt(lesson.filename, "js"))
 
   # Execute
   # We execute in the temp dir with timeout
@@ -138,4 +146,9 @@ proc validate*(lesson: Lesson, code: string, res: RunResult): (bool, string) =
 proc checkNimInstalled*() =
   if execCmd("nim --version") != 0:
     echo "Error: Nim compiler not found."
+    quit(1)
+
+proc checkNimbleInstalled*() =
+  if execCmd("nimble --version") != 0:
+    echo "Error: Nimble package manager not found."
     quit(1)
