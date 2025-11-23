@@ -13,6 +13,16 @@ let
   ReIdentUndeclared = re"undeclared identifier: '(.+)'"
   ReIndentError = re"invalid indentation"
 
+proc checkNimInstalled*() =
+  if execCmd("nim --version") != 0:
+    echo "Error: Nim compiler not found."
+    quit(1)
+
+proc checkNimbleInstalled*() =
+  if execCmd("nimble --version") != 0:
+    echo "Error: Nimble package manager not found."
+    quit(1)
+
 proc parseCompilerErrors(raw: string): string =
   var hints = newSeq[string]()
 
@@ -110,6 +120,7 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
   if lesson.lessonType == "project":
     # For project lessons, we run nimble test
     # We expect a .nimble file to be present in the files list
+    checkNimbleInstalled()
     cmd = "nimble test"
   else:
     cmd = "nim " & lesson.cmd
@@ -143,12 +154,3 @@ proc validate*(lesson: Lesson, code: string, res: RunResult): (bool, string) =
   else:
     return (false, "\n--- LOGIC ERROR ---\nOutput:\n" & res.stdout)
 
-proc checkNimInstalled*() =
-  if execCmd("nim --version") != 0:
-    echo "Error: Nim compiler not found."
-    quit(1)
-
-proc checkNimbleInstalled*() =
-  if execCmd("nimble --version") != 0:
-    echo "Error: Nimble package manager not found."
-    quit(1)
