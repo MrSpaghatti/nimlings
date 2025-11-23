@@ -1,5 +1,7 @@
 
 import os, parseopt, strutils, std/sets, times, threadpool, json
+when defined(posix):
+  import posix
 import engine, tui, types, content, models
 
 # Version constant (match nimble file)
@@ -231,7 +233,6 @@ proc main() =
     else:
       try:
         when defined(posix):
-          import posix
           if isatty(stdin.getFileHandle()) == 1:
             echo "Reading from stdin... (Press Ctrl+D when done)"
         content = stdin.readAll()
