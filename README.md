@@ -2,7 +2,7 @@
 
 `nimlings` is an interactive command-line application designed to take you from zero to professional in the Nim programming language.
 
-**Now rewritten in 100% Pure Nim!**
+**Now rewritten in 100% Nim!**
 
 The tutor presents you with a concept, gives you a coding task, and then opens your default text editor for you to write a solution. It then compiles and runs your code in a sandboxed environment, providing immediate feedback. All in a cynical, no-bullshit tone.
 

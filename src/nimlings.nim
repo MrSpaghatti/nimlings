@@ -1,5 +1,7 @@
 
 import os, parseopt, strutils, std/sets, times, threadpool, json
+when defined(posix):
+  import posix
 import engine, tui, types, content, models
 
 # Version constant (match nimble file)
@@ -39,6 +41,15 @@ proc findLesson(id: string): (bool, Lesson) =
     for l in m.lessons:
       if l.id == id: return (true, l)
   return (false, Lesson())
+
+proc findLessonById(id: string): Lesson =
+  ## Find a lesson by ID, quit with error if not found
+  for m in modules:
+    for l in m.lessons:
+      if l.id == id:
+        return l
+  echo "Lesson not found: ", id
+  quit(1)
 
 proc findNextLesson(id: string): Lesson =
   var found = false
@@ -195,34 +206,16 @@ proc main() =
     if arg == "":
       printHelp()
       quit(1)
-    var found = false
-    for m in modules:
-      for l in m.lessons:
-        if l.id == arg:
-          echo "=== Hint for ", l.id, " ==="
-          echo l.hint
-          found = true
-          break
-      if found: break
-    if not found:
-      echo "Lesson not found: ", arg
-      quit(1)
+    let lesson = findLessonById(arg)
+    echo "=== Hint for ", lesson.id, " ==="
+    echo lesson.hint
   of "solution":
     if arg == "":
       printHelp()
       quit(1)
-    var found = false
-    for m in modules:
-      for l in m.lessons:
-        if l.id == arg:
-          echo "=== Solution for ", l.id, " ==="
-          echo l.solution
-          found = true
-          break
-      if found: break
-    if not found:
-      echo "Lesson not found: ", arg
-      quit(1)
+    let lesson = findLessonById(arg)
+    echo "=== Solution for ", lesson.id, " ==="
+    echo lesson.solution
   of "export":
     let cd = getHomeDir() / ".config" / "nimlings"
     if fileExists(cd / "progress.json"):
@@ -239,6 +232,9 @@ proc main() =
         quit(1)
     else:
       try:
+        when defined(posix):
+          if isatty(stdin.getFileHandle()) == 1:
+            echo "Reading from stdin... (Press Ctrl+D when done)"
         content = stdin.readAll()
       except EOFError:
         echo "Error: No input provided."
@@ -263,6 +259,9 @@ proc main() =
       echo "Imported ", count, " new progress items."
     except JsonParsingError:
       echo "Error: Invalid JSON"
+      quit(1)
+    except JsonKindError:
+      echo "Error: Invalid JSON structure"
       quit(1)
   else:
     printHelp()
