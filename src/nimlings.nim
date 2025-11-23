@@ -1,6 +1,9 @@
 
-import os, parseopt, strutils, std/sets, times, threadpool
+import os, parseopt, strutils, std/sets, times, threadpool, json
 import engine, tui, types, content, models
+
+# Version constant (match nimble file)
+const NimlingsVersion = "2.0.0"
 
 when NimMajor < 1 or (NimMajor == 1 and NimMinor < 6):
   {.error: "Nim 1.6 or higher is required to build nimlings.".}
@@ -8,14 +11,27 @@ when NimMajor < 1 or (NimMajor == 1 and NimMinor < 6):
 proc printHelp() =
   echo "nimlings: An interactive tutor for the Nim programming language."
   echo ""
-  echo "Usage:"
-  echo "  nimlings learn [lesson_id]   Start the TUI (default)"
-  echo "  nimlings watch [lesson_id]   Start CLI Watch Mode"
-  echo "  nimlings list                List all lessons"
-  echo "  nimlings reset               Reset progress"
-  echo "  nimlings test                Run internal tests"
-  echo "  nimlings hint <id>           Show hint"
-  echo "  nimlings solution <id>       Show solution"
+  echo "Usage: nimlings [options] [command] [args]"
+  echo ""
+  echo "Commands:"
+  echo "  learn [lesson_id]         Start the TUI (default)"
+  echo "  watch [lesson_id]         Start CLI Watch Mode"
+  echo "  list                      List all lessons"
+  echo "  reset                     Reset progress"
+  echo "  test                      Run internal tests"
+  echo "  hint <lesson_id>          Show hint for a lesson"
+  echo "  solution <lesson_id>      Show solution for a lesson"
+  echo "  export                    Export progress to stdout (JSON)"
+  echo "  import [file]             Import progress from file (or stdin)"
+  echo ""
+  echo "Options:"
+  echo "  -h, --help                Show this help message"
+  echo "  -v, --version             Show version"
+  echo ""
+  echo "Config:"
+  echo "  Progress and state are stored in: ~/.config/nimlings/"
+  echo ""
+  echo "For more information, visit: https://github.com/nim-lang/nimlings"
 
 # --- Watch Mode Logic ---
 proc findLesson(id: string): (bool, Lesson) =
@@ -105,14 +121,26 @@ proc runWatchMode(startId: string) =
           discard
 
 proc main() =
-  checkNimInstalled()
+  # Move checkNimInstalled later to avoid noise on help/version/list
+
   initLessons() # Load content
 
   var p = initOptParser(quoteShellCommand(commandLineParams()))
+
+  # Handle flags first if they appear as first argument
+  if paramCount() > 0:
+    let first = paramStr(1)
+    if first == "-h" or first == "--help":
+      printHelp()
+      quit(0)
+    if first == "-v" or first == "--version":
+      echo "nimlings " & NimlingsVersion
+      quit(0)
+
   var cmd = "learn"
   var arg = ""
 
-  # Basic parsing
+  # Basic parsing for subcommands
   if paramCount() > 0:
     cmd = paramStr(1)
     if paramCount() > 1:
@@ -120,8 +148,10 @@ proc main() =
 
   case cmd
   of "learn":
+    checkNimInstalled()
     runTUI()
   of "watch":
+    checkNimInstalled()
     runWatchMode(arg)
   of "list":
     let p = loadProgress()
@@ -139,14 +169,13 @@ proc main() =
     removeFile(cd / "state.json")
     echo "Progress reset."
   of "test":
+    checkNimInstalled()
     echo "Running internal tests..."
     var passed = 0
     var failed = 0
     for m in modules:
       for l in m.lessons:
-        if l.validate == nil: continue # Should verify function pointer?
-        # Intro lessons usually return true or have simple validation.
-        # We need to run the solution code.
+        if l.validate == nil: continue
         echo "Testing ", l.id, ": ", l.name, "..."
         let res = runCode(l, l.solution)
         let (ok, msg) = validate(l, l.solution, res)
@@ -163,25 +192,81 @@ proc main() =
     else:
       echo "All passed."
   of "hint":
-    # find lesson
-    # naive search
+    if arg == "":
+      printHelp()
+      quit(1)
+    var found = false
     for m in modules:
       for l in m.lessons:
         if l.id == arg:
           echo "=== Hint for ", l.id, " ==="
           echo l.hint
-          return
-    echo "Lesson not found."
+          found = true
+          break
+      if found: break
+    if not found:
+      echo "Lesson not found: ", arg
+      quit(1)
   of "solution":
+    if arg == "":
+      printHelp()
+      quit(1)
+    var found = false
     for m in modules:
       for l in m.lessons:
         if l.id == arg:
           echo "=== Solution for ", l.id, " ==="
           echo l.solution
-          return
-    echo "Lesson not found."
+          found = true
+          break
+      if found: break
+    if not found:
+      echo "Lesson not found: ", arg
+      quit(1)
+  of "export":
+    let cd = getHomeDir() / ".config" / "nimlings"
+    if fileExists(cd / "progress.json"):
+      echo readFile(cd / "progress.json")
+    else:
+      echo "[]"
+  of "import":
+    var content = ""
+    if arg != "":
+      if fileExists(arg):
+        content = readFile(arg)
+      else:
+        echo "Error: File not found: ", arg
+        quit(1)
+    else:
+      try:
+        content = stdin.readAll()
+      except EOFError:
+        echo "Error: No input provided."
+        quit(1)
+
+    try:
+      let imported = parseJson(content)
+      if imported.kind != JArray:
+        echo "Error: Invalid JSON format (expected array)"
+        quit(1)
+
+      var p = loadProgress()
+      var count = 0
+      for item in imported.getElems():
+        if item.kind == JString:
+          let id = item.getStr()
+          if id notin p:
+            p.incl(id)
+            count.inc()
+
+      saveProgress(p)
+      echo "Imported ", count, " new progress items."
+    except JsonParsingError:
+      echo "Error: Invalid JSON"
+      quit(1)
   else:
     printHelp()
+    quit(1)
 
 when isMainModule:
   main()

@@ -1,9 +1,34 @@
 
-import os, osproc, strutils, tables
+import os, osproc, strutils, tables, streams, times, re
 import std/tempfiles
 import types, models
 
 const ExercisesDir = "exercises"
+const RunTimeout = 5000 # 5 seconds
+
+# Regexes for common Nim errors
+# Cannot be const because re() might involve C calls or checks not available at CT
+let
+  ReTypeMismatch = re"type mismatch: got <(.+)> but expected '(.+)'"
+  ReIdentUndeclared = re"undeclared identifier: '(.+)'"
+  ReIndentError = re"invalid indentation"
+
+proc parseCompilerErrors(raw: string): string =
+  var hints = newSeq[string]()
+
+  if raw.contains(ReTypeMismatch):
+    hints.add "Type Mismatch: You're trying to put a square peg in a round hole.\nCheck your types."
+
+  if raw.contains(ReIdentUndeclared):
+    hints.add "Undeclared Identifier: You used a name that doesn't exist.\nDid you typo it? Did you forget to declare it?"
+
+  if raw.contains(ReIndentError):
+    hints.add "Indentation Error: Nim uses whitespace to define blocks.\nAlign your code properly."
+
+  if hints.len > 0:
+    return raw & "\n\n--- HINTS ---\n" & hints.join("\n")
+
+  return raw
 
 proc getLessonPath(lesson: Lesson): string =
   # Clean ID for folder name
@@ -25,6 +50,31 @@ proc ensureLessonFile*(lesson: Lesson): string =
     writeFile(path, content)
 
   return absolutePath(path)
+
+proc runWithTimeout(cmd: string, workingDir: string): tuple[output: string, exitCode: int] =
+  # Use shell to run the command to handle arguments parsing automatically
+  # On Unix: sh -c "cmd"
+  # On Windows: cmd /c "cmd"
+  let p = startProcess(cmd, workingDir = workingDir, options = {poStdErrToStdOut, poUsePath, poEvalCommand})
+  defer: p.close()
+
+  let t0 = epochTime()
+  var output = ""
+
+  while p.running:
+    if epochTime() - t0 > (RunTimeout / 1000.0):
+      p.terminate()
+      # Give it a moment to die
+      os.sleep(100)
+      if p.running: p.kill()
+      return ("Error: Execution timed out (infinite loop?)", 124)
+
+    os.sleep(50)
+
+  # Read remaining output
+  output = p.outputStream.readAll()
+  return (output, p.peekExitCode())
+
 
 proc runCode*(lesson: Lesson, code: string): RunResult =
   # Create temp dir
@@ -63,15 +113,15 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
     cmd.add " -o:" & quoteShell(changeFileExt(lesson.filename, "js"))
 
   # Execute
-  # We execute in the temp dir
-  let (outp, errC) = execCmdEx(cmd, workingDir = tmpDir)
+  # We execute in the temp dir with timeout
+  let (outp, errC) = runWithTimeout(cmd, tmpDir)
 
-  # Simple execCmdEx for now
   return RunResult(stdout: outp, stderr: "", exitCode: errC)
 
 proc validate*(lesson: Lesson, code: string, res: RunResult): (bool, string) =
   if res.exitCode != 0:
-    return (false, "\n--- COMPILE/RUN ERROR ---\n" & res.stdout & "\n" & res.stderr & "\n\nHINT: " & lesson.hint)
+    let friendlyErr = parseCompilerErrors(res.stdout & "\n" & res.stderr)
+    return (false, "\n--- COMPILE/RUN ERROR ---\n" & friendlyErr & "\n\nHINT: " & lesson.hint)
 
   if lesson.validate(code, res.stdout, res.stderr, res.exitCode):
     return (true, "\nCorrect!\n" & res.stdout)
