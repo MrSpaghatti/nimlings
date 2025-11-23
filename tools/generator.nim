@@ -8,7 +8,11 @@ proc main() =
     quit("Error: " & LessonFile & " not found!")
 
   let jsonContent = readFile(LessonFile)
-  let modulesJson = parseJson(jsonContent)
+  var modulesJson: JsonNode
+  try:
+    modulesJson = parseJson(jsonContent)
+  except JsonParsingError as e:
+    quit("Error: Invalid JSON in " & LessonFile & " - " & e.msg)
 
   var output = newSeq[string]()
 
@@ -37,11 +41,7 @@ proc main() =
       val_code = val_code.replace("result.stdout", "output")
       val_code = val_code.replace("result.stderr", "stderr")
       val_code = val_code.replace("result.exitCode", "exitCode")
-      val_code = val_code.replace(".strip()", ".strip()")
       val_code = val_code.replace("result.returncode", "exitCode")
-      val_code = val_code.replace(" in code", " in code")
-      val_code = val_code.replace(".replace(\"_\", \"\")", ".replace(\"_\", \"\")")
-      val_code = val_code.replace(" and ", " and ").replace(" or ", " or ")
 
       let proc_name = fmt"validate_{id_safe}"
       output.add fmt"  proc {proc_name}(code: string, output: string, stderr: string, exitCode: int): bool ="
@@ -52,8 +52,8 @@ proc main() =
       if lesson.hasKey("files") and lesson["files"].len > 0:
         var pairs: seq[string] = @[]
         for k, v in lesson["files"].pairs:
-           # k is string, v is JsonNode (string)
-           # Use %k to create a JsonNode, then $ to stringify it (adding quotes)
+           # k is a string key, v is a JsonNode value
+           # $ %k produces a quoted JSON key, $v produces the JSON value
            pairs.add(($ %k) & ": " & $v)
         files_nim = "{" & pairs.join(", ") & "}.toTable"
 
@@ -92,6 +92,9 @@ proc main() =
 
     output.add "  modules.add(Module(name: " & $module["module"] & ", lessons: m_lessons))"
 
-  writeFile(OutputFile, output.join("\n"))
+  try:
+    writeFile(OutputFile, output.join("\n"))
+  except OSError as e:
+    quit("Error: Failed to write to " & OutputFile & ": " & e.msg)
 
 main()

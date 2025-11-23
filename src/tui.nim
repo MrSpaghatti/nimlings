@@ -94,7 +94,10 @@ proc showHint(lesson: Lesson) =
   # Append the hint to the output buffer instead of overwriting
   state.outputBuffer.add("")
   state.outputBuffer.add("--- HINT ---")
-  state.outputBuffer.add(lesson.hint)
+  if lesson.hint.strip.len > 0:
+    state.outputBuffer.add(lesson.hint)
+  else:
+    state.outputBuffer.add("No hint available for this lesson.")
   state.outputBuffer.add("")
 
 proc pollCheckResult() =

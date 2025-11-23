@@ -21,4 +21,4 @@ task generate_content, "Generates content.nim from lessons.json":
   exec "nim c -r tools/generator.nim"
 
 before build:
-  generate_contentTask()
+  generateContentTask()

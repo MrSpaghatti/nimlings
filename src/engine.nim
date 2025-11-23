@@ -62,17 +62,24 @@ proc runWithTimeout(cmd: string, workingDir: string): tuple[output: string, exit
   var output = ""
 
   while p.running:
+    # Read any available output incrementally
+    if p.outputStream.atEnd == false:
+      output.add(p.outputStream.read(p.outputStream.available))
     if epochTime() - t0 > (RunTimeout / 1000.0):
       p.terminate()
       # Give it a moment to die
       os.sleep(100)
       if p.running: p.kill()
-      return ("Error: Execution timed out (infinite loop?)", 124)
+      # Read any remaining output after termination
+      if p.outputStream.atEnd == false:
+        output.add(p.outputStream.readAll())
+      return ("Error: Execution timed out (infinite loop?)\n" & output, 124)
 
-    os.sleep(50)
+    os.sleep(150)
 
   # Read remaining output
-  output = p.outputStream.readAll()
+  if p.outputStream.atEnd == false:
+    output.add(p.outputStream.readAll())
   return (output, p.peekExitCode())
 
 
