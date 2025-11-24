@@ -1,3 +1,4 @@
 nimlings
 tools/generator
 src/content.nim
+tests/runner
