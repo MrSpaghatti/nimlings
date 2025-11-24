@@ -13,6 +13,16 @@ let
   ReIdentUndeclared = re"undeclared identifier: '(.+)'"
   ReIndentError = re"invalid indentation"
 
+proc checkNimInstalled*() =
+  if execCmd("nim --version") != 0:
+    echo "Error: Nim compiler not found."
+    quit(1)
+
+proc checkNimbleInstalled*() =
+  if execCmd("nimble --version") != 0:
+    echo "Error: Nimble package manager not found."
+    quit(1)
+
 proc parseCompilerErrors(raw: string): string =
   var hints = newSeq[string]()
 
@@ -26,7 +36,7 @@ proc parseCompilerErrors(raw: string): string =
     hints.add "Indentation Error: Nim uses whitespace to define blocks.\nAlign your code properly."
 
   if hints.len > 0:
-    return raw & "\n\n--- HINTS ---\n" & hints.join("\n")
+    return raw & "\n\n--- HINTS ---" & hints.join("\n")
 
   return raw
 
@@ -60,8 +70,9 @@ proc runWithTimeout(cmd: string, workingDir: string): tuple[output: string, exit
 
   let t0 = epochTime()
   var output = ""
-  var readStreams = @[p.outputStream]
-
+  
+  # We track if we are still running to handle the timeout loop correctly
+  
   while p.running:
     if epochTime() - t0 > (RunTimeout / 1000.0):
       p.terminate()
@@ -70,7 +81,7 @@ proc runWithTimeout(cmd: string, workingDir: string): tuple[output: string, exit
       output.add(p.outputStream.readAll())
       return ("Error: Execution timed out (infinite loop?)\n" & output, 124)
 
-    # Non-blocking read for POSIX-like systems
+    # Non-blocking read for POSIX-like systems (from HEAD)
     when defined(posix):
       if p.hasData:
         var line = ""
@@ -106,6 +117,14 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
   if lesson.skipRun:
     return RunResult(stdout: "", stderr: "", exitCode: 0)
 
+  # 1. Project Mode
+  if lesson.lessonType == "project":
+    checkNimbleInstalled()
+    let cmd = "nimble test"
+    let (outp, errC) = runWithTimeout(cmd, tmpDir)
+    return RunResult(stdout: outp, stderr: "", exitCode: errC)
+
+  # 2. JS Mode (from HEAD)
   if lesson.cmd == "js":
     # JS-specific logic: compile, then run with Node
     let jsFile = tmpDir / changeFileExt(lesson.filename, "js")
@@ -119,11 +138,14 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
       return RunResult(stdout: compileOut, stderr: "", exitCode: compileErr)
 
     # If compilation is successful, run with node
+    # Check if node is installed? 
+    # For now assume yes as per HEAD implementation, or maybe add a check?
+    # Keeping it simple as per HEAD.
     let runCmd = "node " & quoteShell(jsFile)
     let (runOut, runErr) = runWithTimeout(runCmd, tmpDir)
     return RunResult(stdout: runOut, stderr: "", exitCode: runErr)
 
-  # Build Command for other targets
+  # 3. Standard Nim Mode
   var cmd = "nim " & lesson.cmd
   if lesson.cmd == "c":
     cmd.add " -r --threads:on --hints:off"
@@ -141,14 +163,9 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
 proc validate*(lesson: Lesson, code: string, res: RunResult): (bool, string) =
   if res.exitCode != 0:
     let friendlyErr = parseCompilerErrors(res.stdout & "\n" & res.stderr)
-    return (false, "\n--- COMPILE/RUN ERROR ---\n" & friendlyErr & "\n\nHINT: " & lesson.hint)
+    return (false, "\n--- COMPILE/RUN ERROR ---" & friendlyErr & "\n\nHINT: " & lesson.hint)
 
   if lesson.validate(code, res.stdout, res.stderr, res.exitCode):
     return (true, "\nCorrect!\n" & res.stdout)
   else:
     return (false, "\n--- LOGIC ERROR ---\nOutput:\n" & res.stdout)
-
-proc checkNimInstalled*() =
-  if execCmd("nim --version") != 0:
-    echo "Error: Nim compiler not found."
-    quit(1)

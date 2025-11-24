@@ -650,5 +650,62 @@
         "hint": "Use `%*` for JSON construction. Don't forget to import `todo`."
       }
     ]
+  },
+  {
+    "module": "26: Macros II (\"Writing Your Own Language\")",
+    "lessons": [
+      {
+        "id": "26.1",
+        "name": "HTML DSL",
+        "concept": "Macros allow you to create Domain Specific Languages (DSLs).\nLet's create a simple HTML generator.\nWe want syntax like `html div: echo \"content\"`.\nTo do this, we accept a body of `untyped` statements.",
+        "task": "Import `macros`.\nCreate a macro `html(name: untyped, body: untyped)`.\nIt should return a `quote do:` block that echoes \"<\" & $name & \">\", then runs `body`, then echoes \"</\" & $name & \">\" .\nUse it: `html div: echo \"Hello\"`.",
+        "validation_code": "\"<div>\" in result.stdout and \"</div>\" in result.stdout and \"Hello\" in result.stdout",
+        "solution": "import macros\nmacro html(name: untyped, body: untyped): untyped =\n  result = quote do:\n    echo \"<\" & $`name` & \">\"\n    `body`\n    echo \"</\" & $`name` & \">\"\nhtml div:\n  echo \"Hello\"",
+        "hint": "Inside `quote do:`, remember to use backticks to inject variables: `$`name``. "
+      },
+      {
+        "id": "26.2",
+        "name": "Typed Macros",
+        "concept": "So far we used `untyped`. But `typed` arguments are fully type-checked before the macro runs.\nThis is useful for verifying inputs.\nWrite a macro `checkInt(x: typed)` that errors at compile time if `x` is not an int.",
+        "task": "Import `macros`.\nWrite macro `checkInt(x: typed)`.\nUse `x.getType.typeKind` to check if it is `ntyInt`.\nIf not, call `error(\"Not an int\", x)`.\nCall it with `10`.",
+        "validation_code": "result.exitCode == 0",
+        "solution": "import macros\nmacro checkInt(x: typed): untyped =\n  if x.getType.typeKind != ntyInt:\n    error(\"Not an int\", x)\ncheckInt(10)",
+        "hint": "Access `x.getType.typeKind`. Compare with `ntyInt` (from `macros` module)."
+      }
+    ]
+  },
+  {
+    "module": "BOSS FIGHT 4: The MiniTest Framework",
+    "lessons": [
+      {
+        "id": "B4.1",
+        "name": "The Framework",
+        "concept": "You've learned macros and projects. Now build a mini testing framework.\nThis is a Project Mode lesson.\nYou need to implement `src/minitest.nim` with a `suite` and `test` macro.",
+        "type": "project",
+        "task": "1. In `src/minitest.nim`, export a template `suite(name, body)` that echoes \"[SUITE] \" & name and runs body.\n2. Export a template `test(name, body)` that echoes \"  [TEST] \" & name and runs body.\n3. The `tests/test1.nim` file already uses it. Just implement the module.",
+        "filename": "src/minitest.nim",
+        "files": {
+          "minitest.nimble": "version = \"0.1.0\"\nauthor = \"Boss\"\ndescription = \"Minitest\"\nlicense = \"MIT\"\nsrcDir = \"src\"\n",
+          "tests/test1.nim": "import minitest\nsuite \"MySuite\":\n  test \"MyTest\":\n    echo \"Running\""
+        },
+        "validation_code": "\"[SUITE] MySuite\" in result.stdout and \"[TEST] MyTest\" in result.stdout",
+        "solution": "template suite*(name: string, body: untyped) =\n  echo \"[SUITE] \", name\n  body\n\ntemplate test*(name: string, body: untyped) =\n  echo \"  [TEST] \", name\n  body",
+        "hint": "Use `template` not `macro` for simplicity here. `template suite*(name: string, body: untyped) = ...`"
+      }
+    ]
+  },
+  {
+    "module": "27: Concurrency Deep Dive (\"Threading the Needle\")",
+    "lessons": [
+      {
+        "id": "27.1",
+        "name": "Channels",
+        "concept": "Threads share memory, but that's dangerous. `Channel[T]` lets threads communicate safely by passing messages.\nUse `open` to initialize, `send` to send, `recv` to receive.\nChannels are generic.",
+        "task": "Import `os`.\nDeclare `var chan: Channel[string]`.\nOpen it.\nSpawn a thread that sleeps 100ms then sends \"Ping\".\nIn main thread, `recv()` and echo the message.",
+        "validation_code": "result.stdout.strip() == \"Ping\"",
+        "solution": "import os\nvar chan: Channel[string]\nchan.open()\nproc worker() {.thread.} =\n  sleep(100)\n  chan.send(\"Ping\")\nvar t: Thread[void]\ncreateThread(t, worker)\nt.joinThread()\necho chan.recv()",
+        "hint": "Remember `{.thread.}` pragma. Use `createThread`. `chan.send(...)`."
+      }
+    ]
   }
 ]
