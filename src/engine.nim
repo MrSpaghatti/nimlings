@@ -60,22 +60,25 @@ proc runWithTimeout(cmd: string, workingDir: string): tuple[output: string, exit
 
   let t0 = epochTime()
   var output = ""
+  var readStreams = @[p.outputStream]
 
   while p.running:
-    # Read any available output incrementally
-    if p.outputStream.atEnd == false:
-      output.add(p.outputStream.read(p.outputStream.available))
     if epochTime() - t0 > (RunTimeout / 1000.0):
       p.terminate()
-      # Give it a moment to die
       os.sleep(100)
       if p.running: p.kill()
-      # Read any remaining output after termination
-      if p.outputStream.atEnd == false:
-        output.add(p.outputStream.readAll())
+      output.add(p.outputStream.readAll())
       return ("Error: Execution timed out (infinite loop?)\n" & output, 124)
 
-    os.sleep(150)
+    # Non-blocking read for POSIX-like systems
+    when defined(posix):
+      if p.hasData:
+        var line = ""
+        while p.outputStream.readLine(line):
+          output.add(line & "\n")
+    else:
+      # Fallback for Windows - less efficient, small sleeps
+      os.sleep(50)
 
   # Read remaining output
   if p.outputStream.atEnd == false:
@@ -103,7 +106,24 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
   if lesson.skipRun:
     return RunResult(stdout: "", stderr: "", exitCode: 0)
 
-  # Build Command
+  if lesson.cmd == "js":
+    # JS-specific logic: compile, then run with Node
+    let jsFile = tmpDir / changeFileExt(lesson.filename, "js")
+    var compileCmd = "nim js -o:" & quoteShell(jsFile)
+    for arg in lesson.compilerArgs:
+      compileCmd.add " " & arg
+    compileCmd.add " " & quoteShell(lesson.filename)
+
+    let (compileOut, compileErr) = runWithTimeout(compileCmd, tmpDir)
+    if compileErr != 0:
+      return RunResult(stdout: compileOut, stderr: "", exitCode: compileErr)
+
+    # If compilation is successful, run with node
+    let runCmd = "node " & quoteShell(jsFile)
+    let (runOut, runErr) = runWithTimeout(runCmd, tmpDir)
+    return RunResult(stdout: runOut, stderr: "", exitCode: runErr)
+
+  # Build Command for other targets
   var cmd = "nim " & lesson.cmd
   if lesson.cmd == "c":
     cmd.add " -r --threads:on --hints:off"
@@ -113,14 +133,7 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
 
   cmd.add " " & quoteShell(lesson.filename)
 
-  if lesson.cmd == "js":
-    # For JS, we compile then run with node
-    # TODO: Implement JS run logic (compile to .js then node)
-    # For now, just compile
-    cmd.add " -o:" & quoteShell(changeFileExt(lesson.filename, "js"))
-
   # Execute
-  # We execute in the temp dir with timeout
   let (outp, errC) = runWithTimeout(cmd, tmpDir)
 
   return RunResult(stdout: outp, stderr: "", exitCode: errC)

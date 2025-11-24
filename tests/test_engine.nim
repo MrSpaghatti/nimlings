@@ -38,3 +38,24 @@ suite "Engine":
     let (ok3, msg3) = validate(l2, "code", resFailLogic)
     check ok3 == false
     check "LOGIC ERROR" in msg3
+
+  test "JS Runner":
+    var l = Lesson(
+      id: "js_test",
+      filename: "test.nim",
+      cmd: "js"
+    )
+    let code = "echo \"Hello from JS\""
+    let res = runCode(l, code)
+    check res.exitCode == 0
+    check "Hello from JS" in res.stdout
+
+  test "JS Runner Compilation Failure":
+    var l = Lesson(
+      id: "js_fail_test",
+      filename: "test.nim",
+      cmd: "js"
+    )
+    let code = "echo \"Hello from JS" # Intentional syntax error
+    let res = runCode(l, code)
+    check res.exitCode != 0
