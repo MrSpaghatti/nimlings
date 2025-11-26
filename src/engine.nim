@@ -1,4 +1,3 @@
-
 import os, osproc, strutils, tables, streams, times, re
 import std/tempfiles
 import types, models
@@ -87,16 +86,26 @@ proc runWithTimeout*(cmd: string, workingDir: string): tuple[output: string, exi
 
 proc runCode*(lesson: Lesson, code: string): RunResult =
   # Create temp dir
-  let tmpDir = createTempDir("nimlings_", "")
-  defer: removeDir(tmpDir) # Clean up
+  # For project lessons, this becomes the project root
+  let tmpDir = case lesson.lessonType
+    of "project": getHomeDir() / ".config" / "nimlings" / "projects" / lesson.id.replace(".", "_")
+    else: createTempDir("nimlings_", "")
 
-  # Write main file
+  # Cleanup for non-project lessons
+  if lesson.lessonType != "project":
+    defer: removeDir(tmpDir)
+  else:
+    # For projects, we clear the dir before use
+    if dirExists(tmpDir): removeDir(tmpDir)
+
+  createDir(tmpDir)
+
+  # Write main file to tmpDir
   let mainFile = tmpDir / lesson.filename
-  # Ensure parent dirs exist
   createDir(parentDir(mainFile))
   writeFile(mainFile, code)
 
-  # Write project files
+  # Write scaffolding files
   for fname, content in lesson.files:
     let path = tmpDir / fname
     createDir(parentDir(path))
@@ -145,13 +154,23 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
 
   # Execute
   let (outp, errC) = runWithTimeout(cmd, tmpDir)
-
   return RunResult(stdout: outp, stderr: "", exitCode: errC)
 
 proc validate*(lesson: Lesson, code: string, res: RunResult): (bool, string) =
+  # For project type, we only care about exit code from nimble test
+  if lesson.lessonType == "project":
+    if res.exitCode == 0:
+      return (true, "\nCorrect!\n" & res.stdout)
+    else:
+      # We show the full nimble test output on failure
+      return (false, "\n--- TEST FAILED ---\n" & res.stdout)
+
+  # Standard validation for other types
   if res.exitCode != 0:
+    # Before showing error, print the user's code for context
+    var context = "\n--- YOUR CODE ---\n" & code & "\n-----------------"
     let friendlyErr = parseCompilerErrors(res.stdout & "\n" & res.stderr)
-    return (false, "\n--- COMPILE/RUN ERROR ---" & friendlyErr & "\n\nHINT: " & lesson.hint)
+    return (false, context & "\n--- COMPILE/RUN ERROR ---" & friendlyErr & "\n\nHINT: " & lesson.hint)
 
   if lesson.validate(code, res.stdout, res.stderr, res.exitCode):
     return (true, "\nCorrect!\n" & res.stdout)
