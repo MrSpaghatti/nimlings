@@ -61,7 +61,7 @@ proc ensureLessonFile*(lesson: Lesson): string =
 
   return absolutePath(path)
 
-proc runWithTimeout(cmd: string, workingDir: string): tuple[output: string, exitCode: int] =
+proc runWithTimeout*(cmd: string, workingDir: string): tuple[output: string, exitCode: int] =
   # Use shell to run the command to handle arguments parsing automatically
   # On Unix: sh -c "cmd"
   # On Windows: cmd /c "cmd"
@@ -70,30 +70,18 @@ proc runWithTimeout(cmd: string, workingDir: string): tuple[output: string, exit
 
   let t0 = epochTime()
   var output = ""
-  
-  # We track if we are still running to handle the timeout loop correctly
-  
-  while p.running:
-    if epochTime() - t0 > (RunTimeout / 1000.0):
-      p.terminate()
-      os.sleep(100)
-      if p.running: p.kill()
-      output.add(p.outputStream.readAll())
-      return ("Error: Execution timed out (infinite loop?)\n" & output, 124)
 
-    # Non-blocking read for POSIX-like systems (from HEAD)
-    when defined(posix):
-      if p.hasData:
-        var line = ""
-        while p.outputStream.readLine(line):
-          output.add(line & "\n")
-    else:
-      # Fallback for Windows - less efficient, small sleeps
-      os.sleep(50)
+  while p.running and (epochTime() - t0 < (RunTimeout / 1000.0)):
+    os.sleep(50) # Poll every 50ms
 
-  # Read remaining output
-  if p.outputStream.atEnd == false:
-    output.add(p.outputStream.readAll())
+  if p.running:
+    p.terminate()
+    os.sleep(100) # Give it a moment to die gracefully
+    if p.running: p.kill()
+    return ("Error: Execution timed out (infinite loop?)\n" & p.outputStream.readAll(), 124)
+
+  # Process has finished, read all output
+  output = p.outputStream.readAll()
   return (output, p.peekExitCode())
 
 

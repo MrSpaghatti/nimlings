@@ -2,3 +2,5 @@ nimlings
 tools/generator
 src/content.nim
 tests/runner
+tests/temp_script_for_test.nim
+tests/temp_script_for_test
