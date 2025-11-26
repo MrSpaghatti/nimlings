@@ -13,6 +13,7 @@ type
     hint*: string
     filename*: string
     files*: Table[string, string]
+    lessonType*: string
     cmd*: string
     compilerArgs*: seq[string]
     skipRun*: bool

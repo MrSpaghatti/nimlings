@@ -70,6 +70,7 @@ proc main() =
       let hint = if lesson.hasKey("hint"): $lesson["hint"] else: "\"\""
       let filename = if lesson.hasKey("filename"): $lesson["filename"] else: "\"solution.nim\""
       let cmd = if lesson.hasKey("cmd"): $lesson["cmd"] else: "\"c\""
+      let lType = if lesson.hasKey("type"): $lesson["type"] else: "\"single_file\""
 
       var skipRun = "false"
       if lesson.hasKey("skip_run"):
@@ -84,6 +85,7 @@ proc main() =
       output.add "    hint: " & hint & ","
       output.add "    filename: " & filename & ","
       output.add "    files: " & files_nim & ","
+      output.add "    lessonType: " & lType & ","
       output.add "    cmd: " & cmd & ","
       output.add "    compilerArgs: " & comp_args & ","
       output.add "    skipRun: " & skipRun & ","

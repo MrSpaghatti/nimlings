@@ -13,6 +13,16 @@ let
   ReIdentUndeclared = re"undeclared identifier: '(.+)'"
   ReIndentError = re"invalid indentation"
 
+proc checkNimInstalled*() =
+  if execCmd("nim --version") != 0:
+    echo "Error: Nim compiler not found."
+    quit(1)
+
+proc checkNimbleInstalled*() =
+  if execCmd("nimble --version") != 0:
+    echo "Error: Nimble package manager not found."
+    quit(1)
+
 proc parseCompilerErrors(raw: string): string =
   var hints = newSeq[string]()
 
@@ -60,25 +70,24 @@ proc runWithTimeout(cmd: string, workingDir: string): tuple[output: string, exit
 
   let t0 = epochTime()
   var output = ""
-  var readStreams = @[p.outputStream]
 
   while p.running:
+    # Note: We cannot read incrementally from p.outputStream easily without blocking
+    # or using async, because `available` is not part of the standard Stream interface.
+    # To avoid blocking the timeout loop, we wait for the process to finish or timeout,
+    # and then read all output. The timeout ensures we don't hang forever.
+
     if epochTime() - t0 > (RunTimeout / 1000.0):
       p.terminate()
+      # Give it a moment to die
       os.sleep(100)
       if p.running: p.kill()
-      output.add(p.outputStream.readAll())
+      # Read any remaining output after termination
+      if p.outputStream.atEnd == false:
+        output.add(p.outputStream.readAll())
       return ("Error: Execution timed out (infinite loop?)\n" & output, 124)
 
-    # Non-blocking read for POSIX-like systems
-    when defined(posix):
-      if p.hasData:
-        var line = ""
-        while p.outputStream.readLine(line):
-          output.add(line & "\n")
-    else:
-      # Fallback for Windows - less efficient, small sleeps
-      os.sleep(50)
+    os.sleep(150)
 
   # Read remaining output
   if p.outputStream.atEnd == false:
@@ -88,16 +97,26 @@ proc runWithTimeout(cmd: string, workingDir: string): tuple[output: string, exit
 
 proc runCode*(lesson: Lesson, code: string): RunResult =
   # Create temp dir
-  let tmpDir = createTempDir("nimlings_", "")
-  defer: removeDir(tmpDir) # Clean up
+  # For project lessons, this becomes the project root
+  let tmpDir = case lesson.lessonType
+    of "project": getHomeDir() / ".config" / "nimlings" / "projects" / lesson.id.replace(".", "_")
+    else: createTempDir("nimlings_", "")
 
-  # Write main file
+  # Cleanup for non-project lessons
+  if lesson.lessonType != "project":
+    defer: removeDir(tmpDir)
+  else:
+    # For projects, we clear the dir before use
+    if dirExists(tmpDir): removeDir(tmpDir)
+
+  createDir(tmpDir)
+
+  # Write main file to tmpDir
   let mainFile = tmpDir / lesson.filename
-  # Ensure parent dirs exist
   createDir(parentDir(mainFile))
   writeFile(mainFile, code)
 
-  # Write project files
+  # Write scaffolding files
   for fname, content in lesson.files:
     let path = tmpDir / fname
     createDir(parentDir(path))
@@ -106,7 +125,12 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
   if lesson.skipRun:
     return RunResult(stdout: "", stderr: "", exitCode: 0)
 
-  if lesson.cmd == "js":
+  # Build Command
+  var cmd = ""
+  if lesson.lessonType == "project":
+    checkNimbleInstalled()
+    cmd = "nimble test"
+  elif lesson.cmd == "js":
     # JS-specific logic: compile, then run with Node
     let jsFile = tmpDir / changeFileExt(lesson.filename, "js")
     var compileCmd = "nim js -o:" & quoteShell(jsFile)
@@ -122,33 +146,37 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
     let runCmd = "node " & quoteShell(jsFile)
     let (runOut, runErr) = runWithTimeout(runCmd, tmpDir)
     return RunResult(stdout: runOut, stderr: "", exitCode: runErr)
+  else:
+    cmd = "nim " & lesson.cmd
+    if lesson.cmd == "c":
+      cmd.add " -r --threads:on --hints:off"
 
-  # Build Command for other targets
-  var cmd = "nim " & lesson.cmd
-  if lesson.cmd == "c":
-    cmd.add " -r --threads:on --hints:off"
+    for arg in lesson.compilerArgs:
+      cmd.add " " & arg
 
-  for arg in lesson.compilerArgs:
-    cmd.add " " & arg
-
-  cmd.add " " & quoteShell(lesson.filename)
+    cmd.add " " & quoteShell(lesson.filename)
 
   # Execute
   let (outp, errC) = runWithTimeout(cmd, tmpDir)
-
   return RunResult(stdout: outp, stderr: "", exitCode: errC)
 
 proc validate*(lesson: Lesson, code: string, res: RunResult): (bool, string) =
+  # For project type, we only care about exit code from nimble test
+  if lesson.lessonType == "project":
+    if res.exitCode == 0:
+      return (true, "\nCorrect!\n" & res.stdout)
+    else:
+      # We show the full nimble test output on failure
+      return (false, "\n--- TEST FAILED ---\n" & res.stdout)
+
+  # Standard validation for other types
   if res.exitCode != 0:
+    # Before showing error, print the user's code for context
+    var context = "\n--- YOUR CODE ---\n" & code & "\n-----------------\n"
     let friendlyErr = parseCompilerErrors(res.stdout & "\n" & res.stderr)
-    return (false, "\n--- COMPILE/RUN ERROR ---\n" & friendlyErr & "\n\nHINT: " & lesson.hint)
+    return (false, context & "\n--- COMPILE/RUN ERROR ---\n" & friendlyErr)
 
   if lesson.validate(code, res.stdout, res.stderr, res.exitCode):
     return (true, "\nCorrect!\n" & res.stdout)
   else:
-    return (false, "\n--- LOGIC ERROR ---\nOutput:\n" & res.stdout)
-
-proc checkNimInstalled*() =
-  if execCmd("nim --version") != 0:
-    echo "Error: Nim compiler not found."
-    quit(1)
+    return (false, "\n--- LOGIC ERROR ---\n" & "Expected:\n" & lesson.solution & "\nGot:\n" & res.stdout)
