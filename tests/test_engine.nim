@@ -1,5 +1,5 @@
 
-import unittest, strutils
+import unittest, strutils, os
 import types, engine
 
 suite "Engine":
@@ -59,3 +59,19 @@ suite "Engine":
     let code = "echo \"Hello from JS" # Intentional syntax error
     let res = runCode(l, code)
     check res.exitCode != 0
+
+  test "runWithTimeout captures all output":
+    # This test is designed to fail with the old, racy implementation of runWithTimeout.
+    # It runs a command that produces a predictable amount of output and checks if it's all there.
+    let tempScriptPath = "tests/temp_script_for_test.nim"
+    let scriptContent = "for i in 1..5: echo \"line \", i"
+    writeFile(tempScriptPath, scriptContent)
+    defer: removeFile(tempScriptPath)
+
+    let cmd = "nim e --hints:off --warnings:off " & tempScriptPath
+    let (output, exitCode) = runWithTimeout(cmd, "")
+    check exitCode == 0
+    let expectedLines = 5
+    # Nim's splitLines includes the empty line after the last newline, so we subtract 1
+    let actualLines = output.splitLines.len - 1
+    check actualLines == expectedLines

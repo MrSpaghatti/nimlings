@@ -3,3 +3,5 @@ tools/generator
 src/content.nim
 tests/runner
 DEV_PLAN.md
+tests/temp_script_for_test.nim
+tests/temp_script_for_test
