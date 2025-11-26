@@ -2,3 +2,4 @@ nimlings
 tools/generator
 src/content.nim
 tests/runner
+DEV_PLAN.md
