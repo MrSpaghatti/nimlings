@@ -1,5 +1,4 @@
-
-import unittest, strutils, os
+import unittest, strutils, os, tables
 import types, engine
 
 suite "Engine":
@@ -75,3 +74,18 @@ suite "Engine":
     # Nim's splitLines includes the empty line after the last newline, so we subtract 1
     let actualLines = output.splitLines.len - 1
     check actualLines == expectedLines
+
+  test "Project Runner":
+    var l = Lesson(
+      id: "proj_test",
+      filename: "src/main.nim",
+      lessonType: "project",
+      files: {
+        "proj_test.nimble": "version = \"0.1.0\"\nauthor = \"Tester\"\ndescription = \"A test\"\nlicense = \"MIT\"\n\ntask test, \"Run tests\":\n  exec \"nim c -r src/main.nim\"",
+        "src/main.nim": "echo \"Hello from Project\""
+      }.toTable
+    )
+    let code = "echo \"This is the main file content\"" # This is the content of src/main.nim
+    let res = runCode(l, code)
+    check res.exitCode == 0
+    check "Hello from Project" in res.stdout
