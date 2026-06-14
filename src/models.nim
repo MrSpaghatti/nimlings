@@ -1,23 +1,30 @@
-
-import json, os, sets
+import json, os, sets, times, strutils
 
 type
   Progress* = object
     completed*: HashSet[string]
 
+  DailyRecord* = object
+    lastLessonDate*: string   # YYYY-MM-DD
+    streak*: int
+    longestStreak*: int
+    lessonsToday*: int
+
 const
   ConfigDir = getHomeDir() / ".config" / "nimlings"
   ProgressFile = ConfigDir / "progress.json"
+  DailyFile = ConfigDir / "daily.json"
   StateFile = ConfigDir / "state.json"
 
 proc ensureConfigDir*() =
   createDir(ConfigDir)
 
+# ── Lesson Progress ─────────────────────────────────────────────────
+
 proc loadProgress*(): HashSet[string] =
   result = initHashSet[string]()
   if not fileExists(ProgressFile):
     return
-
   try:
     let data = parseJson(readFile(ProgressFile))
     for item in data.getElems():
@@ -31,6 +38,99 @@ proc saveProgress*(completed: HashSet[string]) =
   for item in completed:
     jsonNode.add(newJString(item))
   writeFile(ProgressFile, $jsonNode)
+
+# ── Daily Streak ────────────────────────────────────────────────────
+
+proc today*(): string =
+  let now = now()
+  result = $now.year & "-" & align($(now.month.ord), 2, '0') & "-" & align($(now.monthday), 2, '0')
+
+proc loadDaily*(): DailyRecord =
+  if not fileExists(DailyFile):
+    return DailyRecord()
+  try:
+    let data = parseJson(readFile(DailyFile))
+    result = DailyRecord(
+      lastLessonDate: data{"lastLessonDate"}.getStr(""),
+      streak: data{"streak"}.getInt(0),
+      longestStreak: data{"longestStreak"}.getInt(0),
+      lessonsToday: data{"lessonsToday"}.getInt(0)
+    )
+  except:
+    result = DailyRecord()
+
+proc saveDaily*(record: DailyRecord) =
+  ensureConfigDir()
+  let jsonNode = %*{
+    "lastLessonDate": record.lastLessonDate,
+    "streak": record.streak,
+    "longestStreak": record.longestStreak,
+    "lessonsToday": record.lessonsToday
+  }
+  writeFile(DailyFile, $jsonNode)
+
+proc recordLessonCompletion*() =
+  ## Call this when a lesson is completed. Updates streak.
+  var daily = loadDaily()
+  let todayDate = today()
+
+  if daily.lastLessonDate == todayDate:
+    # Already did a lesson today — just increment count
+    daily.lessonsToday += 1
+  elif daily.lastLessonDate == "":
+    # First lesson ever
+    daily.streak = 1
+    daily.longestStreak = 1
+    daily.lessonsToday = 1
+    daily.lastLessonDate = todayDate
+  else:
+    # Check if yesterday or gap
+    let lastDate = daily.lastLessonDate
+    # Simple check: if today is consecutive day
+    if lastDate < todayDate:
+      # Parse dates to check if yesterday
+      try:
+        let last = lastDate.split("-")
+        let parts = todayDate.split("-")
+        let lastDay = parseInt(last[2])
+        let lastMonth = parseInt(last[1])
+        let lastYear = parseInt(last[0])
+        let todayDay = parseInt(parts[2])
+        let todayMonth = parseInt(parts[1])
+        let todayYear = parseInt(parts[0])
+
+        # Check if consecutive day
+        var isConsecutive = false
+        if lastYear == todayYear and lastMonth == todayMonth and todayDay - lastDay == 1:
+          isConsecutive = true
+        elif lastYear == todayYear and lastMonth == todayMonth - 1:
+          # month boundary
+          let daysInLastMonth = case lastMonth
+            of 1, 3, 5, 7, 8, 10, 12: 31
+            of 4, 6, 9, 11: 30
+            of 2: (if lastYear mod 4 == 0 and (lastYear mod 100 != 0 or lastYear mod 400 == 0): 29 else: 28)
+            else: 30
+          if todayDay == 1 and lastDay == daysInLastMonth:
+            isConsecutive = true
+        elif lastYear == todayYear - 1 and lastMonth == 12 and todayMonth == 1 and lastDay == 31 and todayDay == 1:
+          isConsecutive = true
+
+        if isConsecutive:
+          daily.streak += 1
+        else:
+          daily.streak = 1  # Reset (gap > 1 day)
+
+        if daily.streak > daily.longestStreak:
+          daily.longestStreak = daily.streak
+      except:
+        daily.streak = 1
+
+    daily.lessonsToday = 1
+    daily.lastLessonDate = todayDate
+
+  saveDaily(daily)
+
+# ── State ───────────────────────────────────────────────────────────
 
 proc loadState*(): JsonNode =
   if not fileExists(StateFile):

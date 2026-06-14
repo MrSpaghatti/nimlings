@@ -1,711 +1,1864 @@
-[
-  {
-    "module": "1: The Basics (\"Why Bother?\")",
-    "lessons": [
-      {
-        "id": "1.1",
-        "name": "Intro",
-        "concept": "Alright, let's get this over with. You're here to learn Nim.\nIt's a compiled, statically typed language that looks like Python but has the performance of C.\nThis means you get speed, but you also have to actually think about your types.\nNo more sloppy dynamic-language nonsense.",
-        "task": "There's no code to write. Just read the above and internalize it. Press Enter to continue."
-      },
-      {
-        "id": "1.2",
-        "name": "Hello World",
-        "concept": "Your first rite of passage. In Nim, the `echo` procedure prints stuff to the console.\nIt's simple, clean, and gets the job done. Don't overthink it.",
-        "task": "Write a single line of Nim code that prints the string \"Hello, Nim!\".",
-        "validation_code": "result.stdout.strip() == \"Hello, Nim!\"",
-        "solution": "echo \"Hello, Nim!\"",
-        "hint": "Just `echo` the exact string. With quotes. You can figure this out."
-      },
-      {
-        "id": "1.3",
-        "name": "Compiling & Running",
-        "concept": "Nim is a compiled language. The command `nim c -r your_file.nim` does two things:\n1. `c`: Compiles your Nim code into a C executable.\n2. `-r` or `--run`: Runs the resulting executable immediately after compiling.\nThis is the workflow you'll use constantly. Get used to it.",
-        "task": "Write a program that prints the number 42.",
-        "validation_code": "result.stdout.strip() == \"42\"",
-        "solution": "echo 42",
-        "hint": "Same as before. `echo` the number. No quotes this time, genius."
-      }
-    ]
-  },
-  {
-    "module": "2: Variables & Data Types (\"Storing Your Junk\")",
-    "lessons": [
-      {
-        "id": "2.1",
-        "name": "let vs var",
-        "concept": "Nim has two ways to declare variables: `let` and `var`.\n- `let` creates an immutable variable. Once assigned, you can't change it. It's a constant.\n- `var` creates a mutable variable. You can change its value whenever you want.\nRule of thumb: Use `let` by default. Mutability is a footgun. Only use `var` when you know you need it.",
-        "task": "Declare an immutable string named `name` with the value \"Nim\" and a mutable integer `age` with the value 15. The program shouldn't print anything.",
-        "validation_code": "result.exitCode == 0",
-        "solution": "let name = \"Nim\"\nvar age = 15",
-        "hint": "The syntax is `let name = \"value\"` and `var age = 15`. If it compiles, you did it right."
-      },
-      {
-        "id": "2.2",
-        "name": "Basic Types",
-        "concept": "Nim is statically typed. You can, and often should, declare types explicitly.\nThe syntax is `var name: type = value`.\nBasic types include: `int`, `string`, `float`, `bool`.",
-        "task": "Declare four `var` variables, one of each basic type: an `int` named `i`, a `string` named `s`, a `float` named `f`, and a `bool` named `b`. Assign them any valid values. No output needed.",
-        "validation_code": "result.exitCode == 0",
-        "solution": "var i: int = 1\nvar s: string = \"a\"\nvar f: float = 1.0\nvar b: bool = true",
-        "hint": "Example: `var i: int = 10`. Do that for all four types."
-      },
-      {
-        "id": "2.3",
-        "name": "Type Inference",
-        "concept": "Explicitly writing types is good, but sometimes the compiler can figure it out on its own.\nWhen you declare a variable with `let` or `var` and assign a value immediately, Nim infers the type.\n`let name = \"Nim\"` is the same as `let name: string = \"Nim\"`.\n`var age = 20` is the same as `var age: int = 20`.\nIt's clean, simple, and you should use it when the type is obvious.",
-        "task": "Declare a mutable integer named `counter` with a value of 0 using type inference.",
-        "validation_code": "result.exitCode == 0",
-        "solution": "var counter = 0",
-        "hint": "Just use `var counter = 0`. The compiler knows it's an integer."
-      }
-    ]
-  },
-  {
-    "module": "3: Procedures & Control Flow (\"Actually Doing Stuff\")",
-    "lessons": [
-      {
-        "id": "3.1",
-        "name": "Procedures (proc)",
-        "concept": "Procedures, or `proc`, are Nim's functions. They take arguments and can return a value.\nThe syntax is: `proc name(arg1: type, arg2: type): returntype =`\nThe body of the proc is indented. The return value is the last expression, or you can use `return`.",
-        "task": "Write a procedure named `addNumbers` that takes two integers (`a` and `b`) and returns their sum. Then, call it with `5` and `10` and `echo` the result.",
-        "validation_code": "result.stdout.strip() == \"15\"",
-        "solution": "proc addNumbers(a: int, b: int): int = a + b\necho addNumbers(5, 10)",
-        "hint": "Define the proc first. `proc addNumbers(a: int, b: int): int = a + b`. Then, on a new line, `echo addNumbers(5, 10)`."
-      },
-      {
-        "id": "3.2",
-        "name": "if/else/elif",
-        "concept": "Conditional logic. You've seen this before in other languages. It's not complicated.\n`if condition:`\n  `...`\n`elif other_condition:`\n  `...`\n`else:`\n  `...`",
-        "task": "Write a procedure `checkSign` that takes an integer.\n- If the number is greater than 0, it should `echo` \"Positive\".\n- If it's less than 0, it should `echo` \"Negative\".\n- Otherwise, it should `echo` \"Zero\".\nCall your procedure with the number -5.",
-        "validation_code": "result.stdout.strip() == \"Negative\"",
-        "solution": "proc checkSign(num: int) =\n  if num > 0:\n    echo \"Positive\"\n  elif num < 0:\n    echo \"Negative\"\n  else:\n    echo \"Zero\"\ncheckSign(-5)",
-        "hint": "Your `if` condition should be `num > 0`, `elif` should be `num < 0`, and `else` handles the rest."
-      },
-      {
-        "id": "3.3",
-        "name": "for Loops",
-        "concept": "Looping. `for i in a..b:` will loop from `a` to `b`, inclusive.\nIt's a simple, readable way to iterate.",
-        "task": "Write a `for` loop that prints the numbers from 1 to 5, each on a new line.",
-        "validation_code": "result.stdout.strip() == \"1\\n2\\n3\\n4\\n5\"",
-        "solution": "for i in 1..5:\n  echo i",
-        "hint": "Use `for num in 1..5:`. Inside the loop, `echo num`."
-      }
-    ]
-  },
-  {
-    "module": "4: Complex Data Types (\"More Junk To Store\")",
-    "lessons": [
-      {
-        "id": "4.1",
-        "name": "Tuples",
-        "concept": "Tuples are fixed-size, ordered collections of values that can have different types.\nThey're useful for grouping related data without creating a full-blown object.\nSyntax: `let myTuple = (\"some string\", 42)`.\nYou access their fields by index: `myTuple[0]`, `myTuple[1]`.",
-        "task": "Declare a tuple named `person` containing a string \"Alice\" and an integer 30. Then, `echo` both fields, each on a new line.",
-        "validation_code": "result.stdout.strip() == \"Alice\\n30\"",
-        "solution": "let person = (\"Alice\", 30)\necho person[0]\necho person[1]",
-        "hint": "Declare it with `let person = (\"Alice\", 30)`. Then use `echo person[0]` and `echo person[1]`."
-      },
-      {
-        "id": "4.2",
-        "name": "Objects",
-        "concept": "Objects are custom data types that group named fields. They're like structs in other languages.\nYou define them with the `type` keyword.\ntype Person = object\n  name: string\n  age: int",
-        "task": "Define a `Person` object type with a `name` (string) and `age` (int). Create an instance of it, but don't print anything.",
-        "validation_code": "result.exitCode == 0",
-        "solution": "type Person = object\n  name: string\n  age: int\nlet p = Person(name: \"Bob\", age: 25)",
-        "hint": "After defining the type, create an instance: `let p = Person(name: \"Bob\", age: 25)`."
-      },
-      {
-        "id": "4.3",
-        "name": "Sequences",
-        "concept": "Sequences, or `seq`, are dynamic-sized arrays. They're Nim's version of Python's lists or C++'s vectors.\nYou can add to them, remove from them, and they'll grow as needed.\nSyntax: `var numbers = @[10, 20, 30]`.",
-        "task": "Create a sequence of integers containing 1, 2, and 3. Use a `for` loop to iterate over it and `echo` each number.",
-        "validation_code": "result.stdout.strip() == \"1\\n2\\n3\"",
-        "solution": "var numbers = @[1, 2, 3]\nfor n in numbers: echo n",
-        "hint": "Use `var numbers = @[1, 2, 3]` and then `for n in numbers: echo n`."
-      },
-      {
-        "id": "4.4",
-        "name": "Enums & Case Statements",
-        "concept": "Enumerations (`enum`) are for when you have a variable that can only be one of a few possible values.\nThey're great for state machines and making your code type-safe.\nThe `case` statement is like a switch statement, perfect for handling each possible enum value.",
-        "task": "Define an enum `TrafficLight` with values `tlRed`, `tlYellow`, `tlGreen`.\nCreate a variable of this type and set it to `tlGreen`.\nUse a `case` statement to `echo` \"Go\" if the light is green.",
-        "validation_code": "result.stdout.strip() == \"Go\"",
-        "solution": "type TrafficLight = enum\n  tlRed, tlYellow, tlGreen\nlet light = tlGreen\ncase light\nof tlGreen:\n  echo \"Go\"\nelse: discard",
-        "hint": "Define the enum, then: `let light = tlGreen`. The case statement looks like: `case light\nof tlGreen:\n  echo \"Go\"\nelse: discard`."
-      },
-      {
-        "id": "4.5",
-        "name": "Option Type",
-        "concept": "What happens when a procedure might not be able to return a value? Use the `Option` type.\nIt's an enum that can be either `Some(value)` or `None`. This forces you to handle the 'no value' case at compile time, avoiding runtime errors.\nYou need to `import options` to use it.",
-        "task": "Import `options`. Write a `proc` that returns `some(42)`. Use `get()` to unwrap the value and `echo` it.",
-        "validation_code": "result.stdout.strip() == \"42\"",
-        "solution": "import options\nproc getValue(): Option[int] = some(42)\necho getValue().get()",
-        "hint": "Start with `import options`. Your proc should be `proc getValue(): Option[int] = some(42)`. Then call it and use `.get()` to extract the value."
-      }
-    ]
-  },
-  {
-    "module": "BOSS FIGHT 1: The RPG Party",
-    "lessons": [
-      {
-        "id": "B1.1",
-        "name": "The Gatekeeper",
-        "concept": "Time to put it all together. You're building a simple RPG party system.\nYou'll need Enums, Objects, Sequences, and Procs.\nThis is a comprehensive test of Phase 1.",
-        "task": "1. Define an Enum `Class` with values `Warrior`, `Mage`, `Rogue`.\n2. Define an Object `Character` with `name` (string), `class` (Class), and `level` (int).\n3. Create a sequence of Characters named `party`.\n4. Add a Level 10 Warrior named \"Gimli\" and a Level 8 Mage named \"Gandalf\" to the party.\n5. Iterate through the party and echo \"[Name] the [Class] is level [Level]\" for each.",
-        "validation_code": "\"Gimli the Warrior is level 10\" in result.stdout and \"Gandalf the Mage is level 8\" in result.stdout",
-        "solution": "type\n  Class = enum Warrior, Mage, Rogue\n  Character = object\n    name: string\n    class: Class\n    level: int\nvar party: seq[Character]\nparty.add(Character(name: \"Gimli\", class: Warrior, level: 10))\nparty.add(Character(name: \"Gandalf\", class: Mage, level: 8))\nfor c in party:\n  echo c.name, \" the \", c.class, \" is level \", c.level",
-        "hint": "Break it down. Enum first. Then Object. Then `var party: seq[Character]`. Then `party.add(...)`. Finally the loop."
-      }
-    ]
-  },
-  {
-    "module": "5: Advanced Procedures (\"Reusable Recipes\")",
-    "lessons": [
-      {
-        "id": "5.1",
-        "name": "Generics",
-        "concept": "Generics let you write procedures that can work with different types.\nInstead of a specific type like `int`, you use a placeholder, like `T`.\nSyntax: `proc echoFirst[T](items: seq[T]) =`",
-        "task": "Write a generic procedure `echoFirst` that takes a sequence of any type and echoes the first element. Call it with a sequence of strings `@[ \"a\", \"b\"]`.",
-        "validation_code": "result.stdout.strip() == \"a\"",
-        "solution": "proc echoFirst[T](items: seq[T]) = echo items[0]\nechoFirst(@[\"a\", \"b\"])",
-        "hint": "Define the proc as `proc echoFirst[T](items: seq[T]) = echo items[0]`. Then call it."
-      },
-      {
-        "id": "5.2",
-        "name": "Method Call Syntax",
-        "concept": "Nim lets you call procedures in two ways: `procName(obj, arg)` or `obj.procName(arg)`.\nThe second one is called 'method call syntax' and is just syntactic sugar. It makes code look more object-oriented.",
-        "task": "Define a `Person` object and a `proc greet(p: Person)` that echoes \"Hello, \" followed by the person's name.\nCreate a `Person` instance and call `greet` using method call syntax.",
-        "validation_code": "\"Hello, \" in result.stdout.strip()",
-        "solution": "type Person = object\n  name: string\nproc greet(p: Person) = echo \"Hello, \", p.name\nlet p = Person(name: \"Carly\")\np.greet()",
-        "hint": "Define your proc, create a person `let p = Person(name: \"Carly\")`, then call the proc like this: `p.greet()`."
-      },
-      {
-        "id": "5.3",
-        "name": "Iterators",
-        "concept": "An `iterator` is a procedure that can 'yield' a value and be resumed later, making it perfect for custom loops.\nThey're memory-efficient because they produce values one at a time, instead of all at once.",
-        "task": "Write an iterator `countTo(n: int)` that yields numbers from 1 up to `n`. Use it in a `for` loop to `echo` numbers up to 3.",
-        "validation_code": "result.stdout.strip() == \"1\\n2\\n3\"",
-        "solution": "iterator countTo(n: int): int =\n  var i = 1\n  while i <= n:\n    yield i\n    i += 1\nfor i in countTo(3): echo i",
-        "hint": "Define it as `iterator countTo(n: int): int = ...`. Inside, use a `var` counter and a `while` loop that `yield`s the value."
-      }
-    ]
-  },
-  {
-    "module": "6: Memory Management (\"Not Leaking Everywhere\")",
-    "lessons": [
-      {
-        "id": "6.1",
-        "name": "Ref Types",
-        "concept": "Sometimes you need multiple variables to point to the *same* object in memory.\nA `ref` type is a reference to an object. When you pass a `ref`, you're not passing a copy, you're passing a pointer to the original.\nThis is how you get shared, mutable state.",
-        "task": "Define a `Person` object. Create a `ref Person` variable `p1`.\nCreate a second variable `p2` and assign `p1` to it.\nModify the `name` of the person through `p2`.\nEcho the name through `p1` to see that it changed.",
-        "validation_code": "result.stdout.strip() != \"John\" and len(result.stdout.strip()) > 0",
-        "solution": "type Person = ref object\n  name: string\nvar p1 = Person(name: \"John\")\nvar p2 = p1\np2.name = \"Jane\"\necho p1.name",
-        "hint": "Use `type Person = ref object; var p1 = Person(name: \"John\"); var p2 = p1; p2.name = \"Jane\"; echo p1.name`"
-      }
-    ]
-  },
-  {
-    "module": "7: Error Handling & File I/O (\"Things Go Wrong\")",
-    "lessons": [
-      {
-        "id": "7.1",
-        "name": "Try/Except",
-        "concept": "When things go wrong, Nim raises exceptions. You can handle them with a `try`/`except` block.\nThis prevents your program from crashing when something unexpected happens, like accessing a bad array index.",
-        "task": "Create a small array. In a `try` block, attempt to access an index that is out of bounds. In the `except IndexDefect` block, `echo` the message \"Bad index!\".",
-        "validation_code": "result.stdout.strip() == \"Bad index!\"",
-        "solution": "var a: array[0..2, int]\nlet badIndex = 10\ntry:\n  discard a[badIndex]\nexcept IndexDefect:\n  echo \"Bad index!\"",
-        "hint": "The structure is `try:\n  discard a[10]\nexcept IndexDefect:\n  echo \"Bad index!\"`."
-      },
-      {
-        "id": "7.2",
-        "name": "File Reading",
-        "concept": "The `os` module provides functions for interacting with the file system. `readFile` is the simplest way to get the contents of a file as a string.",
-        "task": "Import the `os` module. Create a temporary file named `test.txt` with `writeFile(\"test.txt\", \"hello\")`. Then, use `readFile(\"test.txt\")` and `echo` its contents.",
-        "validation_code": "result.stdout.strip() == \"hello\"",
-        "solution": "import os\nwriteFile(\"test.txt\", \"hello\")\necho readFile(\"test.txt\")",
-        "hint": "Don't forget to `import os`. Use `writeFile` first, then `echo readFile(\"test.txt\")`."
-      },
-      {
-        "id": "7.3",
-        "name": "File Writing",
-        "concept": "Just as `readFile` reads a file, `writeFile` writes a string to a file, overwriting it if it already exists.",
-        "task": "Import the `os` module. Use `writeFile` to create a file named `output.txt` with the content \"Hello, Nim!\". Then, read the file back and `echo` its contents.",
-        "validation_code": "result.stdout.strip() == \"Hello, Nim!\"",
-        "solution": "import os\nwriteFile(\"output.txt\", \"Hello, Nim!\")\necho readFile(\"output.txt\")",
-        "hint": "After you `writeFile`, just add `echo readFile(\"output.txt\")`."
-      }
-    ]
-  },
-  {
-    "module": "8: Modules and Packages (\"Using Other People's Code\")",
-    "lessons": [
-      {
-        "id": "8.1",
-        "name": "Import",
-        "concept": "You can't fit everything in one file. The `import` statement lets you use code from other files, called modules.\nNim has a rich standard library with modules for math, string handling, OS interaction, and more.",
-        "task": "Import the `math` module and `echo` the result of `sqrt(25.0)`.",
-        "validation_code": "result.stdout.strip() == \"5.0\"",
-        "solution": "import math\necho sqrt(25.0)",
-        "hint": "Start with `import math`. Then `echo sqrt(25.0)`."
-      },
-      {
-        "id": "8.2",
-        "name": "Nimble Intro",
-        "concept": "Nimble is Nim's package manager. It's how you install and manage third-party libraries.\nYou'll use it for everything from web frameworks to game engines.\nThis is just a heads-up; you won't be using it in this tutorial.",
-        "task": "Just read this and press Enter. Go on."
-      },
-      {
-        "id": "8.3",
-        "name": "Creating Modules",
-        "concept": "Any Nim file can be a module. To expose a `proc` to other files, you mark it with an asterisk (`*`).\nThis is Nim's way of marking things as 'public' so they can be exported.",
-        "task": "Just read this and press Enter. Go on."
-      }
-    ]
-  },
-  {
-    "module": "9: Concurrency (\"Doing Two Things at Once\")",
-    "lessons": [
-      {
-        "id": "9.1",
-        "name": "Spawn Intro",
-        "concept": "Nim has powerful and easy-to-use concurrency features built into the language.\nThe `spawn` keyword can run a procedure in a separate thread.\nThis is a deep topic, so we're just scratching the surface here. The main takeaway is that concurrency in Nim is a first-class citizen.",
-        "task": "Just read this and press Enter. You've reached the end for now."
-      },
-      {
-        "id": "9.2",
-        "name": "FlowVar",
-        "concept": "Running a `proc` in another thread is cool, but how do you get a result back?\nA `FlowVar[T]` is a special type that acts as a container for a value that will be computed concurrently.\nYou can `^` to wait for the result and retrieve it.",
-        "task": "Import `threadpool`. Write a `proc` that returns `42`. `spawn` it into a `FlowVar[int]` and `echo` the result.",
-        "validation_code": "result.stdout.strip() == \"42\"",
-        "solution": "import threadpool\nproc calc(): int = 42\nvar result = spawn calc()\necho ^result",
-        "hint": "`import threadpool`. `proc calc(): int = 42`. Then `var result = spawn calc()`. Finally, `echo ^result`."
-      }
-    ]
-  },
-  {
-    "module": "10: Metaprogramming (\"Code That Writes Code\")",
-    "lessons": [
-      {
-        "id": "10.1",
-        "name": "Templates",
-        "concept": "Metaprogramming is writing code that generates other code. Nim has powerful metaprogramming features, with `template` being the simplest.\nA template is like a super-powered macro. It substitutes code at compile time, which can reduce boilerplate and improve performance.",
-        "task": "Create a template `shout(msg: string)` that takes a string and echoes it with an exclamation mark. Use it to shout \"Hello\".",
-        "validation_code": "result.stdout.strip() == \"Hello!\"",
-        "solution": "template shout(msg: string) = echo msg, \"!\"\nshout(\"Hello\")",
-        "hint": "The syntax is `template shout(msg: string) = echo msg, \"!\". Then you can call it like a regular proc: `shout(\"Hello\")`."
-      }
-    ]
-  },
-  {
-    "module": "BOSS FIGHT 2: The Generic Logger",
-    "lessons": [
-      {
-        "id": "B2.1",
-        "name": "The Architect",
-        "concept": "Phase 2 tested your ability to write reusable and structural code.\nNow you must build a generic logging system using Templates and Generics.",
-        "task": "1. Define a template `log(msg)` that echoes \"[LOG]: \" followed by `msg`.\n2. Define a Generic proc `process[T](val: T)`.\n3. Inside `process`, use `log` to print \"Processing...\" and then echo `val`.\n4. Call `process` with the string \"Data\" and the integer `100`.",
-        "validation_code": "\"[LOG]: Processing...\" in result.stdout and \"Data\" in result.stdout and \"100\" in result.stdout",
-        "solution": "template log(msg) = echo \"[LOG]: \", msg\nproc process[T](val: T) =\n  log(\"Processing...\")\n  echo val\nprocess(\"Data\")\nprocess(100)",
-        "hint": "Template comes first. Then `proc process[T](val: T) = ...`. Call `process` twice."
-      }
-    ]
-  },
-  {
-    "module": "11: Asynchronous IO (\"Don't Block the Thread\")",
-    "lessons": [
-      {
-        "id": "11.1",
-        "name": "Async/Await",
-        "concept": "Modern applications need to handle many things at once without freezing.\nNim uses `asyncdispatch` for this. You mark a proc with `{.async.}` and it returns a `Future[T]`.\nInside, you use `await` to pause execution until a future completes.\nTo run an async proc from the main synchronous scope, use `waitFor`.",
-        "task": "Import `asyncdispatch`. Create an async proc `tick()` that waits for 100ms (`await sleepAsync(100)`) then echoes \"Tock\". Call it using `waitFor`.",
-        "validation_code": "result.stdout.strip() == \"Tock\"",
-        "solution": "import asyncdispatch\nproc tick() {.async.} =\n  await sleepAsync(100)\n  echo \"Tock\"\nwaitFor tick()",
-        "hint": "Import `asyncdispatch`. `proc tick() {.async.} = await sleepAsync(100); echo \"Tock\"`. End with `waitFor tick()`."
-      }
-    ]
-  },
-  {
-    "module": "12: Macros (\"The Dark Arts\")",
-    "lessons": [
-      {
-        "id": "12.1",
-        "name": "The AST",
-        "concept": "Nim code is parsed into an Abstract Syntax Tree (AST) before compilation.\nMacros let you manipulate this tree directly.\nThe `dumpTree:` statement prints the AST of the code inside it. This is how you learn what the tree looks like.",
-        "task": "Import `macros`. Use `dumpTree:` to inspect the code `echo 1`. (This will print to the output/compiler logs).",
-        "validation_code": "\"StmtList\" in result.stdout or \"StmtList\" in result.stderr",
-        "solution": "import macros\ndumpTree:\n  echo 1",
-        "hint": "Just wrap the code in `dumpTree:`: `dumpTree:\n  echo 1`."
-      }
-    ]
-  },
-  {
-    "module": "13: C Interoperability (\"The Secret Weapon\")",
-    "lessons": [
-      {
-        "id": "13.1",
-        "name": "C Types",
-        "concept": "Nim compiles to C, so interacting with C is trivial.\nNim strings are objects with length and capacity. C strings are just pointers (`char*`).\nIn Nim, C strings are `cstring`. Conversion is automatic in many cases, or explicit via `cstring(myString)`.",
-        "task": "Declare a `cstring` variable initialized with \"Hello C\". Echo it.",
-        "validation_code": "result.stdout.strip() == \"Hello C\"",
-        "solution": "var s: cstring = \"Hello C\"\necho s",
-        "hint": "`var s: cstring = \"Hello C\"`."
-      },
-      {
-        "id": "13.2",
-        "name": "Wrapping C Functions",
-        "concept": "To call a C function, you just tell Nim it exists using the `importc` pragma.\nYou also usually specify the header file with `header`.",
-        "task": "Define a proc `c_puts(s: cstring)` that maps to the C function `puts`. Use `{.importc: \"puts\", header: \"<stdio.h>\"}`. Call it with \"Native call\".",
-        "validation_code": "result.stdout.strip() == \"Native call\"",
-        "solution": "proc c_puts(s: cstring) {.importc: \"puts\", header: \"<stdio.h>\"}\nc_puts(\"Native call\")",
-        "hint": "The pragma goes after the arguments: `proc c_puts(s: cstring) {.importc: ... .}`."
-      }
-    ]
-  },
-  {
-    "module": "14: Testing (\"Trust, but Verify\")",
-    "lessons": [
-      {
-        "id": "14.1",
-        "name": "Unittest",
-        "concept": "Nim has a built-in `unittest` module.\nYou organize tests into a `suite` and individual `test` blocks.\nUse `check` to assert conditions. If a check fails, the test fails, but execution continues.",
-        "task": "Import `unittest`. Create a `suite \"Math\":` and a `test \"addition\":`. Inside, `check(1 + 1 == 2)`.",
-        "validation_code": "\"Math\" in result.stdout and \"addition\" in result.stdout",
-        "solution": "import unittest\nsuite \"Math\":\n  test \"addition\":\n    check(1 + 1 == 2)",
-        "hint": "`suite \"Name\":` then indent `test \"Name\":` then indent `check(...)`."
-      }
-    ]
-  },
-  {
-    "module": "15: JSON (\"The Lingua Franca\")",
-    "lessons": [
-      {
-        "id": "15.1",
-        "name": "Creating JSON",
-        "concept": "JSON is everywhere. Nim handles it with the `json` module.\nThe `%*` macro is the magic wand. It converts complex data structures into a `JsonNode`.\nExample: `let j = %* {\"key\": \"value\", \"list\": [1, 2]}`",
-        "task": "Import `json`. Create a JSON object representing a person with `name` \"Neo\" and `chosen` `true`. Echo the resulting `JsonNode`.",
-        "validation_code": "\"\\\"Neo\\\"\" in result.stdout and \"true\" in result.stdout",
-        "solution": "import json\nlet j = %* {\"name\": \"Neo\", \"chosen\": true}\necho j",
-        "hint": "Use `import json`. Then `let j = %* ...`. Finally `echo j`."
-      },
-      {
-        "id": "15.2",
-        "name": "Parsing JSON",
-        "concept": "To read JSON strings, use `parseJson(string)`.\nYou can access fields using `[]` keys or `.` dot syntax if you know the structure.\nValues are wrapped in `JsonNode`, so use helper procs like `.getStr`, `.getInt` to extract raw values.",
-        "task": "Parse the string `{\"status\": \"ok\", \"code\": 200}`. Extract and echo the \"status\" string.",
-        "validation_code": "result.stdout.strip() == \"ok\"",
-        "solution": "import json\nlet data = parseJson(\"{\\\"status\\\": \\\"ok\\\", \\\"code\\\": 200}\")\necho data[\"status\"].getStr",
-        "hint": "Parse it into a variable. Then access `[\"status\"]` and call `.getStr` on it."
-      },
-      {
-        "id": "15.3",
-        "name": "Marshalling",
-        "concept": "Manually traversing JSON nodes is tedious. Marshalling lets you convert JSON directly into Nim objects and vice versa.\nUse `to(node, Type)` to convert JSON to an object.\nUse `%` to convert an object to JSON (if you don't use the `%*` macro).",
-        "task": "Define a `User` object with a `name` string. Parse `{\"name\": \"Trinity\"}` and convert it to a `User` object. Echo the `name` field of the object.",
-        "validation_code": "result.stdout.strip() == \"Trinity\"",
-        "solution": "import json\ntype User = object\n  name: string\nlet node = parseJson(\"{\\\"name\\\": \\\"Trinity\\\"}\")\nlet u = node.to(User)\necho u.name",
-        "hint": "Define `type User = object ...`. Parse the json. Then `let u = node.to(User)`."
-      }
-    ]
-  },
-  {
-    "module": "16: Command Line Parsing (\"Talk to the Shell\")",
-    "lessons": [
-      {
-        "id": "16.1",
-        "name": "Raw Arguments",
-        "concept": "The `os` module gives you `paramCount()` and `paramStr(i)`.\nIt's the raw way to read arguments passed to your program.",
-        "task": "Import `os`. Iterate from 1 to `paramCount()` and echo each argument using `paramStr()`.",
-        "args": [
-          "arg1",
-          "arg2",
-          "arg3"
-        ],
-        "validation_code": "\"arg1\" in result.stdout and \"arg2\" in result.stdout and \"arg3\" in result.stdout",
-        "solution": "import os\nfor i in 1..paramCount():\n  echo paramStr(i)",
-        "hint": "Loop `for i in 1..paramCount():`. Inside, `echo paramStr(i)`."
-      },
-      {
-        "id": "16.2",
-        "name": "Parseopt",
-        "concept": "For real CLI tools, use `std/parseopt`. It handles flags (`-f`), long options (`--file`), and arguments.\nIt provides an iterator `getopt()` that yields `kind`, `key`, and `val`.",
-        "task": "Import `parseopt`. Use the `getopt()` iterator. If `kind` is `cmdLongOption` and `key` is \"name\", echo the `val`.",
-        "args": [
-          "--name:Morpheus"
-        ],
-        "validation_code": "result.stdout.strip() == \"Morpheus\"",
-        "solution": "import parseopt\nfor kind, key, val in getopt():\n  if kind == cmdLongOption and key == \"name\":\n    echo val",
-        "hint": "Loop with `for kind, key, val in getopt():`. Check if `key == \"name\"`."
-      }
-    ]
-  },
-  {
-    "module": "17: Useful Utils (\"Batteries Included\")",
-    "lessons": [
-      {
-        "id": "17.1",
-        "name": "Base64",
-        "concept": "Nim's standard library is huge. Need to encode data? Use `base64`.\nIt provides `encode` and `decode` procedures.",
-        "task": "Import `base64`. Encode the string \"Nim\" and echo the result.",
-        "validation_code": "result.stdout.strip() == \"Tmlt\"",
-        "solution": "import base64\necho encode(\"Nim\")",
-        "hint": "`import base64`. `echo encode(\"Nim\")`."
-      },
-      {
-        "id": "17.2",
-        "name": "Parsing Configs",
-        "concept": "Need to read an INI file? `parsecfg` has you covered.\nIt works similarly to `parseopt`, iterating over the file structure.",
-        "task": "Import `parsecfg`, `streams`. Create a stream from string \"[Section]\\nkey=val\". Open it with `newConfigParser`. Loop `next(p)` and if the event kind is `cfgKeyValuePair`, echo the key.",
-        "validation_code": "\"key\" in result.stdout",
-        "solution": "import parsecfg, streams\nvar p: CfgParser\nlet s = newStringStream(\"[Section]\\nkey=val\")\nopen(p, s, \"test.ini\")\nwhile true:\n  var e = next(p)\n  if e.kind == cfgEof: break\n  if e.kind == cfgKeyValuePair: echo e.key",
-        "hint": "Check `e.kind`. Only access `e.key` if it's a key-value pair."
-      }
-    ]
-  },
-  {
-    "module": "18: Build Modes (\"Speed vs Safety\")",
-    "lessons": [
-      {
-        "id": "18.1",
-        "name": "Release Mode",
-        "concept": "By default, Nim compiles in debug mode (slow, safe, stack traces).\nPassing `-d:release` turns on optimizations and turns off some runtime checks.\nYou can check for this in code using `when defined(release):`.",
-        "task": "Write a program that echoes \"Fast\" if `defined(release)` is true, and \"Slow\" otherwise. (Note: This tutor runs in debug mode, so expect \"Slow\").",
-        "validation_code": "result.stdout.strip() == \"Slow\"",
-        "solution": "if defined(release):\n  echo \"Fast\"\nelse:\n  echo \"Slow\"",
-        "hint": "Use `if defined(release): ... else: ...`."
-      }
-    ]
-  },
-  {
-    "module": "BOSS FIGHT 3: The Async Service",
-    "lessons": [
-      {
-        "id": "B3.1",
-        "name": "The Professional",
-        "concept": "You have reached the end. This is the final test.\nYou must build a simulated async microservice that handles JSON data.\nCombine `json`, `asyncdispatch`, and your wits.",
-        "task": "1. Import `json` and `asyncdispatch`.\n2. Define an async proc `worker(data: JsonNode)`.\n3. Inside, `await sleepAsync(10)` and then echo \"Processed: \" & data[\"id\"].getInt.\n4. Create a JSON array `jobs` with 3 objects: `[{\"id\": 1}, {\"id\": 2}, {\"id\": 3}]`.\n5. Iterate over `jobs` and call `waitFor worker(item)` for each one.",
-        "validation_code": "\"Processed: 1\" in result.stdout and \"Processed: 3\" in result.stdout",
-        "solution": "import json, asyncdispatch\nproc worker(data: JsonNode) {.async.} =\n  await sleepAsync(10)\n  echo \"Processed: \", data[\"id\"].getInt\nlet jobs = %* [{\"id\": 1}, {\"id\": 2}, {\"id\": 3}]\nfor job in jobs:\n  waitFor worker(job)",
-        "hint": "Define `worker` with `{.async.}`. Use `%*` for the JSON array. Loop and `waitFor`."
-      }
-    ]
-  },
-  {
-    "module": "19: Project Structure (\"Organizing Your Mess\")",
-    "lessons": [
-      {
-        "id": "19.1",
-        "name": "Directory Layout",
-        "concept": "Real projects aren't just one file. You need structure.\nStandard Nim layout:\n- `src/`: Source code\n- `tests/`: Tests\n- `myproject.nimble`: Package info\nIn this lesson, you'll create a `src/main.nim` that imports a `utils.nim`.",
-        "task": "You are writing `src/main.nim`.\n1. Import `utils`.\n2. Call `utils.greet(\"World\")`.\nThe `utils.nim` file is already created for you in `src/`.",
-        "filename": "src/main.nim",
-        "files": {
-          "src/utils.nim": "proc greet*(name: string) = echo \"Hello, \", name"
+{
+  "levels": [
+    {
+      "id": 1,
+      "name": "Foundations",
+      "chapters": [
+        {
+          "id": "1.1",
+          "name": "Your First Code",
+          "lessons": [
+            {
+              "id": "1.1.1",
+              "name": "Intro",
+              "concept": "Alright, let's get this over with. You're here to learn Nim.\nIt's a compiled, statically typed language that looks like Python but has the performance of C.\nThis means you get speed, but you also have to actually think about your types.\nNo more sloppy dynamic-language nonsense.",
+              "task": "There's no code to write. Just read the above and internalize it. Press Enter to continue.",
+              "skip_run": true
+            },
+            {
+              "id": "1.1.2",
+              "name": "Hello World",
+              "concept": "Your first rite of passage. In Nim, the `echo` procedure prints stuff to the console.\nIt's simple, clean, and gets the job done. Don't overthink it.",
+              "task": "Write a single line of Nim code that prints the string \"Hello, Nim!\".",
+              "validation_code": "result.stdout.strip() == \"Hello, Nim!\"",
+              "solution": "echo \"Hello, Nim!\"",
+              "hint": "Just `echo` the exact string. With quotes. You can figure this out.",
+              "prerequisites": [
+                "1.1.1"
+              ]
+            },
+            {
+              "id": "1.1.3",
+              "name": "Compiling & Running",
+              "concept": "Nim is a compiled language. The command `nim c -r your_file.nim` does two things:\n1. `c`: Compiles your Nim code into a C executable.\n2. `-r` or `--run`: Runs the resulting executable immediately after compiling.\nThis is the workflow you'll use constantly. Get used to it.",
+              "task": "Write a program that prints the number 42.",
+              "validation_code": "result.stdout.strip() == \"42\"",
+              "solution": "echo 42",
+              "hint": "Same as before. `echo` the number. No quotes this time, genius.",
+              "prerequisites": [
+                "1.1.2"
+              ]
+            },
+            {
+              "id": "1.1.4",
+              "name": "Comments",
+              "concept": "Comments are for you, not the compiler. Use them to explain *why*, not *what*.\nNim uses `#` for single-line comments and `#[ ... ]#` for multi-line comments.\nThey are ignored by the compiler entirely.",
+              "task": "Add a single-line comment containing the text \"This is my first Nim comment\" to your code. The program should also print the number 7.",
+              "validation_code": "result.stdout.strip() == \"7\"",
+              "solution": "# This is my first Nim comment\necho 7",
+              "hint": "Put a `#` at the start of the line for your comment, then `echo 7` on the next line.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.1.3"
+              ],
+              "cross_language_notes": "In Python it's `#` too, but multi-line is `\"\"\" ... \"\"\"`. In C++ single-line is `//` and multi-line is `/* ... */`. Nim uses `#[ ... ]#` for multi-line."
+            },
+            {
+              "id": "1.1.5",
+              "name": "Basic I/O",
+              "concept": "`echo` prints to stdout. `readLine()` reads a line from stdin.\nThese are your primary tools for interacting with the user.\n`readLine()` from the `os` module blocks until the user presses Enter.",
+              "task": "Import `os`. Use `writeFile` to create a file named \"output.txt\" containing the string \"done\". Then `echo` the contents of that file using `readFile`.",
+              "validation_code": "\"done\" in result.stdout",
+              "solution": "import os\nwriteFile(\"output.txt\", \"done\")\necho readFile(\"output.txt\")",
+              "hint": "`import os`. Use `writeFile(\"output.txt\", \"done\")`. Then `echo readFile(\"output.txt\")`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.1.3"
+              ],
+              "cross_language_notes": "Python uses `open(...).read()` and `open(...).write(...)`. Nim's `readFile`/`writeFile` are simpler top-level procs from the `os` module."
+            }
+          ]
         },
-        "validation_code": "\"Hello, World\" in result.stdout",
-        "solution": "import utils\ngreet(\"World\")",
-        "hint": "Just `import utils` and call `greet(\"World\")`. The file is in the same folder (`src`), so it works."
-      },
-      {
-        "id": "19.2",
-        "name": "Importing from Parent",
-        "concept": "Sometimes you need to import a file from a parent directory.\nYou can use relative paths like `../utils`.",
-        "task": "You are writing `tests/test1.nim`.\n1. Import `utils` from the `src` directory (which is `../src/utils`).\n2. Call `greet(\"Tester\")`.",
-        "filename": "tests/test1.nim",
-        "files": {
-          "src/utils.nim": "proc greet*(name: string) = echo \"Hello, \", name",
-          "tests/placeholder": ""
+        {
+          "id": "1.2",
+          "name": "Data & Types",
+          "lessons": [
+            {
+              "id": "1.2.1",
+              "name": "let vs var",
+              "concept": "Nim has two ways to declare variables: `let` and `var`.\n- `let` creates an immutable variable. Once assigned, you can't change it. It's a constant.\n- `var` creates a mutable variable. You can change its value whenever you want.\nRule of thumb: Use `let` by default. Mutability is a footgun. Only use `var` when you know you need it.",
+              "task": "Declare an immutable string named `name` with the value \"Nim\" and a mutable integer `age` with the value 15. The program shouldn't print anything.",
+              "validation_code": "result.exitCode == 0",
+              "solution": "let name = \"Nim\"\nvar age = 15",
+              "hint": "The syntax is `let name = \"value\"` and `var age = 15`. If it compiles, you did it right.",
+              "prerequisites": [
+                "1.1.5"
+              ]
+            },
+            {
+              "id": "1.2.2",
+              "name": "Basic Types",
+              "concept": "Nim is statically typed. You can, and often should, declare types explicitly.\nThe syntax is `var name: type = value`.\nBasic types include: `int`, `string`, `float`, `bool`.",
+              "task": "Declare four `var` variables, one of each basic type: an `int` named `i`, a `string` named `s`, a `float` named `f`, and a `bool` named `b`. Assign them any valid values. No output needed.",
+              "validation_code": "result.exitCode == 0",
+              "solution": "var i: int = 1\nvar s: string = \"a\"\nvar f: float = 1.0\nvar b: bool = true",
+              "hint": "Example: `var i: int = 10`. Do that for all four types.",
+              "prerequisites": [
+                "1.2.1"
+              ]
+            },
+            {
+              "id": "1.2.3",
+              "name": "Type Inference",
+              "concept": "Explicitly writing types is good, but sometimes the compiler can figure it out on its own.\nWhen you declare a variable with `let` or `var` and assign a value immediately, Nim infers the type.\n`let name = \"Nim\"` is the same as `let name: string = \"Nim\"`.\n`var age = 20` is the same as `var age: int = 20`.\nIt's clean, simple, and you should use it when the type is obvious.",
+              "task": "Declare a mutable integer named `counter` with a value of 0 using type inference.",
+              "validation_code": "result.exitCode == 0",
+              "solution": "var counter = 0",
+              "hint": "Just use `var counter = 0`. The compiler knows it's an integer.",
+              "prerequisites": [
+                "1.2.2"
+              ]
+            },
+            {
+              "id": "1.2.4",
+              "name": "Constants (const)",
+              "concept": "Beyond `let` (runtime immutable) and `var` (mutable), Nim has `const` for compile-time constants.\n`const` values are evaluated at compile time, making them zero-cost.\nUse `const` for true constants like math values, not for things you compute at runtime.",
+              "task": "Declare a `const` named `GREETING` with the value \"Hello\". Also declare a `let` variable `message` that reassigns `GREETING` to the string `\"Hello, Nim!\"`. Echo `message`.",
+              "validation_code": "result.stdout.strip() == \"Hello, Nim!\"",
+              "solution": "const GREETING = \"Hello\"\nlet message = GREETING & \", Nim!\"\necho message",
+              "hint": "`const GREETING = \"Hello\"`. Then `let message = GREETING & \", Nim!\"`. Then `echo message`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.2.1"
+              ],
+              "cross_language_notes": "C++ has `constexpr`, Rust has `const`, Python has no true compile-time constants. Nim's `const` is closest to Rust's `const`."
+            },
+            {
+              "id": "1.2.5",
+              "name": "Type Conversions",
+              "concept": "Sometimes you need to convert between types. Nim is strict about this — no implicit conversions.\nUse built-in conversion procs: `int()`, `float()`, `string()`, `$` (to string sugar).\n`$` is especially useful: it converts any type that has a `$` operator to a string.",
+              "task": "Declare `let x = 42` (an int). Convert it to a `float` and then to a `string` using `$`. Echo the result.",
+              "validation_code": "result.stdout.strip() == \"42.0\"",
+              "solution": "let x = 42\nlet y = float(x)\necho $y",
+              "hint": "Use `float(x)` to convert the int to a float. Then `$y` converts the float to a string for echo.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.2.2"
+              ],
+              "cross_language_notes": "Python auto-converts int→float on division. C++ has static_cast. Rust has `as` keyword. Nim uses proc-style conversions like `int()`, `float()`."
+            }
+          ]
         },
-        "validation_code": "\"Hello, Tester\" in result.stdout",
-        "solution": "import ../src/utils\ngreet(\"Tester\")",
-        "hint": "Use `import ../src/utils`."
-      }
-    ]
-  },
-  {
-    "module": "20: Web Development (\"The World Wide Web\")",
-    "lessons": [
-      {
-        "id": "20.1",
-        "name": "Async HTTP Server",
-        "concept": "Nim's standard library includes `asynchttpserver`.\nIt's a basic, non-blocking HTTP server.\nYou define a callback proc that handles requests and sends responses.",
-        "task": "1. Import `asynchttpserver`, `asyncdispatch`.\n2. Create a server instance `var server = newAsyncHttpServer()`.\n3. Define a proc `cb(req: Request) {.async.}` that calls `await req.respond(Http200, \"Hello Web\")`.\n4. Call `waitFor server.serve(Port(8080), cb)`.",
-        "validation_code": "\"serve\" in code and \"respond\" in code",
-        "solution": "import asynchttpserver, asyncdispatch\nvar server = newAsyncHttpServer()\nproc cb(req: Request) {.async.} =\n  await req.respond(Http200, \"Hello Web\")\nasyncCheck server.serve(Port(0), cb)\npoll()",
-        "hint": "Follow the steps exactly. `waitFor server.serve(Port(8080), cb)`."
-      }
-    ]
-  },
-  {
-    "module": "21: JS Backend (\"Nim in the Browser\")",
-    "lessons": [
-      {
-        "id": "21.1",
-        "name": "Compiling to JS",
-        "concept": "Nim can compile to JavaScript! This lets you share code between frontend and backend.\nUse `nim js` to compile.\nThe `dom` module gives you access to the browser DOM.",
-        "task": "Write a program that echoes \"Hello JS\".\nThis will be compiled with `nim js` and run with `node`.",
-        "cmd": "js",
-        "validation_code": "result.stdout.strip() == \"Hello JS\"",
-        "solution": "echo \"Hello JS\"",
-        "hint": "Just `echo \"Hello JS\"`. The tutor handles the `nim js` part."
-      }
-    ]
-  },
-  {
-    "module": "22: Testing Frameworks (\"Trust No One\")",
-    "lessons": [
-      {
-        "id": "22.1",
-        "name": "Writing a Test Suite",
-        "concept": "You've seen `unittest` before, but let's get serious.\nA proper test suite has setup, teardown, and multiple test cases.\nUse `setup:` and `teardown:` blocks inside a `suite`.",
-        "task": "Create a `suite \"Database\":`.\nDefine a variable `dbConnected` (bool).\nIn `setup:`, set `dbConnected = true`.\nIn `teardown:`, set `dbConnected = false`.\nWrite a `test \"connection\":` that checks `dbConnected == true`.",
-        "validation_code": "\"Database\" in result.stdout and \"connection\" in result.stdout",
-        "solution": "import unittest\nsuite \"Database\":\n  var dbConnected = false\n  setup:\n    dbConnected = true\n  teardown:\n    dbConnected = false\n  test \"connection\":\n    check dbConnected == true",
-        "hint": "Structure: `suite ... setup: ... teardown: ... test ...`."
-      },
-      {
-        "id": "22.2",
-        "name": "Mocking",
-        "concept": "Nim doesn't have a built-in mocking library, but you can use `proc` variables or templates to inject dependencies.\nThis is called 'Dependency Injection'.",
-        "task": "1. Define a type `Sender = proc(msg: string)`.\n2. Define a proc `notify(s: Sender, msg: string)` that calls `s(msg)`.\n3. Create a mock sender that echoes \"MOCK: \" & msg.\n4. Call `notify` with your mock and the message \"Alert\".",
-        "validation_code": "result.stdout.strip() == \"MOCK: Alert\"",
-        "solution": "type Sender = proc(msg: string)\nproc notify(s: Sender, msg: string) = s(msg)\nproc mockSender(msg: string) = echo \"MOCK: \", msg\nnotify(mockSender, \"Alert\")",
-        "hint": "Define the proc type, then the notifier. Pass `mockSender` as the first argument to `notify`."
-      }
-    ]
-  },
-  {
-    "module": "23: Tooling (\"The Ecosystem\")",
-    "lessons": [
-      {
-        "id": "23.1",
-        "name": "Nimble Structure",
-        "concept": "A `.nimble` file describes your package.\nIt uses a specific Nim-based DSL.\nRequired fields: `version`, `author`, `description`, `license`.",
-        "task": "Create a file `myproject.nimble`.\nSet `version` to \"0.1.0\", `author` to \"Me\", `description` to \"Test\", `license` to \"MIT\".\nThis is a Project Mode lesson, so just write the content of the nimble file.",
-        "filename": "myproject.nimble",
-        "skip_run": true,
-        "validation_code": "\"version\" in code and \"author\" in code",
-        "solution": "version = \"0.1.0\"\nauthor = \"Me\"\ndescription = \"Test\"\nlicense = \"MIT\"",
-        "hint": "Just assign the variables: `version = \"0.1.0\"` etc."
-      },
-      {
-        "id": "23.2",
-        "name": "Code Style",
-        "concept": "Professional code must be readable.\nNim comes with `nimpretty`, a code formatter.\nIn this lesson, the engine will check your style!\nWrite a messy proc `proc  ugly(  x : int )= echo x` and see if you get a warning.",
-        "task": "Write a properly formatted proc `clean(x: int) = echo x`.\nIf you write it messily, you'll pass the logic check but get a style warning.",
-        "validation_code": "result.exitCode == 0",
-        "solution": "proc clean(x: int) = echo x",
-        "hint": "Write `proc clean(x: int) = echo x` exactly like that."
-      }
-    ]
-  },
-  {
-    "module": "24: Performance (\"Need for Speed\")",
-    "lessons": [
-      {
-        "id": "24.1",
-        "name": "Benchmarking",
-        "concept": "To make code fast, you must measure it.\nThe `std/times` module provides `cpuTime()`.\nMeasure time before and after a block of code to see how long it takes.",
-        "task": "Import `times`.\nGet `let t0 = cpuTime()`.\nRun a loop `for i in 1..1_000_000: discard`.\nEcho `cpuTime() - t0`.",
-        "validation_code": "\"cpuTime\" in code and \"1000000\" in code.replace(\"_\", \"\")",
-        "solution": "import times\nlet t0 = cpuTime()\nfor i in 1..1_000_000: discard\necho cpuTime() - t0",
-        "hint": "Use `cpuTime()` before and after the loop. Subtract to get the duration."
-      },
-      {
-        "id": "24.2",
-        "name": "Profiling",
-        "concept": "Nim has a built-in profiler.\nCompile with `--profiler:on --stackTrace:on`.\nIn code, import `nimprof` to enable it.\nThis writes a `profile_results.txt` file.",
-        "task": "Import `nimprof`.\nWrite a slow proc `slow()` that loops 100,000 times.\nCall `slow()`.",
-        "compiler_args": [
-          "--profiler:on",
-          "--stackTrace:on"
-        ],
-        "validation_code": "\"nimprof\" in code",
-        "solution": "import nimprof\nproc slow() = \n  for i in 1..100_000: discard\nslow()",
-        "hint": "Just `import nimprof` and write a loop."
-      }
-    ]
-  },
-  {
-    "module": "25: Capstone Project (\"The Web API\")",
-    "lessons": [
-      {
-        "id": "25.1",
-        "name": "Project Setup",
-        "concept": "Welcome to the final challenge.\nYou will build a simple Todo API.\nFirst, let's set up the project structure.\nWe need a `src/server.nim` and a `src/todo.nim`.",
-        "task": "Create `src/todo.nim`.\nDefine a `Todo` object with `id: int`, `title: string`, `done: bool`.\nExport the type and fields (`*`).",
-        "filename": "src/todo.nim",
-        "validation_code": "\"type\" in code and \"Todo*\" in code and \"title*\" in code",
-        "solution": "type Todo* = object\n  id*: int\n  title*: string\n  done*: bool",
-        "hint": "Remember to use `*` to export symbols."
-      },
-      {
-        "id": "25.2",
-        "name": "The Server",
-        "concept": "Now let's build the server in `src/server.nim`.\nWe'll use `asynchttpserver` and import our `todo` module.",
-        "task": "Import `asynchttpserver`, `asyncdispatch`, `json`, and `todo`.\nCreate a server that responds with `{\"status\": \"ok\"}` (JSON) to any request.\nUse `Port(0)` to avoid conflicts in tests.",
-        "filename": "src/server.nim",
-        "files": {
-          "src/todo.nim": "type Todo* = object\n  id*: int\n  title*: string\n  done*: bool"
+        {
+          "id": "1.3",
+          "name": "Control Flow",
+          "lessons": [
+            {
+              "id": "1.3.1",
+              "name": "Procedures (proc)",
+              "concept": "Procedures, or `proc`, are Nim's functions. They take arguments and can return a value.\nThe syntax is: `proc name(arg1: type, arg2: type): returntype =`\nThe body of the proc is indented. The return value is the last expression, or you can use `return`.",
+              "task": "Write a procedure named `addNumbers` that takes two integers (`a` and `b`) and returns their sum. Then, call it with `5` and `10` and `echo` the result.",
+              "validation_code": "result.stdout.strip() == \"15\"",
+              "solution": "proc addNumbers(a: int, b: int): int = a + b\necho addNumbers(5, 10)",
+              "hint": "Define the proc first. `proc addNumbers(a: int, b: int): int = a + b`. Then, on a new line, `echo addNumbers(5, 10)`.",
+              "prerequisites": [
+                "1.2.5",
+                "1.2.3"
+              ]
+            },
+            {
+              "id": "1.3.2",
+              "name": "if/else/elif",
+              "concept": "Conditional logic. You've seen this before in other languages. It's not complicated.\n`if condition:`\n  `...`\n`elif other_condition:`\n  `...`\n`else:`\n  `...`",
+              "task": "Write a procedure `checkSign` that takes an integer.\n- If the number is greater than 0, it should `echo` \"Positive\".\n- If it's less than 0, it should `echo` \"Negative\".\n- Otherwise, it should `echo` \"Zero\".\nCall your procedure with the number -5.",
+              "validation_code": "result.stdout.strip() == \"Negative\"",
+              "solution": "proc checkSign(num: int) =\n  if num > 0:\n    echo \"Positive\"\n  elif num < 0:\n    echo \"Negative\"\n  else:\n    echo \"Zero\"\ncheckSign(-5)",
+              "hint": "Your `if` condition should be `num > 0`, `elif` should be `num < 0`, and `else` handles the rest.",
+              "prerequisites": [
+                "1.3.1"
+              ]
+            },
+            {
+              "id": "1.3.3",
+              "name": "for Loops",
+              "concept": "Looping. `for i in a..b:` will loop from `a` to `b`, inclusive.\nIt's a simple, readable way to iterate.",
+              "task": "Write a `for` loop that prints the numbers from 1 to 5, each on a new line.",
+              "validation_code": "result.stdout.strip() == \"1\\n2\\n3\\n4\\n5\"",
+              "solution": "for i in 1..5:\n  echo i",
+              "hint": "Use `for num in 1..5:`. Inside the loop, `echo num`.",
+              "prerequisites": [
+                "1.3.2"
+              ]
+            },
+            {
+              "id": "1.3.4",
+              "name": "while Loops",
+              "concept": "When you don't know how many iterations you need, use `while`.\n`while condition:` keeps running as long as `condition` is true.\nBe careful: if the condition never becomes false, you get an infinite loop.",
+              "task": "Write a `while` loop that prints numbers from 1 to 3. Start with `var i = 1`. The loop should run while `i <= 3` and increment `i` each iteration.",
+              "validation_code": "result.stdout.strip() == \"1\\n2\\n3\"",
+              "solution": "var i = 1\nwhile i <= 3:\n  echo i\n  i += 1",
+              "hint": "`var i = 1`. Then `while i <= 3:`. Inside: `echo i`, then `i += 1`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.3.3"
+              ],
+              "cross_language_notes": "Same as Python, C, Java. `while` loops are nearly identical across all C-family languages."
+            },
+            {
+              "id": "1.3.5",
+              "name": "break & continue",
+              "concept": "`break` exits a loop immediately. `continue` skips to the next iteration.\nUse them sparingly — they can make control flow hard to follow. But sometimes they're exactly what you need.\nNim supports named loop blocks with `block label:` for breaking out of nested loops.",
+              "task": "Write a `for` loop from 1 to 10. Use `continue` to skip even numbers (i mod 2 == 0). Use `break` to stop when you hit 7. Echo only the odd numbers before 7.",
+              "validation_code": "result.stdout.strip() == \"1\\n3\\n5\"",
+              "solution": "for i in 1..10:\n  if i mod 2 == 0: continue\n  if i == 7: break\n  echo i",
+              "hint": "Inside the loop: `if i mod 2 == 0: continue`, then `if i == 7: break`, then `echo i`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.3.3"
+              ],
+              "cross_language_notes": "Same behavior as Python, C, Java. Nim additionally has `block label:` for breaking nested loops."
+            },
+            {
+              "id": "1.3.6",
+              "name": "case/match",
+              "concept": "The `case` statement is Nim's version of a switch/match.\nIt works with integers, strings, chars, and enums.\nUnlike C's `switch`, Nim's `case` doesn't fall through — you don't need `break` after each branch.\nThe `else:` branch handles unmatched values.",
+              "task": "Write a `case` statement that takes an integer variable `day = 3`. If it's 1 or 2, echo \"Weekday\". If it's 6 or 7, echo \"Weekend\". Otherwise, echo \"Midweek\".",
+              "validation_code": "result.stdout.strip() == \"Midweek\"",
+              "solution": "let day = 3\ncase day\nof 1, 2:\n  echo \"Weekday\"\nof 6, 7:\n  echo \"Weekend\"\nelse:\n  echo \"Midweek\"",
+              "hint": "`let day = 3`. Then `case day: of 1, 2: ... of 6, 7: ... else: ...`. No break needed.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.3.2"
+              ],
+              "cross_language_notes": "C requires `break` in each case. Rust uses `match` with `=>` syntax and is exhaustive. Nim's `case` is like Rust's `match` in safety but with simpler syntax."
+            }
+          ]
         },
-        "validation_code": "\"import\" in code and \"todo\" in code and \"%*\" in code",
-        "solution": "import asynchttpserver, asyncdispatch, json, todo\nvar server = newAsyncHttpServer()\nproc cb(req: Request) {.async.} =\n  await req.respond(Http200, $(%*{\"status\": \"ok\"}))\nasyncCheck server.serve(Port(0), cb)\npoll()",
-        "hint": "Use `%*` for JSON construction. Don't forget to import `todo`."
-      }
-    ]
-  },
-  {
-    "module": "26: Macros II (\"Writing Your Own Language\")",
-    "lessons": [
-      {
-        "id": "26.1",
-        "name": "HTML DSL",
-        "concept": "Macros allow you to create Domain Specific Languages (DSLs).\nLet's create a simple HTML generator.\nWe want syntax like `html div: echo \"content\"`.\nTo do this, we accept a body of `untyped` statements.",
-        "task": "Import `macros`.\nCreate a macro `html(name: untyped, body: untyped)`.\nIt should return a `quote do:` block that echoes \"<\" & $name & \">\", then runs `body`, then echoes \"</\" & $name & \">\" .\nUse it: `html div: echo \"Hello\"`.",
-        "validation_code": "\"<div>\" in result.stdout and \"</div>\" in result.stdout and \"Hello\" in result.stdout",
-        "solution": "import macros\nmacro html(name: untyped, body: untyped): untyped =\n  result = quote do:\n    echo \"<\" & $`name` & \">\"\n    `body`\n    echo \"</\" & $`name` & \">\"\nhtml div:\n  echo \"Hello\"",
-        "hint": "Inside `quote do:`, remember to use backticks to inject variables: `$`name``. "
-      },
-      {
-        "id": "26.2",
-        "name": "Typed Macros",
-        "concept": "So far we used `untyped`. But `typed` arguments are fully type-checked before the macro runs.\nThis is useful for verifying inputs.\nWrite a macro `checkInt(x: typed)` that errors at compile time if `x` is not an int.",
-        "task": "Import `macros`.\nWrite macro `checkInt(x: typed)`.\nUse `x.getType.typeKind` to check if it is `ntyInt`.\nIf not, call `error(\"Not an int\", x)`.\nCall it with `10`.",
-        "validation_code": "result.exitCode == 0",
-        "solution": "import macros\nmacro checkInt(x: typed): untyped =\n  if x.getType.typeKind != ntyInt:\n    error(\"Not an int\", x)\ncheckInt(10)",
-        "hint": "Access `x.getType.typeKind`. Compare with `ntyInt` (from `macros` module)."
-      }
-    ]
-  },
-  {
-    "module": "BOSS FIGHT 4: The MiniTest Framework",
-    "lessons": [
-      {
-        "id": "B4.1",
-        "name": "The Framework",
-        "concept": "You've learned macros and projects. Now build a mini testing framework.\nThis is a Project Mode lesson.\nYou need to implement `src/minitest.nim` with a `suite` and `test` macro.",
-        "type": "project",
-        "task": "1. In `src/minitest.nim`, export a template `suite(name, body)` that echoes \"[SUITE] \" & name and runs body.\n2. Export a template `test(name, body)` that echoes \"  [TEST] \" & name and runs body.\n3. The `tests/test1.nim` file already uses it. Just implement the module.",
-        "filename": "src/minitest.nim",
-        "files": {
-          "minitest.nimble": "version = \"0.1.0\"\nauthor = \"Boss\"\ndescription = \"Minitest\"\nlicense = \"MIT\"\nsrcDir = \"src\"\n",
-          "tests/test1.nim": "import minitest\nsuite \"MySuite\":\n  test \"MyTest\":\n    echo \"Running\""
+        {
+          "id": "1.4",
+          "name": "Collections",
+          "lessons": [
+            {
+              "id": "1.4.1",
+              "name": "Tuples",
+              "concept": "Tuples are fixed-size, ordered collections of values that can have different types.\nThey're useful for grouping related data without creating a full-blown object.\nSyntax: `let myTuple = (\"some string\", 42)`.\nYou access their fields by index: `myTuple[0]`, `myTuple[1]`.",
+              "task": "Declare a tuple named `person` containing a string \"Alice\" and an integer 30. Then, `echo` both fields, each on a new line.",
+              "validation_code": "result.stdout.strip() == \"Alice\\n30\"",
+              "solution": "let person = (\"Alice\", 30)\necho person[0]\necho person[1]",
+              "hint": "Declare it with `let person = (\"Alice\", 30)`. Then use `echo person[0]` and `echo person[1]`.",
+              "prerequisites": [
+                "1.3.2",
+                "1.3.1"
+              ]
+            },
+            {
+              "id": "1.4.2",
+              "name": "Objects",
+              "concept": "Objects are custom data types that group named fields. They're like structs in other languages.\nYou define them with the `type` keyword.\ntype Person = object\n  name: string\n  age: int",
+              "task": "Define a `Person` object type with a `name` (string) and `age` (int). Create an instance of it, but don't print anything.",
+              "validation_code": "result.exitCode == 0",
+              "solution": "type Person = object\n  name: string\n  age: int\nlet p = Person(name: \"Bob\", age: 25)",
+              "hint": "After defining the type, create an instance: `let p = Person(name: \"Bob\", age: 25)`.",
+              "prerequisites": [
+                "1.4.1"
+              ]
+            },
+            {
+              "id": "1.4.3",
+              "name": "Sequences",
+              "concept": "Sequences, or `seq`, are dynamic-sized arrays. They're Nim's version of Python's lists or C++'s vectors.\nYou can add to them, remove from them, and they'll grow as needed.\nSyntax: `var numbers = @[10, 20, 30]`.",
+              "task": "Create a sequence of integers containing 1, 2, and 3. Use a `for` loop to iterate over it and `echo` each number.",
+              "validation_code": "result.stdout.strip() == \"1\\n2\\n3\"",
+              "solution": "var numbers = @[1, 2, 3]\nfor n in numbers: echo n",
+              "hint": "Use `var numbers = @[1, 2, 3]` and then `for n in numbers: echo n`.",
+              "prerequisites": [
+                "1.4.2"
+              ]
+            },
+            {
+              "id": "1.4.4",
+              "name": "Enums & Case Statements",
+              "concept": "Enumerations (`enum`) are for when you have a variable that can only be one of a few possible values.\nThey're great for state machines and making your code type-safe.\nThe `case` statement is like a switch statement, perfect for handling each possible enum value.",
+              "task": "Define an enum `TrafficLight` with values `tlRed`, `tlYellow`, `tlGreen`.\nCreate a variable of this type and set it to `tlGreen`.\nUse a `case` statement to `echo` \"Go\" if the light is green.",
+              "validation_code": "result.stdout.strip() == \"Go\"",
+              "solution": "type TrafficLight = enum\n  tlRed, tlYellow, tlGreen\nlet light = tlGreen\ncase light\nof tlGreen:\n  echo \"Go\"\nelse: discard",
+              "hint": "Define the enum, then: `let light = tlGreen`. The case statement looks like: `case light\nof tlGreen:\n  echo \"Go\"\nelse: discard`.",
+              "prerequisites": [
+                "1.4.3"
+              ]
+            },
+            {
+              "id": "1.4.5",
+              "name": "Option Type",
+              "concept": "What happens when a procedure might not be able to return a value? Use the `Option` type.\nIt's an enum that can be either `Some(value)` or `None`. This forces you to handle the 'no value' case at compile time, avoiding runtime errors.\nYou need to `import options` to use it.",
+              "task": "Import `options`. Write a `proc` that returns `some(42)`. Use `get()` to unwrap the value and `echo` it.",
+              "validation_code": "result.stdout.strip() == \"42\"",
+              "solution": "import options\nproc getValue(): Option[int] = some(42)\necho getValue().get()",
+              "hint": "Start with `import options`. Your proc should be `proc getValue(): Option[int] = some(42)`. Then call it and use `.get()` to extract the value.",
+              "prerequisites": [
+                "1.4.4"
+              ]
+            }
+          ]
         },
-        "validation_code": "\"[SUITE] MySuite\" in result.stdout and \"[TEST] MyTest\" in result.stdout",
-        "solution": "template suite*(name: string, body: untyped) =\n  echo \"[SUITE] \", name\n  body\n\ntemplate test*(name: string, body: untyped) =\n  echo \"  [TEST] \", name\n  body",
-        "hint": "Use `template` not `macro` for simplicity here. `template suite*(name: string, body: untyped) = ...`"
-      }
-    ]
-  },
-  {
-    "module": "27: Concurrency Deep Dive (\"Threading the Needle\")",
-    "lessons": [
-      {
-        "id": "27.1",
-        "name": "Channels",
-        "concept": "Threads share memory, but that's dangerous. `Channel[T]` lets threads communicate safely by passing messages.\nUse `open` to initialize, `send` to send, `recv` to receive.\nChannels are generic.",
-        "task": "Import `os`.\nDeclare `var chan: Channel[string]`.\nOpen it.\nSpawn a thread that sleeps 100ms then sends \"Ping\".\nIn main thread, `recv()` and echo the message.",
-        "validation_code": "result.stdout.strip() == \"Ping\"",
-        "solution": "import os\nvar chan: Channel[string]\nchan.open()\nproc worker() {.thread.} =\n  sleep(100)\n  chan.send(\"Ping\")\nvar t: Thread[void]\ncreateThread(t, worker)\nt.joinThread()\necho chan.recv()",
-        "hint": "Remember `{.thread.}` pragma. Use `createThread`. `chan.send(...)`."
-      }
-    ]
-  }
-]
+        {
+          "id": "1.5",
+          "name": "Boss: RPG Party",
+          "lessons": [
+            {
+              "id": "1.5.1",
+              "name": "The Gatekeeper",
+              "concept": "Time to put it all together. You're building a simple RPG party system.\nYou'll need Enums, Objects, Sequences, and Procs.\nThis is a comprehensive test of Phase 1.",
+              "task": "1. Define an Enum `Class` with values `Warrior`, `Mage`, `Rogue`.\n2. Define an Object `Character` with `name` (string), `class` (Class), and `level` (int).\n3. Create a sequence of Characters named `party`.\n4. Add a Level 10 Warrior named \"Gimli\" and a Level 8 Mage named \"Gandalf\" to the party.\n5. Iterate through the party and echo \"[Name] the [Class] is level [Level]\" for each.",
+              "validation_code": "\"Gimli the Warrior is level 10\" in result.stdout and \"Gandalf the Mage is level 8\" in result.stdout",
+              "solution": "type\n  Class = enum Warrior, Mage, Rogue\n  Character = object\n    name: string\n    class: Class\n    level: int\nvar party: seq[Character]\nparty.add(Character(name: \"Gimli\", class: Warrior, level: 10))\nparty.add(Character(name: \"Gandalf\", class: Mage, level: 8))\nfor c in party:\n  echo c.name, \" the \", c.class, \" is level \", c.level",
+              "hint": "Break it down. Enum first. Then Object. Then `var party: seq[Character]`. Then `party.add(...)`. Finally the loop.",
+              "prerequisites": [
+                "1.4.5",
+                "1.3.6",
+                "1.2.5",
+                "1.1.5"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "1.6",
+          "name": "Strings & Text",
+          "lessons": [
+            {
+              "id": "1.6.1",
+              "name": "String Basics",
+              "concept": "Strings in Nim are sequences of characters. They're mutable (you can modify individual chars) and dynamically sized.\nDeclare them with `var s = \"hello\"` or `var s: string = \"hello\"`.\nNim strings are NOT null-terminated (unlike C). They know their own length.",
+              "task": "Declare a string variable `greeting` with the value \"Nim\" and echo it.",
+              "validation_code": "result.stdout.strip() == \"Nim\"",
+              "solution": "let greeting = \"Nim\"\necho greeting",
+              "hint": "`let greeting = \"Nim\"` then `echo greeting`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.2.1"
+              ],
+              "cross_language_notes": "Python strings are immutable. C strings are char pointers. Nim strings are mutable and track their own length."
+            },
+            {
+              "id": "1.6.2",
+              "name": "String Interpolation",
+              "concept": "Nim's `strformat` module gives you `fmt` for string interpolation.\nUse `fmt\"Value: {variable}\"` to embed expressions directly.\nThis is cleaner than concatenating with `&`.",
+              "task": "Import `strformat`. Declare `let name = \"World\"; let score = 100`. Use `fmt` to echo \"Hello World, score: 100\".",
+              "validation_code": "result.stdout.strip() == \"Hello World, score: 100\"",
+              "solution": "import strformat\nlet name = \"World\"\nlet score = 100\necho fmt\"Hello {name}, score: {score}\"",
+              "hint": "`import strformat`. Then `let name = \"World\"`, `let score = 100`. Then `echo fmt\"Hello {name}, score: {score}\"`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.6.1"
+              ],
+              "cross_language_notes": "Python has f-strings (`f\"...\"`). C++ uses fmtlib. Rust uses `println!(\"...\")`. Nim's `fmt` is closest to Python's f-strings."
+            },
+            {
+              "id": "1.6.3",
+              "name": "String Operations",
+              "concept": "The `strutils` module provides rich string operations.\nCommon ones: `len()`, `contains()`, `split()`, `join()`, `strip()`, `toUpperAscii()`, `toLowerAscii()`.\nImport it explicitly to use these.",
+              "task": "Import `strutils`. Declare `let text = \"A,B,C\"`. Use `split(\",\")` to split it into a sequence, then use `join(\"-\")` to join it back. Echo the result.",
+              "validation_code": "result.stdout.strip() == \"A-B-C\"",
+              "solution": "import strutils\nlet text = \"A,B,C\"\necho text.split(\",\").join(\"-\")",
+              "hint": "Start with `import strutils`. Then `let text = \"A,B,C\"`. Then use `text.split(\",\").join(\"-\")` and `echo` it.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.6.1"
+              ],
+              "cross_language_notes": "Python: `.split()`, `.join()` — nearly identical. JavaScript: `.split()`, `.join()`. Nim follows the same pattern."
+            },
+            {
+              "id": "1.6.4",
+              "name": "Multi-line & Raw Strings",
+              "concept": "Nim supports multi-line string literals with triple quotes `\"\"\"...\"\"\"`.\nThese can span multiple lines in your source code.\nRaw strings use the `r` prefix: `r\"C:\\Users\\name\"` — backslashes are literal, not escape sequences.",
+              "task": "Create a multi-line string using `\"\"\"` that contains three lines: \"one\", \"two\", \"three\" on separate lines. Echo it.",
+              "validation_code": "\"one\" in result.stdout and \"two\" in result.stdout and \"three\" in result.stdout",
+              "solution": "let s = \"\"\"one\ntwo\nthree\"\"\"\necho s",
+              "hint": "Use triple quotes `\"\"\"` to start and end. Put each word on its own line between them. Then `echo s`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.6.1"
+              ],
+              "cross_language_notes": "Python also uses triple quotes. C++ uses raw string literals `R\"()\"`. Rust uses `r#\"...\"#`."
+            }
+          ]
+        },
+        {
+          "id": "1.7",
+          "name": "Objects & Enums",
+          "lessons": [
+            {
+              "id": "1.7.1",
+              "name": "Creating Objects",
+              "concept": "Objects group related data into a single value.\nDefine them with the `type` keyword and `object` annotation.\nA `Person` object with `name` and `age` is a common first example.",
+              "task": "Define a `Book` object type with fields `title: string` and `pages: int`. Create an instance with title \"Nim in Action\" and pages 300. Echo the title.",
+              "validation_code": "result.stdout.strip() == \"Nim in Action\"",
+              "solution": "type Book = object\n  title: string\n  pages: int\nlet b = Book(title: \"Nim in Action\", pages: 300)\necho b.title",
+              "hint": "`type Book = object`. Then `let b = Book(title: ..., pages: ...)`. Access with `b.title`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.2.5"
+              ],
+              "cross_language_notes": "Python classes need `def __init__`. C++ has constructors. Rust uses structs with field init shorthand. Nim's object creation is closest to Rust."
+            },
+            {
+              "id": "1.7.2",
+              "name": "Object Fields & Methods",
+              "concept": "Objects can have any number of fields. Access them with dot notation: `obj.field`.\nNim doesn't have methods attached to objects — instead you write procs that take the object as the first argument.\nMethod call syntax (`obj.procName()`) makes it look like method calls.",
+              "task": "Define a `Rectangle` object with `width: float` and `height: float`. Write a `proc area(r: Rectangle): float = r.width * r.height`. Create a rect with width 3.0, height 4.0 and call `area` using method syntax.",
+              "validation_code": "result.stdout.strip() == \"12.0\"",
+              "solution": "type Rectangle = object\n  width: float\n  height: float\nproc area(r: Rectangle): float = r.width * r.height\nlet r = Rectangle(width: 3.0, height: 4.0)\necho r.area()",
+              "hint": "Define the proc: `proc area(r: Rectangle): float = r.width * r.height`. Then call it: `r.area()` and `echo`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "1.7.1",
+                "1.3.1"
+              ],
+              "cross_language_notes": "Python uses `def area(self)` inside the class. C++ uses member functions. Nim separates data objects from procedures that act on them."
+            },
+            {
+              "id": "1.7.3",
+              "name": "Enums in Depth",
+              "concept": "Enums aren't just labels — they have an underlying `int` value.\nYou can access the `ord` (ordinal) and `$` (string representation).\nYou can also specify custom values: `enum MyEnum = val1, val2 = 10, val3`.",
+              "task": "Define an enum `Color` with values `cRed`, `cGreen`, `cBlue`. Create a variable `paint` set to `cGreen`. Echo the string representation of `paint` (using `$`) and its ordinal (using `ord`), each on separate lines.",
+              "validation_code": "result.stdout.strip() == \"cGreen\\n1\"",
+              "solution": "type Color = enum cRed, cGreen, cBlue\nlet paint = cGreen\necho $paint\necho ord(paint)",
+              "hint": "`$paint` gives the string \"cGreen\". `ord(paint)` gives the integer 1 (0-indexed).",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.2.1"
+              ],
+              "cross_language_notes": "Python's `IntEnum` gives `.value` for the ordinal. C enums are just integers. Rust can `as isize` cast. Nim's `ord` and `$` are explicit and clean."
+            },
+            {
+              "id": "1.7.4",
+              "name": "Case with Enums",
+              "concept": "Enums and `case` work together naturally.\nThe compiler warns if you don't handle all possible enum values (exhaustiveness check).\nThis is a powerful pattern for state machines and command dispatch.",
+              "task": "Define an enum `Direction` with values `dNorth`, `dSouth`, `dEast`, `dWest`. Create a `Direction` variable set to `dNorth`. Use a `case` statement: if North, echo \"Up\"; if South, echo \"Down\"; otherwise echo \"Side\".",
+              "validation_code": "result.stdout.strip() == \"Up\"",
+              "solution": "type Direction = enum dNorth, dSouth, dEast, dWest\nlet dir = dNorth\ncase dir\nof dNorth: echo \"Up\"\nof dSouth: echo \"Down\"\nelse: echo \"Side\"",
+              "hint": "Define the enum. `case dir: of dNorth: ... of dSouth: ... else: ...`. No `break` needed.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "1.7.3",
+                "1.3.6"
+              ],
+              "cross_language_notes": "Rust's `match` is exhaustive by default. C's switch isn't. Nim's `case` with enums gives you compile-time exhaustiveness checks."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Builder",
+      "chapters": [
+        {
+          "id": "2.1",
+          "name": "Generics & Iterators",
+          "lessons": [
+            {
+              "id": "2.1.1",
+              "name": "Generics",
+              "concept": "Generics let you write procedures that can work with different types.\nInstead of a specific type like `int`, you use a placeholder, like `T`.\nSyntax: `proc echoFirst[T](items: seq[T]) =`",
+              "task": "Write a generic procedure `echoFirst` that takes a sequence of any type and echoes the first element. Call it with a sequence of strings `@[ \"a\", \"b\"]`.",
+              "validation_code": "result.stdout.strip() == \"a\"",
+              "solution": "proc echoFirst[T](items: seq[T]) = echo items[0]\nechoFirst(@[\"a\", \"b\"])",
+              "hint": "Define the proc as `proc echoFirst[T](items: seq[T]) = echo items[0]`. Then call it.",
+              "prerequisites": [
+                "1.5.1"
+              ]
+            },
+            {
+              "id": "2.1.2",
+              "name": "Method Call Syntax",
+              "concept": "Nim lets you call procedures in two ways: `procName(obj, arg)` or `obj.procName(arg)`.\nThe second one is called 'method call syntax' and is just syntactic sugar. It makes code look more object-oriented.",
+              "task": "Define a `Person` object and a `proc greet(p: Person)` that echoes \"Hello, \" followed by the person's name.\nCreate a `Person` instance and call `greet` using method call syntax.",
+              "validation_code": "\"Hello, \" in result.stdout.strip()",
+              "solution": "type Person = object\n  name: string\nproc greet(p: Person) = echo \"Hello, \", p.name\nlet p = Person(name: \"Carly\")\np.greet()",
+              "hint": "Define your proc, create a person `let p = Person(name: \"Carly\")`, then call the proc like this: `p.greet()`.",
+              "prerequisites": [
+                "2.1.1"
+              ]
+            },
+            {
+              "id": "2.1.3",
+              "name": "Iterators",
+              "concept": "An `iterator` is a procedure that can 'yield' a value and be resumed later, making it perfect for custom loops.\nThey're memory-efficient because they produce values one at a time, instead of all at once.",
+              "task": "Write an iterator `countTo(n: int)` that yields numbers from 1 up to `n`. Use it in a `for` loop to `echo` numbers up to 3.",
+              "validation_code": "result.stdout.strip() == \"1\\n2\\n3\"",
+              "solution": "iterator countTo(n: int): int =\n  var i = 1\n  while i <= n:\n    yield i\n    i += 1\nfor i in countTo(3): echo i",
+              "hint": "Define it as `iterator countTo(n: int): int = ...`. Inside, use a `var` counter and a `while` loop that `yield`s the value.",
+              "prerequisites": [
+                "2.1.2"
+              ]
+            },
+            {
+              "id": "2.1.4",
+              "name": "Generic Constraints",
+              "concept": "Nim uses type classes like `SomeInteger` to constrain generic parameters.\nThese are sets of types that support certain operations.\n`SomeInteger` includes all signed/unsigned ints but not `float`.\nUse them to restrict a generic proc to only valid types.",
+              "task": "Write a generic proc `sumInts[T: SomeInteger](seq: openArray[T]): T` that sums a sequence. Call it with `@[1, 2, 3, 4, 5]` and echo the result.",
+              "validation_code": "result.stdout.strip() == \"15\"",
+              "solution": "proc sumInts[T: SomeInteger](seq: openArray[T]): T =\n  var total: T = 0\n  for x in seq: total += x\n  total\necho sumInts(@[1, 2, 3, 4, 5])",
+              "hint": "The proc signature is `proc sumInts[T: SomeInteger](seq: openArray[T]): T`. Inside: `var total: T = 0`, loop and add, return total.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.1.1"
+              ],
+              "cross_language_notes": "Rust uses trait bounds like `T: Add<Output=T>`. C++20 uses `std::integral`. Nim uses type classes like `SomeInteger` which are structurally defined."
+            },
+            {
+              "id": "2.1.5",
+              "name": "Multiple Generic Params",
+              "concept": "Generic procs can take several independent type parameters, e.g., `proc pair[A, B](a: A, b: B)`. This is useful for heterogeneous containers or adapters.\nThe compiler infers the types at the call site.",
+              "task": "Write a proc `makePair[A, B](x: A, y: B): string` that returns `\"($1, $2)\"` using string representation of both values. Call it with `42` and `\"hello\"`. Use `$` to convert.",
+              "validation_code": "result.stdout.strip() == \"(42, hello)\"",
+              "solution": "proc makePair[A, B](x: A, y: B): string = \"(\" & $x & \", \" & $y & \")\"\necho makePair(42, \"hello\")",
+              "hint": "The proc signature: `proc makePair[A, B](x: A, y: B): string`. Use `$` to convert each param to string.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "2.1.1"
+              ],
+              "cross_language_notes": "Python just accepts any types. C++ templates do this implicitly. Rust uses `fn pair<A, B>(a: A, b: B)`. Nim's syntax is clean and the compiler infers types."
+            }
+          ]
+        },
+        {
+          "id": "2.2",
+          "name": "Memory Basics",
+          "lessons": [
+            {
+              "id": "2.2.1",
+              "name": "Ref Types",
+              "concept": "Sometimes you need multiple variables to point to the *same* object in memory.\nA `ref` type is a reference to an object. When you pass a `ref`, you're not passing a copy, you're passing a pointer to the original.\nThis is how you get shared, mutable state.",
+              "task": "Define a `Person` object. Create a `ref Person` variable `p1`.\nCreate a second variable `p2` and assign `p1` to it.\nModify the `name` of the person through `p2`.\nEcho the name through `p1` to see that it changed.",
+              "validation_code": "result.stdout.strip() != \"John\" and len(result.stdout.strip()) > 0",
+              "solution": "type Person = ref object\n  name: string\nvar p1 = Person(name: \"John\")\nvar p2 = p1\np2.name = \"Jane\"\necho p1.name",
+              "hint": "Use `type Person = ref object; var p1 = Person(name: \"John\"); var p2 = p1; p2.name = \"Jane\"; echo p1.name`",
+              "prerequisites": [
+                "2.1.5",
+                "1.5.1"
+              ]
+            },
+            {
+              "id": "2.2.2",
+              "name": "Linked Lists with ref",
+              "concept": "`ref` objects let you build recursive data structures like linked lists.\nA `Node` can have a `next: ref Node` field, creating a chain.\nWhen you remove a node from the chain, the remaining nodes stay alive because they're still referenced.",
+              "task": "Define a `Node` object with `data: int` and `next: ref Node`. Build a two-node chain (1 -> 2). Drop the first node by assigning `head = head.next`. Echo the data of the remaining node.",
+              "validation_code": "result.stdout.strip() == \"2\"",
+              "solution": "type Node = ref object\n  data: int\n  next: Node\nvar head = Node(data: 1)\nhead.next = Node(data: 2)\nhead = head.next\necho head.data",
+              "hint": "`type Node = ref object`. Build the chain, then `head = head.next` to drop first node, then `echo head.data`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "1.7.1"
+              ],
+              "cross_language_notes": "Similar to Python's normal objects (ref semantics). Unlike C++ where you'd use pointers or `std::shared_ptr`. Rust would require `Rc` or `Box`."
+            },
+            {
+              "id": "2.2.3",
+              "name": "Raw Pointers with ptr",
+              "concept": "`ptr` is a raw, unchecked pointer. Use `addr` to get the address of a mutable variable.\nRaw pointers bypass Nim's memory safety — they're mainly for FFI.\nDereference a `ptr` with `[]`: `p[]` gives you the value at the address.",
+              "task": "Write a proc `swap(a, b: ptr int)` that swaps two integers using raw pointers. Use `let tmp = a[]; a[] = b[]; b[] = tmp`. Call it with `addr(x)` and `addr(y)` then echo x and y.",
+              "validation_code": "\"x=10 y=20\" in result.stdout or \"x=10\" in result.stdout",
+              "solution": "proc swap(a, b: ptr int) =\n  let tmp = a[]\n  a[] = b[]\n  b[] = tmp\nvar x = 20\nvar y = 10\nswap(addr(x), addr(y))\necho \"x=\", x, \" y=\", y",
+              "hint": "Use `addr(x)` to get the pointer. Dereference with `[]`. The swap: save tmp, assign b to a, assign tmp to b.",
+              "difficulty": "hard",
+              "prerequisites": [
+                "2.2.1"
+              ],
+              "cross_language_notes": "C's `int*`, C++'s raw pointers. Rust requires `unsafe`. Nim's `ptr` is typed like C pointers."
+            },
+            {
+              "id": "2.2.4",
+              "name": "Move Semantics",
+              "concept": "With `--gc:arc` or `--gc:orc`, `owned` indicates unique ownership. A `owned T` can be moved but not copied.\nUse `move(x)` from `std/sugar` to transfer ownership.\nAfter moving, the original variable is consumed and can't be used.",
+              "task": "Import `std/sugar`. Create a `ref object` `Data` with a `value: string`. Write a proc `take(owned: owned Data)` that prints `owned.value`. Create a `Data` instance, move it into `take`, and echo.",
+              "validation_code": "\"Hello\" in result.stdout",
+              "solution": "import std/sugar\ntype Data = ref object\n  value: string\nproc take(owned: owned Data) = echo owned.value\nvar d = Data(value: \"Hello\")\ntake(move(d))",
+              "hint": "`type Data = ref object`. The proc takes `owned: owned Data`. Call with `take(move(d))`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.2.1"
+              ],
+              "cross_language_notes": "Similar to C++ `std::move` or Rust's move by default. Nim requires explicit `owned` and `move()`."
+            }
+          ]
+        },
+        {
+          "id": "2.3",
+          "name": "Files & Errors",
+          "lessons": [
+            {
+              "id": "2.3.1",
+              "name": "Try/Except",
+              "concept": "When things go wrong, Nim raises exceptions. You can handle them with a `try`/`except` block.\nThis prevents your program from crashing when something unexpected happens, like accessing a bad array index.",
+              "task": "Create a small array. In a `try` block, attempt to access an index that is out of bounds. In the `except IndexDefect` block, `echo` the message \"Bad index!\".",
+              "validation_code": "result.stdout.strip() == \"Bad index!\"",
+              "solution": "var a: array[0..2, int]\nlet badIndex = 10\ntry:\n  discard a[badIndex]\nexcept IndexDefect:\n  echo \"Bad index!\"",
+              "hint": "The structure is `try:\n  discard a[10]\nexcept IndexDefect:\n  echo \"Bad index!\"`.",
+              "prerequisites": [
+                "2.2.4",
+                "1.5.1"
+              ]
+            },
+            {
+              "id": "2.3.2",
+              "name": "File Reading",
+              "concept": "The `os` module provides functions for interacting with the file system. `readFile` is the simplest way to get the contents of a file as a string.",
+              "task": "Import the `os` module. Create a temporary file named `test.txt` with `writeFile(\"test.txt\", \"hello\")`. Then, use `readFile(\"test.txt\")` and `echo` its contents.",
+              "validation_code": "\"hello\" in output",
+              "solution": "import os\nwriteFile(\"test.txt\", \"hello\")\necho readFile(\"test.txt\")",
+              "hint": "Don't forget to `import os`. Use `writeFile` first, then `echo readFile(\"test.txt\")`.",
+              "prerequisites": [
+                "2.3.1"
+              ]
+            },
+            {
+              "id": "2.3.3",
+              "name": "File Writing",
+              "concept": "Just as `readFile` reads a file, `writeFile` writes a string to a file, overwriting it if it already exists.",
+              "task": "Import the `os` module. Use `writeFile` to create a file named `output.txt` with the content \"Hello, Nim!\". Then, read the file back and `echo` its contents.",
+              "validation_code": "\"Hello, Nim!\" in output",
+              "solution": "import os\nwriteFile(\"output.txt\", \"Hello, Nim!\")\necho readFile(\"output.txt\")",
+              "hint": "After you `writeFile`, just add `echo readFile(\"output.txt\")`.",
+              "prerequisites": [
+                "2.3.2"
+              ]
+            },
+            {
+              "id": "2.3.4",
+              "name": "Custom Exceptions",
+              "concept": "Exceptions inherit from `CatchableError` (recoverable) or `Defect` (unrecoverable).\nDefine your own with `type MyError = object of CatchableError`.\nYou can add extra fields to carry error info.",
+              "task": "Define `DivideByZeroError` as an object of `CatchableError`. Write a proc `safeDiv(a, b: int): int` that raises `DivideByZeroError` when `b == 0`. Its `msg` field should be \"cannot divide by zero\".",
+              "validation_code": "result.stdout.strip() == \"caught\"",
+              "solution": "type DivideByZeroError = ref object of CatchableError\nproc safeDiv(a, b: int): int =\n  if b == 0:\n    raise DivideByZeroError(msg: \"cannot divide by zero\")\n  a div b\n\ntry:\n  discard safeDiv(5, 0)\nexcept DivideByZeroError:\n  echo \"caught\"",
+              "hint": "`type DivideByZeroError = ref object of CatchableError`. In `safeDiv`, `if b == 0: raise ...`. In main: `try: ... except: echo \"caught\"`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "2.3.1"
+              ],
+              "cross_language_notes": "Python's `class MyError(Exception)`. Nim's exceptions are objects of `CatchableError`. Use `msg` field for error text."
+            },
+            {
+              "id": "2.3.5",
+              "name": "The defer Statement",
+              "concept": "`defer` schedules code to run when the current scope exits — useful for guaranteed cleanup.\nIt's more concise than `try/finally` and runs even if an exception is raised.\nPlace `defer` right after acquiring a resource.",
+              "task": "Write a proc that opens a file for writing, uses `defer: f.close()` right after opening, writes \"hello\", and then echoes \"done\". The file must close even if the write fails.",
+              "validation_code": "\"done\" in output",
+              "solution": "import os\nproc writeAndClose() =\n  let f = open(\"test.txt\", fmWrite)\n  defer: f.close()\n  f.write(\"hello\")\n  echo \"done\"\nwriteAndClose()",
+              "hint": "Wrap the code in a proc. `let f = open(...)`, then `defer: f.close()` on the next line.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "1.3.1"
+              ],
+              "cross_language_notes": "Go's `defer`, Zig's `defer`. Python uses `with` for resource management. Nim's `defer` is closest to Go's."
+            }
+          ]
+        },
+        {
+          "id": "2.4",
+          "name": "Code Organization",
+          "lessons": [
+            {
+              "id": "2.4.1",
+              "name": "Import",
+              "concept": "You can't fit everything in one file. The `import` statement lets you use code from other files, called modules.\nNim has a rich standard library with modules for math, string handling, OS interaction, and more.",
+              "task": "Import the `math` module and `echo` the result of `sqrt(25.0)`.",
+              "validation_code": "result.stdout.strip() == \"5.0\"",
+              "solution": "import math\necho sqrt(25.0)",
+              "hint": "Start with `import math`. Then `echo sqrt(25.0)`.",
+              "prerequisites": [
+                "2.3.5",
+                "1.5.1"
+              ]
+            },
+            {
+              "id": "2.4.2",
+              "name": "Nimble Intro",
+              "concept": "Nimble is Nim's package manager. It's how you install and manage third-party libraries.\nYou'll use it for everything from web frameworks to game engines.\nThis is just a heads-up; you won't be using it in this tutorial.",
+              "task": "Just read this and press Enter. Go on.",
+              "skip_run": true,
+              "prerequisites": [
+                "2.4.1"
+              ]
+            },
+            {
+              "id": "2.4.3",
+              "name": "Creating Modules",
+              "concept": "Any Nim file can be a module. To expose a `proc` to other files, you mark it with an asterisk (`*`).\nThis is Nim's way of marking things as 'public' so they can be exported.",
+              "task": "Just read this and press Enter. Go on.",
+              "skip_run": true,
+              "prerequisites": [
+                "2.4.2"
+              ]
+            },
+            {
+              "id": "2.4.4",
+              "name": "Selective Import",
+              "concept": "`from module import symbols` brings only specific names into scope.\nThis avoids name clashes and makes dependencies explicit.\nUse `from module import nil` to require full qualification.",
+              "task": "Import only `parseInt` from `std/strutils`. Use it to convert the string `\"42\"` to an integer and echo it. Do NOT import `strip` or any other symbol.",
+              "validation_code": "result.stdout.strip() == \"42\"",
+              "solution": "from std/strutils import parseInt\necho parseInt(\"42\")",
+              "hint": "`from std/strutils import parseInt`. Then `echo parseInt(\"42\")`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "2.4.1"
+              ],
+              "cross_language_notes": "Python's `from module import name`. Rust's `use module::name`. Nim's version is clean and supports `{.all.}` pragma."
+            },
+            {
+              "id": "2.4.5",
+              "name": "The include Statement",
+              "concept": "`include file` textually inserts a file's contents at that point — unlike `import`, it does NOT create a separate module scope.\nUseful for splitting large modules or for macros that need surrounding context.\nOveruse breaks modularity.",
+              "task": "Write a main file that `include` a file `helpers.nim` containing a proc `sayHi`. Call `sayHi` directly. Then attempt to `import helpers` — show it fails.",
+              "validation_code": "result.stdout.strip() == \"Hi!\"",
+              "solution": "include \"helpers.nim\"\nsayHi()",
+              "files": {
+                "helpers.nim": "proc sayHi*() = echo \"Hi!\""
+              },
+              "hint": "The main file just says `include \"helpers.nim\"` and then calls `sayHi()` directly — no module prefix needed.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.4.1"
+              ],
+              "cross_language_notes": "C's `#include`. But Nim's `include` respects Nim syntax. Most languages discourage textual inclusion — use `import` for modules."
+            }
+          ]
+        },
+        {
+          "id": "2.5",
+          "name": "Concurrency Intro",
+          "lessons": [
+            {
+              "id": "2.5.1",
+              "name": "Spawn Intro",
+              "concept": "Nim has powerful and easy-to-use concurrency features built into the language.\nThe `spawn` keyword can run a procedure in a separate thread.\nThis is a deep topic, so we're just scratching the surface here. The main takeaway is that concurrency in Nim is a first-class citizen.",
+              "task": "Just read this and press Enter. You've reached the end for now.",
+              "skip_run": true,
+              "prerequisites": [
+                "2.4.5",
+                "1.5.1"
+              ]
+            },
+            {
+              "id": "2.5.2",
+              "name": "FlowVar",
+              "concept": "Running a `proc` in another thread is cool, but how do you get a result back?\nA `FlowVar[T]` is a special type that acts as a container for a value that will be computed concurrently.\nYou can `^` to wait for the result and retrieve it.",
+              "task": "Import `threadpool`. Write a `proc` that returns `42`. `spawn` it into a `FlowVar[int]` and `echo` the result.",
+              "validation_code": "\"42\" in output",
+              "solution": "import threadpool\nproc calc(): int = 42\nvar result = spawn calc()\necho ^result",
+              "hint": "`import threadpool`. `proc calc(): int = 42`. Then `var result = spawn calc()`. Finally, `echo ^result`.",
+              "prerequisites": [
+                "2.5.1"
+              ]
+            },
+            {
+              "id": "2.5.3",
+              "name": "Channels",
+              "concept": "Threads share memory, but that's dangerous. `Channel[T]` lets threads communicate safely by passing messages.\nUse `open` to initialize, `send` to send, `recv` to receive.\nChannels are generic.",
+              "task": "Import `os`.\nDeclare `var chan: Channel[string]`.\nOpen it.\nSpawn a thread that sleeps 100ms then sends \"Ping\".\nIn main thread, `recv()` and echo the message.",
+              "validation_code": "result.stdout.strip() == \"Ping\"",
+              "solution": "import os\nvar chan: Channel[string]\nchan.open()\nproc worker() {.thread.} =\n  sleep(100)\n  chan.send(\"Ping\")\nvar t: Thread[void]\ncreateThread(t, worker)\nt.joinThread()\necho chan.recv()",
+              "hint": "Remember `{.thread.}` pragma. Use `createThread`. `chan.send(...)`.",
+              "prerequisites": [
+                "2.5.2"
+              ]
+            },
+            {
+              "id": "2.5.4",
+              "name": "Parallel Sum with spawn",
+              "concept": "`spawn` from `std/threadpool` starts a task on a thread pool, returning a `FlowVar[T]`.\nUse `^` to block and retrieve the result.\nThe pool uses work stealing for load balancing.",
+              "task": "Write a proc `sumHalf(seq: openArray[int]): int` that sums values. Split `@[1,2,3,4,5,6,7,8,9,10]` into two halves, `spawn` each half, combine results with `^`, and echo the total.",
+              "validation_code": "\"55\" in result.stdout",
+              "solution": "import std/threadpool\nproc sumHalf(seq: openArray[int]): int =\n  for x in seq: result += x\nlet data = @[1,2,3,4,5,6,7,8,9,10]\nlet mid = data.len div 2\nlet f1 = spawn sumHalf(data[0..<mid])\nlet f2 = spawn sumHalf(data[mid..^1])\necho ^f1 + ^f2",
+              "hint": "`import std/threadpool`. Split: `data[0..<mid]` and `data[mid..^1]`. `spawn` each half. Combine: `^f1 + ^f2`.",
+              "difficulty": "hard",
+              "prerequisites": [
+                "2.5.2"
+              ],
+              "cross_language_notes": "Similar to `async` in C# but for CPU tasks. Rust's `rayon`'s `join`. Nim's `spawn` is simpler than manual `Thread` creation."
+            },
+            {
+              "id": "2.5.5",
+              "name": "Channel Communication",
+              "concept": "`Channel[T]` from `std/channels` allows thread-safe message passing.\n`send` puts data, `recv` blocks until data is available.\nChannels can be buffered (pass a size) or unbuffered (synchronous).",
+              "task": "Just read the code below and understand how Channels work. Press Enter to continue.",
+              "validation_code": "true",
+              "solution": "# Channel communication is a topic for Level 2.",
+              "hint": "Channels use send/recv for thread-safe message passing.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.5.2",
+                "2.5.3"
+              ],
+              "cross_language_notes": "Go channels, Rust `mpsc::channel`, Python `queue.Queue`. Nim's channels are low-level but easy to use.",
+              "skip_run": true
+            }
+          ]
+        },
+        {
+          "id": "2.6",
+          "name": "Metaprogramming",
+          "lessons": [
+            {
+              "id": "2.6.1",
+              "name": "Templates",
+              "concept": "Metaprogramming is writing code that generates other code. Nim has powerful metaprogramming features, with `template` being the simplest.\nA template is like a super-powered macro. It substitutes code at compile time, which can reduce boilerplate and improve performance.",
+              "task": "Create a template `shout(msg: string)` that takes a string and echoes it with an exclamation mark. Use it to shout \"Hello\".",
+              "validation_code": "result.stdout.strip() == \"Hello!\"",
+              "solution": "template shout(msg: string) = echo msg, \"!\"\nshout(\"Hello\")",
+              "hint": "The syntax is `template shout(msg: string) = echo msg, \"!\". Then you can call it like a regular proc: `shout(\"Hello\")`.",
+              "prerequisites": [
+                "2.5.5",
+                "1.5.1"
+              ]
+            },
+            {
+              "id": "2.6.2",
+              "name": "Template vs Proc",
+              "concept": "Templates are syntactic substitution — they operate on Nim's AST and accept untyped expressions.\nUse templates for logging, assertions, or lazy evaluation.\nUse procs for reusable, type-safe logic. Templates can double-evaluate expressions.",
+              "task": "Write a template `logOnce(msg: string)` that echoes the message only the first time it's called, using a static bool inside the template. Call it twice — only one should print.",
+              "validation_code": "result.stdout.strip() == \"First\"",
+              "solution": "var called: bool\ntemplate logOnce(msg: string) =\n  if not called:\n    called = true\n    echo msg\nlogOnce(\"First\")\nlogOnce(\"Second\")",
+              "hint": "Declare `var called: bool` outside the template. Inside: `if not called: called = true; echo msg`. Only the first call prints.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.6.1"
+              ],
+              "cross_language_notes": "C macros, C++ templates. Nim's templates are hygienic. Unlike C macros, they respect scope and don't double-evaluate `let`-bound expressions."
+            },
+            {
+              "id": "2.6.3",
+              "name": "Static Params",
+              "concept": "`static[int]` in a template forces a value to be known at compile time.\nThis enables compile-time computation and code specialization.\nOften used with `when` to generate different code for different sizes.",
+              "task": "Write a template `repeat(n: static[int], body: untyped)` that repeats the body `n` times. Use it to echo \"Hi\" three times.",
+              "validation_code": "\"Hi\" in result.stdout",
+              "solution": "template repeat(n: static[int], body: untyped) =\n  for i in 0..<n:\n    body\nrepeat(3):\n  echo \"Hi\"",
+              "hint": "The template signature: `template repeat(n: static[int], body: untyped)`. Inside: `for i in 0..<n: body`. Call: `repeat(3): echo \"Hi\"`.",
+              "difficulty": "hard",
+              "prerequisites": [
+                "1.3.3"
+              ],
+              "cross_language_notes": "C++ non-type template parameters, Zig comptime. Nim's `static` is limited to simple values but enables compile-time loops."
+            },
+            {
+              "id": "2.6.4",
+              "name": "Compile-time when",
+              "concept": "`when` works like `if` but evaluates at compile time.\nThe condition must be constant — e.g., `defined(windows)`, `NimVersion`, `sizeof(int)`.\nUnselected branches aren't even parsed for validity, so you can write platform-specific code.",
+              "task": "Write a proc `getPath: string` that returns `\"C:\\\\temp\"` when `defined(windows)` and `\"/tmp\"` when `defined(posix)` using `when`.",
+              "validation_code": "result.exitCode == 0",
+              "solution": "proc getPath: string =\n  when defined(windows):\n    \"C:\\\\temp\"\n  elif defined(posix):\n    \"/tmp\"\n  else:\n    \".\"\necho getPath()",
+              "hint": "Use `when defined(windows):` and `elif defined(posix):`. The unselected branches don't need to compile on the current platform.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "2.6.1"
+              ],
+              "cross_language_notes": "C preprocessor `#ifdef`, Rust `cfg!` macro. Nim's `when` is more integrated — it's real Nim syntax, not a preprocessor."
+            },
+            {
+              "id": "2.6.5",
+              "name": "const vs let vs static",
+              "concept": "`const` is evaluated at compile time (must be a constant expression).\n`let` is evaluated at runtime once.\n`static:` forces compile-time evaluation inside an expression.\nUse `const` for true compile-time values, `let` for runtime invariants.",
+              "task": "Declare a `const` named `SPEED_OF_LIGHT` with value `299792458`. Use it in a `let` variable `distance` that computes `SPEED_OF_LIGHT * 10`. Echo the distance.",
+              "validation_code": "result.stdout.strip() == \"2997924580\"",
+              "solution": "const SPEED_OF_LIGHT = 299792458\nlet distance = SPEED_OF_LIGHT * 10\necho distance",
+              "hint": "`const SPEED_OF_LIGHT = 299792458`. Then `let distance = SPEED_OF_LIGHT * 10`. Echo it.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "2.6.4"
+              ],
+              "cross_language_notes": "C++ `constexpr`, Rust `const` vs `let`. Nim's `const` is closest to Rust's `const` — evaluated at compile time with no runtime overhead."
+            }
+          ]
+        },
+        {
+          "id": "2.7",
+          "name": "Boss: Generic Logger",
+          "lessons": [
+            {
+              "id": "2.7.1",
+              "name": "The Architect",
+              "concept": "Phase 2 tested your ability to write reusable and structural code.\nNow you must build a generic logging system using Templates and Generics.",
+              "task": "1. Define a template `log(msg)` that echoes \"[LOG]: \" followed by `msg`.\n2. Define a Generic proc `process[T](val: T)`.\n3. Inside `process`, use `log` to print \"Processing...\" and then echo `val`.\n4. Call `process` with the string \"Data\" and the integer `100`.",
+              "validation_code": "\"[LOG]: Processing...\" in result.stdout and \"Data\" in result.stdout and \"100\" in result.stdout",
+              "solution": "template log(msg) = echo \"[LOG]: \", msg\nproc process[T](val: T) =\n  log(\"Processing...\")\n  echo val\nprocess(\"Data\")\nprocess(100)",
+              "hint": "Template comes first. Then `proc process[T](val: T) = ...`. Call `process` twice.",
+              "prerequisites": [
+                "2.1.5",
+                "2.2.4",
+                "2.3.5",
+                "2.4.5",
+                "2.5.5",
+                "2.6.5"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Advanced",
+      "chapters": [
+        {
+          "id": "3.1",
+          "name": "Async",
+          "lessons": [
+            {
+              "id": "3.1.1",
+              "name": "Async/Await",
+              "concept": "Modern applications need to handle many things at once without freezing.\nNim uses `asyncdispatch` for this. You mark a proc with `{.async.}` and it returns a `Future[T]`.\nInside, you use `await` to pause execution until a future completes.\nTo run an async proc from the main synchronous scope, use `waitFor`.",
+              "task": "Import `asyncdispatch`. Create an async proc `tick()` that waits for 100ms (`await sleepAsync(100)`) then echoes \"Tock\". Call it using `waitFor`.",
+              "validation_code": "result.stdout.strip() == \"Tock\"",
+              "solution": "import asyncdispatch\nproc tick() {.async.} =\n  await sleepAsync(100)\n  echo \"Tock\"\nwaitFor tick()",
+              "hint": "Import `asyncdispatch`. `proc tick() {.async.} = await sleepAsync(100); echo \"Tock\"`. End with `waitFor tick()`.",
+              "prerequisites": [
+                "2.7.1"
+              ]
+            },
+            {
+              "id": "3.1.2",
+              "name": "async/await Basics",
+              "concept": "`async` transforms a proc into one that returns a `Future[T]`.\n`await` suspends the current async proc until the future completes, without blocking the thread.\nNim's async runs on a single event loop via `std/asyncdispatch`.\nUse `waitFor` to run an async proc from synchronous code.",
+              "task": "Write an async proc `fetchData: Future[string]` that `await sleepAsync(50)` and returns `\"data\"`. Call it with `waitFor` and echo the result.",
+              "validation_code": "result.stdout.strip() == \"data\"",
+              "solution": "import asyncdispatch\nproc fetchData(): Future[string] {.async.} =\n  await sleepAsync(50)\n  return \"data\"\necho waitFor fetchData()",
+              "hint": "`proc fetchData(): Future[string] {.async.} = await sleepAsync(50); return \"data\"`. Then `echo waitFor fetchData()`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "3.1.1"
+              ],
+              "cross_language_notes": "Python uses `async/await` with `asyncio`. JavaScript uses Promises. Nim requires explicit `waitFor` to run async code from sync context — similar to Python's `asyncio.run()`."
+            },
+            {
+              "id": "3.1.3",
+              "name": "asyncCheck & Errors",
+              "concept": "`asyncCheck(future)` schedules a future to run without waiting. Errors are silently ignored unless `asyncCheck` is used.\n`asyncDiscard` discards the value.\nFor fire-and-forget tasks, use `asyncCheck` and handle errors on the event loop.",
+              "task": "Write an async proc `failer` that raises `newException(ValueError, \"boom\")` after `await sleepAsync(50)`. Launch it with `asyncCheck failer()`. Then `echo \"done\"`.",
+              "validation_code": "\"done\" in result.stdout",
+              "solution": "import asyncdispatch\nproc failer() {.async.} =\n  await sleepAsync(50)\n  raise newException(ValueError, \"boom\")\nasyncCheck failer()\necho \"done\"",
+              "hint": "`asyncCheck failer()` launches the future. The error goes to stderr but the program continues. Then `echo \"done\"`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "3.1.2"
+              ],
+              "cross_language_notes": "JavaScript unhandled promise rejections are caught with `.catch()`. Python's `asyncio.create_task()` silently swallows errors. Nim's `asyncCheck` is similar to Python 3.11's `asyncio.TaskGroup`."
+            },
+            {
+              "id": "3.1.4",
+              "name": "Concurrent Async",
+              "concept": "Run multiple async tasks concurrently with `all()` or manually with `await` on each future.\nNim's `std/asyncfutures` provides `awaitAll` and `awaitOne`.\n`awaitAll` returns when all futures are done, `awaitOne` returns the first completed.",
+              "task": "Write two async procs: `taskA` that sleeps 200ms and returns \"A\", `taskB` that sleeps 100ms and returns \"B\". Use `waitFor` to run both and print the result of `taskB` (the faster one).",
+              "validation_code": "result.stdout.strip() == \"B\"",
+              "solution": "import asyncdispatch\nproc taskA(): Future[string] {.async.} =\n  await sleepAsync(200)\n  return \"A\"\nproc taskB(): Future[string] {.async.} =\n  await sleepAsync(100)\n  return \"B\"\necho waitFor taskB()",
+              "hint": "Define both procs. Then just `echo waitFor taskB()` — it completes first and returns its result.",
+              "difficulty": "hard",
+              "prerequisites": [
+                "2.5.2"
+              ],
+              "cross_language_notes": "Python: `asyncio.gather()`. JS: `Promise.all()`. Rust: `tokio::join!`. Nim's `waitFor` runs one future; for concurrency, compose with loops."
+            }
+          ]
+        },
+        {
+          "id": "3.2",
+          "name": "Macros I",
+          "lessons": [
+            {
+              "id": "3.2.1",
+              "name": "The AST",
+              "concept": "Nim code is parsed into an Abstract Syntax Tree (AST) before compilation.\nMacros let you manipulate this tree directly.\nThe `dumpTree:` statement prints the AST of the code inside it. This is how you learn what the tree looks like.",
+              "task": "Import `macros`. Use `dumpTree:` to inspect the code `echo 1`. (This will print to the output/compiler logs).",
+              "validation_code": "\"StmtList\" in result.stdout or \"StmtList\" in result.stderr",
+              "solution": "import macros\ndumpTree:\n  echo 1",
+              "hint": "Just wrap the code in `dumpTree:`: `dumpTree:\n  echo 1`.",
+              "prerequisites": [
+                "3.1.4",
+                "2.7.1"
+              ]
+            },
+            {
+              "id": "3.2.2",
+              "name": "AST Inspection",
+              "concept": "`dumpTree` (from `std/macros`) prints the AST of Nim code as a tree. Use `dumpTree: echo 1 + 2` to see the AST nodes like `StmtList`, `Call`, `Infix`, `IntLit`. This is essential for macro development.",
+              "task": "Just read the concept below. `dumpTree:` is used directly at compile time to inspect Nim code. Press Enter to continue.",
+              "validation_code": "true",
+              "solution": "# AST inspection uses dumpTree",
+              "hint": "`macro inspect(code: untyped): untyped = dumpTree(code); discard code`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "3.2.1"
+              ],
+              "skip_run": true,
+              "cross_language_notes": "Rust: `cargo expand`. Lisp: macros work on S-expressions directly. Nim's `dumpTree` is a debug tool to see the AST — essential for macro authors."
+            },
+            {
+              "id": "3.2.3",
+              "name": "Building AST Nodes",
+              "concept": "Macros construct AST programmatically. `newLit` creates a literal, `newCall` creates a procedure call, `newStmtList` creates a statement list.\nYou can build complex expressions by nesting these calls.\n`quote do:` is a template shortcut, but manual construction gives you full control.",
+              "task": "Write a template `power(x: int, n: static[int])` that generates the expression `x * x * ... * x` (n times) using `quote do:`. Use it with `power(2, 3)` and echo the result. (Hint: start with `result = 1` and build `result = result * x` in the loop.)",
+              "validation_code": "result.stdout.strip() == \"8\"",
+              "solution": "template power(x: int, n: static[int]): int =\n  var r = 1\n  for _ in 0..<n:\n    r = r * x\n  r\necho power(2, 3)",
+              "hint": "template power(r: int, n: static[int]): int = var r = 1; for _ in 0..<n: r = r * x; r. Then echo power(2, 3).",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.1.3"
+              ],
+              "cross_language_notes": "Lisp: `(list '* x y)` to build AST. Rust: proc macros build `TokenStream`. Nim's `newCall`/`newLit` is closest to Lisp's manual AST construction."
+            },
+            {
+              "id": "3.2.4",
+              "name": "quote do: Injection",
+              "concept": "`quote do:` allows writing Nim code as a template literal, with backticks to inject AST fragments.\nIt's cleaner than manual `newCall`/`newLit` construction.\nUse `echo \"expr: \" , expr` inside `quote do:` to generate code that prints an expression and its value.",
+              "task": "Write a macro `debug(expr: untyped)` that prints the expression's code and its value. Use `quote do:` with backtick injection. Test with `debug(1+2)`.",
+              "validation_code": "\"1 + 2: 3\" in result.stdout or \"1+2: 3\" in result.stdout or \"3\" in result.stdout",
+              "solution": "import macros\nmacro debug(expr: untyped): untyped =\n  let exprStr = repr(expr)\n  result = quote do:\n    echo `exprStr`, \": \", `expr`\ndebug(1+2)",
+              "hint": "Use `repr(expr)` to convert the AST node to a string. Then `quote do: echo exprStr, \": \", expr`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "3.2.3"
+              ],
+              "cross_language_notes": "C# has interpolated strings (`$\"...\"`). Nim's `quote do:` with backtick injection is more like Lisp quasiquote — you write code templates with holes."
+            }
+          ]
+        },
+        {
+          "id": "3.3",
+          "name": "FFI",
+          "lessons": [
+            {
+              "id": "3.3.1",
+              "name": "C Types",
+              "concept": "Nim compiles to C, so interacting with C is trivial.\nNim strings are objects with length and capacity. C strings are just pointers (`char*`).\nIn Nim, C strings are `cstring`. Conversion is automatic in many cases, or explicit via `cstring(myString)`.",
+              "task": "Declare a `cstring` variable initialized with \"Hello C\". Echo it.",
+              "validation_code": "result.stdout.strip() == \"Hello C\"",
+              "solution": "var s: cstring = \"Hello C\"\necho s",
+              "hint": "`var s: cstring = \"Hello C\"`.",
+              "prerequisites": [
+                "3.2.4",
+                "2.7.1"
+              ]
+            },
+            {
+              "id": "3.3.2",
+              "name": "Wrapping C Functions",
+              "concept": "To call a C function, you just tell Nim it exists using the `importc` pragma.\nYou also usually specify the header file with `header`.",
+              "task": "Define a proc `c_puts(s: cstring)` that maps to the C function `puts`. Use `{.importc: \"puts\", header: \"<stdio.h>\"}`. Call it with \"Native call\".",
+              "validation_code": "result.stdout.strip() == \"Native call\"",
+              "solution": "proc c_puts(s: cstring) {.importc: \"puts\", header: \"<stdio.h>\"}\nc_puts(\"Native call\")",
+              "hint": "The pragma goes after the arguments: `proc c_puts(s: cstring) {.importc: ... .}`.",
+              "prerequisites": [
+                "3.3.1"
+              ]
+            },
+            {
+              "id": "3.3.3",
+              "name": "Calling Conventions",
+              "concept": "Nim's FFI uses calling convention pragmas to match C/C++/Windows APIs.\n`cdecl` (default for C), `stdcall` (Win32 API), `noconv` (optimized Nim-to-Nim).\nMismatch causes stack corruption. Always match the convention of the library you're calling.",
+              "task": "Declare the C function `printf` using `varargs` (for format args). Use `{.importc: \"printf\", header: \"<stdio.h>\", varargs, cdecl.}`. Call `printf(\"%s %d\\n\", \"Hello\", 42)`.",
+              "validation_code": "\"Hello 42\" in result.stdout or result.exitCode == 0",
+              "solution": "proc printf(frmt: cstring): cint {.importc: \"printf\", header: \"<stdio.h>\", varargs, cdecl.}\ndiscard printf(\"%s %d\\n\", \"Hello\", 42)",
+              "hint": "Add `varargs` to the pragma for variadic arguments. `{.importc: \"printf\", header: \"<stdio.h>\", varargs, cdecl.}`",
+              "difficulty": "medium",
+              "prerequisites": [
+                "3.3.2"
+              ],
+              "cross_language_notes": "Rust: `extern \"C\"`. Python: `ctypes.CDLL`. Nim's calling convention pragmas (`cdecl`, `stdcall`) are closer to Rust's `extern` blocks."
+            },
+            {
+              "id": "3.3.4",
+              "name": "Dynamic Loading",
+              "concept": "`{.dynlib: \"libname\"}` loads a function at runtime, not link time.\nUseful for plugins or optional dependencies.\nThe library must be installed or bundled with your application.",
+              "task": "Load `sin` from the system math library. Use `{.dynlib: \"libm.so.6\"}` or `\"libm.dylib\"` or `\"msvcrt.dll\"` depending on your OS. Call it with `0.0` and print the result.",
+              "validation_code": "\"0\" in result.stdout",
+              "solution": "when defined(windows):\n  proc sin(x: cdouble): cdouble {.importc: \"sin\", dynlib: \"msvcrt.dll\".}\nelif defined(macosx):\n  proc sin(x: cdouble): cdouble {.importc: \"sin\", dynlib: \"libm.dylib\".}\nelse:\n  proc sin(x: cdouble): cdouble {.importc: \"sin\", dynlib: \"libm.so.6\".}\necho sin(0.0)",
+              "hint": "Use `when defined(windows): ... elif defined(macosx): ... else: ...` for cross-platform dynamic loading.",
+              "difficulty": "hard",
+              "prerequisites": [
+                "2.6.4"
+              ],
+              "cross_language_notes": "Python: `ctypes.CDLL(\"libm.so.6\")`. C: `dlopen/dlsym`. Nim's `dynlib` pragma is declarative — the function is loaded when first called."
+            }
+          ]
+        },
+        {
+          "id": "3.4",
+          "name": "Testing",
+          "lessons": [
+            {
+              "id": "3.4.1",
+              "name": "Unittest",
+              "concept": "Nim has a built-in `unittest` module.\nYou organize tests into a `suite` and individual `test` blocks.\nUse `check` to assert conditions. If a check fails, the test fails, but execution continues.",
+              "task": "Import `unittest`. Create a `suite \"Math\":` and a `test \"addition\":`. Inside, `check(1 + 1 == 2)`.",
+              "validation_code": "\"Math\" in result.stdout and \"addition\" in result.stdout",
+              "solution": "import unittest\nsuite \"Math\":\n  test \"addition\":\n    check(1 + 1 == 2)",
+              "hint": "`suite \"Name\":` then indent `test \"Name\":` then indent `check(...)`.",
+              "prerequisites": [
+                "3.3.4",
+                "2.7.1"
+              ]
+            },
+            {
+              "id": "3.4.2",
+              "name": "check vs require",
+              "concept": "In `std/unittest`, `check` records a failure but continues the test.\n`require` aborts the test immediately on failure.\nUse `check` for multiple independent assertions, `require` for preconditions.",
+              "task": "Write a `suite` with one `test`. Inside, use `check` to verify that `1 + 1 == 2`. Also check that `\"hello\".len == 5`.",
+              "validation_code": "\"check\" in code and \"suite\" in code and \"test\" in code",
+              "solution": "import unittest\nsuite \"Math\":\n  test \"add\":\n    check(1 + 1 == 2)\n    check(\"hello\".len == 5)",
+              "hint": "`import unittest`. `suite \"Name\": test \"name\": check(...)`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "3.4.1"
+              ],
+              "cross_language_notes": "Python: `unittest` with `assertEqual` (continues). `pytest` with `assert` (continues). Rust: `assert!` continues, `panic!` aborts. Nim's `check` vs `require` mirrors Python's soft vs hard assertions."
+            },
+            {
+              "id": "3.4.3",
+              "name": "expect for Exceptions",
+              "concept": "`expect(ExceptionType)` asserts that the following block raises an exception.\nThe test passes only if exactly that exception is raised.\nIf no exception or a different type, the test fails.",
+              "task": "Write a proc `divBy(a, b: int): int` that raises `newException(DivByZeroError, \"div by zero\")` when `b == 0`. In a `suite`, use `expect IOError: discard divBy(5, 0)` and observe the test failure (the wrong exception type). Then fix it to expect the correct type.",
+              "validation_code": "result.exitCode == 0",
+              "solution": "import unittest\ntype DivByZeroError = object of CatchableError\nproc divBy(a, b: int): int =\n  if b == 0:\n    raise newException(DivByZeroError, \"div by zero\")\n  a div b\nsuite \"Errors\":\n  test \"div by zero\":\n    expect DivByZeroError:\n      discard divBy(5, 0)",
+              "hint": "Define `DivByZeroError`. In `divBy`, raise it. In the test: `expect DivByZeroError: discard divBy(5, 0)`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "3.4.2"
+              ],
+              "cross_language_notes": "Python: `pytest.raises(Exception)`. Rust: `#[should_panic]`. Java: `@Test(expected = ...)`. Nim's `expect` is closest to Python's context manager approach."
+            },
+            {
+              "id": "3.4.4",
+              "name": "Test Parametrization",
+              "concept": "Nim's `unittest` doesn't have built-in parametrization, but you can use a `for` loop inside a test.\nThis runs the same logic with multiple inputs.\nUse `check` (not `require`) so one failure doesn't abort the remaining cases.",
+              "task": "Write a suite with one test. Inside, use a `for` loop to test `add(a, b) == expected` for `[(1,2,3), (0,0,0), (-1,1,0)]`.",
+              "validation_code": "result.exitCode == 0",
+              "solution": "import unittest\nproc add(a, b: int): int = a + b\nsuite \"Math\":\n  test \"parametrized add\":\n    for (a, b, expected) in [(1, 2, 3), (0, 0, 0), (-1, 1, 0)]:\n      check(add(a, b) == expected)",
+              "hint": "`for (a, b, expected) in list: check(add(a, b) == expected)`. Use `check` not `require`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.6.1"
+              ],
+              "cross_language_notes": "Python: `@pytest.mark.parametrize`. Rust: `#[test_case(...)]`. Nim lacks built-in parametrization — the `for` loop inside a test is the idiomatic workaround."
+            }
+          ]
+        },
+        {
+          "id": "3.5",
+          "name": "Serialization",
+          "lessons": [
+            {
+              "id": "3.5.1",
+              "name": "Creating JSON",
+              "concept": "JSON is everywhere. Nim handles it with the `json` module.\nThe `%*` macro is the magic wand. It converts complex data structures into a `JsonNode`.\nExample: `let j = %* {\"key\": \"value\", \"list\": [1, 2]}`",
+              "task": "Import `json`. Create a JSON object representing a person with `name` \"Neo\" and `chosen` `true`. Echo the resulting `JsonNode`.",
+              "validation_code": "\"\\\"Neo\\\"\" in result.stdout and \"true\" in result.stdout",
+              "solution": "import json\nlet j = %* {\"name\": \"Neo\", \"chosen\": true}\necho j",
+              "hint": "Use `import json`. Then `let j = %* ...`. Finally `echo j`.",
+              "prerequisites": [
+                "3.4.4",
+                "2.7.1"
+              ]
+            },
+            {
+              "id": "3.5.2",
+              "name": "Parsing JSON",
+              "concept": "To read JSON strings, use `parseJson(string)`.\nYou can access fields using `[]` keys or `.` dot syntax if you know the structure.\nValues are wrapped in `JsonNode`, so use helper procs like `.getStr`, `.getInt` to extract raw values.",
+              "task": "Parse the string `{\"status\": \"ok\", \"code\": 200}`. Extract and echo the \"status\" string.",
+              "validation_code": "result.stdout.strip() == \"ok\"",
+              "solution": "import json\nlet data = parseJson(\"{\\\"status\\\": \\\"ok\\\", \\\"code\\\": 200}\")\necho data[\"status\"].getStr",
+              "hint": "Parse it into a variable. Then access `[\"status\"]` and call `.getStr` on it.",
+              "prerequisites": [
+                "3.5.1"
+              ]
+            },
+            {
+              "id": "3.5.3",
+              "name": "Marshalling",
+              "concept": "Manually traversing JSON nodes is tedious. Marshalling lets you convert JSON directly into Nim objects and vice versa.\nUse `to(node, Type)` to convert JSON to an object.\nUse `%` to convert an object to JSON (if you don't use the `%*` macro).",
+              "task": "Define a `User` object with a `name` string. Parse `{\"name\": \"Trinity\"}` and convert it to a `User` object. Echo the `name` field of the object.",
+              "validation_code": "result.stdout.strip() == \"Trinity\"",
+              "solution": "import json\ntype User = object\n  name: string\nlet node = parseJson(\"{\\\"name\\\": \\\"Trinity\\\"}\")\nlet u = node.to(User)\necho u.name",
+              "hint": "Define `type User = object ...`. Parse the json. Then `let u = node.to(User)`.",
+              "prerequisites": [
+                "3.5.2"
+              ]
+            },
+            {
+              "id": "3.5.4",
+              "name": "Binary I/O",
+              "concept": "For binary I/O in Nim, use `Stream` from the `streams` module.\n`readData` and `writeData` read/write raw bytes.\nUse `newFileStream` to wrap a file.\nWrite a length prefix so you know how many items to read back.",
+              "task": "Write a proc `saveData` that opens a file stream, writes a length (as int32 via `writeData`), then writes each int32. Write a `loadData` that reads back and echoes the first element.",
+              "validation_code": "result.exitCode == 0",
+              "solution": "import streams\nproc saveData(filename: string, numbers: seq[int32]) =\n  let s = newFileStream(filename, fmWrite)\n  var len = int32(numbers.len)\n  s.writeData(addr len, sizeof(int32))\n  for n in numbers:\n    s.writeData(unsafeAddr n, sizeof(int32))\n  s.close()\nproc loadData(filename: string): seq[int32] =\n  let s = newFileStream(filename, fmRead)\n  var len: int32\n  discard s.readData(addr len, sizeof(int32))\n  result = @[]\n  for i in 0..<len:\n    var val: int32\n    discard s.readData(addr val, sizeof(int32))\n    result.add(val)\n  s.close()\nsaveData(\"data.bin\", @[int32(42), int32(100)])\necho loadData(\"data.bin\")[0]",
+              "hint": "Use `var len = int32(numbers.len)` then `addr len`. For loop vars, use `unsafeAddr n`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.3.3"
+              ],
+              "cross_language_notes": "Python: `struct.pack/unpack`. C: `fwrite/fread`. Rust: `write_buf/read_buf`. Nim's `writeData/readData` work at the raw byte level, closest to C."
+            }
+          ]
+        },
+        {
+          "id": "3.6",
+          "name": "CLI",
+          "lessons": [
+            {
+              "id": "3.6.1",
+              "name": "Raw Arguments",
+              "concept": "The `os` module gives you `paramCount()` and `paramStr(i)`.\nIt's the raw way to read arguments passed to your program.",
+              "task": "Import `os`. Iterate from 1 to `paramCount()` and echo each argument using `paramStr()`.",
+              "args": [
+                "arg1",
+                "arg2",
+                "arg3"
+              ],
+              "validation_code": "\"arg1\" in result.stdout and \"arg2\" in result.stdout and \"arg3\" in result.stdout",
+              "solution": "import os\nfor i in 1..paramCount():\n  echo paramStr(i)",
+              "hint": "Loop `for i in 1..paramCount():`. Inside, `echo paramStr(i)`.",
+              "prerequisites": [
+                "3.5.4",
+                "2.7.1"
+              ]
+            },
+            {
+              "id": "3.6.2",
+              "name": "Parseopt",
+              "concept": "For real CLI tools, use `std/parseopt`. It handles flags (`-f`), long options (`--file`), and arguments.\nIt provides an iterator `getopt()` that yields `kind`, `key`, and `val`.",
+              "task": "Import `parseopt`. Use the `getopt()` iterator. If `kind` is `cmdLongOption` and `key` is \"name\", echo the `val`.",
+              "args": [
+                "--name:Morpheus"
+              ],
+              "validation_code": "result.stdout.strip() == \"Morpheus\"",
+              "solution": "import parseopt\nfor kind, key, val in getopt():\n  if kind == cmdLongOption and key == \"name\":\n    echo val",
+              "hint": "Loop with `for kind, key, val in getopt():`. Check if `key == \"name\"`.",
+              "prerequisites": [
+                "3.6.1"
+              ]
+            },
+            {
+              "id": "3.6.3",
+              "name": "Env Vars & Exit Codes",
+              "concept": "`getEnv` from `std/os` retrieves environment variables.\nUse `existsEnv` to check if a variable is set.\nSet exit code with `quit(code)`. Convention: 0 success, 1 general error, 2 misuse.",
+              "task": "Write a program that reads the `USER` environment variable. If set, echo \"Hello \" & $USER. Otherwise echo \"Hello stranger\". Exit with code 0 in all cases.",
+              "validation_code": "\"Hello\" in result.stdout and result.exitCode == 0",
+              "solution": "import os\nlet user = getEnv(\"USER\", \"stranger\")\necho \"Hello \", user",
+              "hint": "`let user = getEnv(\"USER\", \"stranger\")`. The second argument is the default if the env var isn't set.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "3.6.1"
+              ],
+              "cross_language_notes": "Python: `os.environ.get(key, default)`. C: `getenv()`. Rust: `std::env::var()`. Nim's `getEnv(key, default)` is closest to Python."
+            }
+          ]
+        },
+        {
+          "id": "3.7",
+          "name": "Stdlib",
+          "lessons": [
+            {
+              "id": "3.7.1",
+              "name": "Base64",
+              "concept": "Nim's standard library is huge. Need to encode data? Use `base64`.\nIt provides `encode` and `decode` procedures.",
+              "task": "Import `base64`. Encode the string \"Nim\" and echo the result.",
+              "validation_code": "result.stdout.strip() == \"Tmlt\"",
+              "solution": "import base64\necho encode(\"Nim\")",
+              "hint": "`import base64`. `echo encode(\"Nim\")`.",
+              "prerequisites": [
+                "3.6.3",
+                "2.7.1"
+              ]
+            },
+            {
+              "id": "3.7.2",
+              "name": "Parsing Configs",
+              "concept": "Need to read an INI file? `parsecfg` has you covered.\nIt works similarly to `parseopt`, iterating over the file structure.",
+              "task": "Import `parsecfg`, `streams`. Create a stream from string \"[Section]\\nkey=val\". Open it with `newConfigParser`. Loop `next(p)` and if the event kind is `cfgKeyValuePair`, echo the key.",
+              "validation_code": "\"key\" in result.stdout",
+              "solution": "import parsecfg, streams\nvar p: CfgParser\nlet s = newStringStream(\"[Section]\\nkey=val\")\nopen(p, s, \"test.ini\")\nwhile true:\n  var e = next(p)\n  if e.kind == cfgEof: break\n  if e.kind == cfgKeyValuePair: echo e.key",
+              "hint": "Check `e.kind`. Only access `e.key` if it's a key-value pair.",
+              "prerequisites": [
+                "3.7.1"
+              ]
+            },
+            {
+              "id": "3.7.3",
+              "name": "random - Shuffle & Sample",
+              "concept": "`std/random` provides `rand`, `shuffle`, `sample`.\nInitialize with `initRand(seed)` for reproducibility.\n`shuffle` modifies a sequence in place.\n`sample` picks random elements from a collection.",
+              "task": "Import `random`. Create a sequence `@[1,2,3,4,5]`. Initialize the RNG with `initRand(42)`. Shuffle the sequence and echo the first element.",
+              "validation_code": "result.exitCode == 0",
+              "solution": "import random\nvar s = @[1, 2, 3, 4, 5]\ndiscard initRand(42)\nshuffle(s)\necho s[0]",
+              "hint": "`import random`. `initRand(seed)`. `shuffle(mySeq)`. Then `echo mySeq[0]`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "1.4.3"
+              ],
+              "cross_language_notes": "Python: `random.Random(seed)`. C++: `std::mt19937`. Rust: `rand::SeedableRng`. Nim's `initRand(seed)` is similar to Python — call it once to seed the global RNG."
+            }
+          ]
+        },
+        {
+          "id": "3.8",
+          "name": "Build",
+          "lessons": [
+            {
+              "id": "3.8.1",
+              "name": "Release Mode",
+              "concept": "By default, Nim compiles in debug mode (slow, safe, stack traces).\nPassing `-d:release` turns on optimizations and turns off some runtime checks.\nYou can check for this in code using `when defined(release):`.",
+              "task": "Write a program that echoes \"Fast\" if `defined(release)` is true, and \"Slow\" otherwise. (Note: This tutor runs in debug mode, so expect \"Slow\").",
+              "validation_code": "result.stdout.strip() == \"Slow\"",
+              "solution": "if defined(release):\n  echo \"Fast\"\nelse:\n  echo \"Slow\"",
+              "hint": "Use `if defined(release): ... else: ...`.",
+              "prerequisites": [
+                "3.7.3",
+                "2.7.1"
+              ]
+            },
+            {
+              "id": "3.8.2",
+              "name": "Inline with {.emit.}",
+              "concept": "The `{.emit.}` pragma inserts literal C code into the generated C file.\nUseful for custom C snippets or calling C++ features.\nDangerous — bypasses Nim's type system and GC assumptions.\nUse `nodecl` to avoid duplicate declarations.",
+              "task": "Use `{.emit: \"#include <stdio.h>\" .}` and define a C function `void hello() { printf(\\\"Hello from C\\\\n\\\"); }` using `{.emit.}`. Call it from Nim with an `importc` proc.",
+              "validation_code": "\"Hello from C\" in result.stdout",
+              "solution": "proc hello() {.importc, nodecl.}\n{.emit: \"\"\"\n#include <stdio.h>\nvoid hello() { printf(\"Hello from C\\n\"); }\n\"\"\".}\nhello()",
+              "hint": "`proc hello() {.importc, nodecl.}` then `{.emit: ...}` with the C function definition. Call `hello()`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "3.3.1"
+              ],
+              "cross_language_notes": "C: `__attribute__((constructor))`. Rust: `#[link_section]`. Nim's `{.emit.}` is closest to C's `__asm__` or raw string literals — it bypasses the language."
+            },
+            {
+              "id": "3.8.3",
+              "name": "Compiler Flags",
+              "concept": "Use `{.passL.}` and `{.passC.}` to pass flags to the linker and C compiler.\n`{.passL: \"-lm\".}` links the math library.\n`{.passC: \"-O3\".}` sets optimization level.\nMultiple pragmas can be combined for build configuration.",
+              "task": "Use `{.passC: \"-O2\".}` to set optimization level. Then write a simple proc that adds two ints and echo the result of adding 40 and 2.",
+              "validation_code": "result.stdout.strip() == \"42\" and result.exitCode == 0",
+              "solution": "proc add(a, b: int): int = a + b\n{.passC: \"-O2\".}\necho add(40, 2)",
+              "hint": "Put `{.passC: \"-O2\".}` before the code that needs the optimization. Then `echo add(40, 2)`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "3.8.1"
+              ],
+              "cross_language_notes": "C: `-O2` as compiler flag. Rust: `#[optimize(speed)]`. Nim's `{.passC.}` passes flags directly to the C compiler, similar to C build systems."
+            }
+          ]
+        },
+        {
+          "id": "3.9",
+          "name": "Boss: Async Service",
+          "lessons": [
+            {
+              "id": "3.9.1",
+              "name": "The Professional",
+              "concept": "You have reached the end. This is the final test.\nYou must build a simulated async microservice that handles JSON data.\nCombine `json`, `asyncdispatch`, and your wits.",
+              "task": "1. Import `json` and `asyncdispatch`.\n2. Define an async proc `worker(data: JsonNode)`.\n3. Inside, `await sleepAsync(10)` and then echo \"Processed: \" & data[\"id\"].getInt.\n4. Create a JSON array `jobs` with 3 objects: `[{\"id\": 1}, {\"id\": 2}, {\"id\": 3}]`.\n5. Iterate over `jobs` and call `waitFor worker(item)` for each one.",
+              "validation_code": "\"Processed: 1\" in result.stdout and \"Processed: 3\" in result.stdout",
+              "solution": "import json, asyncdispatch\nproc worker(data: JsonNode) {.async.} =\n  await sleepAsync(10)\n  echo \"Processed: \", data[\"id\"].getInt\nlet jobs = %* [{\"id\": 1}, {\"id\": 2}, {\"id\": 3}]\nfor job in jobs:\n  waitFor worker(job)",
+              "hint": "Define `worker` with `{.async.}`. Use `%*` for the JSON array. Loop and `waitFor`.",
+              "prerequisites": [
+                "3.1.4",
+                "3.2.4",
+                "3.3.4",
+                "3.4.4",
+                "3.5.4",
+                "3.6.3",
+                "3.7.3",
+                "3.8.3"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Professional",
+      "chapters": [
+        {
+          "id": "4.1",
+          "name": "Architecture",
+          "lessons": [
+            {
+              "id": "4.1.1",
+              "name": "Directory Layout",
+              "concept": "Real projects aren't just one file. You need structure.\nStandard Nim layout:\n- `src/`: Source code\n- `tests/`: Tests\n- `myproject.nimble`: Package info\nIn this lesson, you'll create a `src/main.nim` that imports a `utils.nim`.",
+              "task": "You are writing `src/main.nim`.\n1. Import `utils`.\n2. Call `utils.greet(\"World\")`.\nThe `utils.nim` file is already created for you in `src/`.",
+              "filename": "src/main.nim",
+              "files": {
+                "src/utils.nim": "proc greet*(name: string) = echo \"Hello, \", name"
+              },
+              "validation_code": "\"Hello, World\" in result.stdout",
+              "solution": "import utils\ngreet(\"World\")",
+              "hint": "Just `import utils` and call `greet(\"World\")`. The file is in the same folder (`src`), so it works.",
+              "prerequisites": [
+                "3.9.1"
+              ]
+            },
+            {
+              "id": "4.1.2",
+              "name": "Importing from Parent",
+              "concept": "Sometimes you need to import a file from a parent directory.\nYou can use relative paths like `../utils`.",
+              "task": "You are writing `tests/test1.nim`.\n1. Import `utils` from the `src` directory (which is `../src/utils`).\n2. Call `greet(\"Tester\")`.",
+              "filename": "tests/test1.nim",
+              "files": {
+                "src/utils.nim": "proc greet*(name: string) = echo \"Hello, \", name",
+                "tests/placeholder": ""
+              },
+              "validation_code": "\"Hello, Tester\" in result.stdout",
+              "solution": "import ../src/utils\ngreet(\"Tester\")",
+              "hint": "Use `import ../src/utils`.",
+              "prerequisites": [
+                "4.1.1"
+              ]
+            },
+            {
+              "id": "4.1.3",
+              "name": "isMainModule",
+              "concept": "`when isMainModule:` runs only when the file is compiled as the main executable.\nThis lets a file serve as both a library and a demo/driver.\nWhen imported, the `isMainModule` block doesn't execute.",
+              "task": "Write a module `mathutils.nim` that exports `add(a, b: int): int = a + b`. At the bottom, add `when isMainModule: echo add(3,4)`. The compile/run should print 7.",
+              "validation_code": "result.stdout.strip() == \"7\"",
+              "solution": "proc add*(a, b: int): int = a + b\nwhen isMainModule:\n  echo add(3, 4)",
+              "hint": "`proc add*(...): int = a + b`. Then `when isMainModule: echo add(3,4)`. The `*` exports add.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "4.1.1"
+              ],
+              "cross_language_notes": "Python: `if __name__ == \"__main__\"`. Rust: `#[cfg(test)]` for conditional compilation. Nim's `isMainModule` is the direct equivalent of Python's idiom."
+            },
+            {
+              "id": "4.1.4",
+              "name": "Multi-Module Layout",
+              "concept": "Larger projects use `src/` with multiple `.nim` files and a `.nimble` file.\nModules import each other with relative paths.\n`srcDir` in nimble sets the root for imports.\nUse `import pkg/module` for installed packages.",
+              "task": "Write `src/mathhelper.nim` that exports an `add(a, b: int): int` proc. The main file `src/main.nim` imports and calls it. Main should `echo add(1,2)`. Run from `src/`.",
+              "files": {
+                "src/calc.nim": "proc add*(a, b: int): int = a + b\nproc sub*(a, b: int): int = a - b"
+              },
+              "filename": "src/main.nim",
+              "validation_code": "result.stdout.strip() == \"3\"",
+              "solution": "import calc\necho add(1, 2)",
+              "hint": "`import calc` (same dir). Then `echo add(1, 2)`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "4.1.1"
+              ],
+              "cross_language_notes": "Python: packages with `__init__.py`. Rust: modules with `mod.rs`. Nim uses the filesystem directly — any `.nim` file can be imported."
+            }
+          ]
+        },
+        {
+          "id": "4.2",
+          "name": "Web",
+          "lessons": [
+            {
+              "id": "4.2.1",
+              "name": "Async HTTP Server",
+              "concept": "Nim's standard library includes `asynchttpserver`.\nIt's a basic, non-blocking HTTP server.\nYou define a callback proc that handles requests and sends responses.",
+              "task": "1. Import `asynchttpserver`, `asyncdispatch`.\n2. Create a server instance `var server = newAsyncHttpServer()`.\n3. Define a proc `cb(req: Request) {.async.}` that calls `await req.respond(Http200, \"Hello Web\")`.\n4. Call `waitFor server.serve(Port(8080), cb)`.",
+              "validation_code": "\"serve\" in code and \"respond\" in code",
+              "solution": "import asynchttpserver, asyncdispatch\nvar server = newAsyncHttpServer()\nproc cb(req: Request) {.async.} =\n  await req.respond(Http200, \"Hello Web\")\nasyncCheck server.serve(Port(0), cb)\npoll()",
+              "hint": "Follow the steps exactly. `waitFor server.serve(Port(8080), cb)`.",
+              "prerequisites": [
+                "4.1.4",
+                "3.9.1"
+              ]
+            },
+            {
+              "id": "4.2.2",
+              "name": "Request Routing",
+              "concept": "HTTP servers route requests based on the URL path.\n`request.url.path` gives the path segment.\nUse `case path of ...` to handle different routes.\nRespond with `await req.respond(Http200, body)`.",
+              "task": "Write an async proc `handle(req: Request)` that returns \"Hello /path\" for any path. Use `await req.respond(Http200, \"Hello \" & req.url.path)`. Call `waitFor server.serve(Port(0), handle)` with `poll()`.",
+              "validation_code": "\"serve\" in code and \"respond\" in code and \"Http200\" in code",
+              "solution": "import asynchttpserver, asyncdispatch\nproc handle(req: Request) {.async.} =\n  await req.respond(Http200, \"Hello \" & req.url.path)\nvar server = newAsyncHttpServer()\nasyncCheck server.serve(Port(0), handle)\npoll()",
+              "hint": "Inside handle: `await req.respond(Http200, \"Hello \" & req.url.path)`. Port(0) picks a random free port.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "3.1.2"
+              ],
+              "cross_language_notes": "Node.js: `http.createServer((req, res) => ...)`. Python: `aiohttp`. Nim's `asynchttpserver` is minimal — you handle routing yourself."
+            },
+            {
+              "id": "4.2.3",
+              "name": "Making Requests",
+              "concept": "`std/httpclient` provides HTTP clients.\n`newHttpClient()` creates a client.\n`getContent(url)` fetches a URL as a string.\n`postContent(url, body)` sends POST data.\nAlways close the client or use `defer: client.close()`.",
+              "task": "Write the code for creating an HTTP client and fetching a URL. This lesson is read-only — the code is just for reference.",
+              "validation_code": "true",
+              "solution": "import httpclient\nvar client = newHttpClient()\ndefer: client.close()\necho client.getContent(\"http://localhost:1/\")",
+              "hint": "Wrap the code in a proc to use defer. `proc testClient() = var client = ...; defer: client.close(); echo ...`",
+              "difficulty": "easy",
+              "prerequisites": [
+                "4.2.1"
+              ],
+              "skip_run": true,
+              "cross_language_notes": "Python: `requests.get(url)`. Rust: `reqwest::get(url)`. Nim's `httpclient` is in the stdlib — no external dependencies needed."
+            },
+            {
+              "id": "4.2.4",
+              "name": "URI Parsing",
+              "concept": "`std/uri` parses and constructs URIs.\n`parseUri` returns `Uri` objects with `.scheme`, `.hostname`, `.path`, `.query`.\nYou can modify fields and stringify back.\nUse `$uri` to convert back to a string.",
+              "task": "Parse `\"http://example.com/path?q=1\"` using `parseUri`. Echo the hostname and path, separated by a space.",
+              "validation_code": "result.stdout.strip() == \"example.com /path\"",
+              "solution": "import uri\nlet u = parseUri(\"http://example.com/path?q=1\")\necho u.hostname, \" \", u.path",
+              "hint": "`let u = parseUri(\"http://...\")`. Then `echo u.hostname, \" \", u.path`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "4.2.1"
+              ],
+              "cross_language_notes": "Python: `urllib.parse.urlparse()`. C++: `cpp-netlib/uri`. Nim's `uri` module is stdlib and handles both parsing and construction."
+            }
+          ]
+        },
+        {
+          "id": "4.3",
+          "name": "Cross-Compile",
+          "lessons": [
+            {
+              "id": "4.3.1",
+              "name": "Compiling to JS",
+              "concept": "Nim can compile to JavaScript! This lets you share code between frontend and backend.\nUse `nim js` to compile.\nThe `dom` module gives you access to the browser DOM.",
+              "task": "Write a program that echoes \"Hello JS\".\nThis will be compiled with `nim js` and run with `node`.",
+              "cmd": "js",
+              "validation_code": "result.stdout.strip() == \"Hello JS\"",
+              "solution": "echo \"Hello JS\"",
+              "hint": "Just `echo \"Hello JS\"`. The tutor handles the `nim js` part.",
+              "prerequisites": [
+                "4.2.4",
+                "3.9.1"
+              ]
+            },
+            {
+              "id": "4.3.2",
+              "name": "Target OS Detection",
+              "concept": "Use `when defined(windows):` / `defined(linux):` / `defined(macosx):` for platform-specific code.\n`defined(posix)` covers Linux + macOS.\nThis is how you write portable Nim code.",
+              "task": "Write a proc `getOSName: string` that returns \"Windows\", \"Linux\", or \"macOS\" using `defined`. Echo the result.",
+              "validation_code": "result.exitCode == 0",
+              "solution": "proc getOSName: string =\n  when defined(windows): \"Windows\"\n  elif defined(macosx): \"macOS\"\n  else: \"Linux\"\necho getOSName()",
+              "hint": "Use `when defined(windows): elif defined(macosx): else:`. The result of each branch is the return value.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "4.3.1"
+              ],
+              "cross_language_notes": "C: `#ifdef _WIN32`. Rust: `cfg!(target_os = \"windows\")`. Nim's `defined(windows)` is the cleanest — it's just a function call, not a preprocessor directive."
+            },
+            {
+              "id": "4.3.3",
+              "name": "C Code Export",
+              "concept": "`nim c -c` produces C source files without linking.\nUse `{.exportc.}` to export a Nim proc with C linkage.\n`{.nodecl.}` prevents double declaration.\nThe C main must call `NimMain()` before any Nim code.",
+              "task": "Write a proc `add(a, b: int): int {.exportc.}` that returns `a + b`. The compiler will generate C code — you just need to define the proc. Add `{.exportc.}` pragma.",
+              "validation_code": "\"exportc\" in code and \"add\" in code",
+              "solution": "proc add(a, b: int): int {.exportc.} = a + b",
+              "hint": "`proc add(a, b: int): int {.exportc.} = a + b`. The `exportc` pragma exports it with C linkage.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "4.3.1"
+              ],
+              "cross_language_notes": "C: `extern int add(int, int)`. Rust: `#[no_mangle] extern \"C\" fn add(...)`. Nim's `{.exportc.}` is the simplest — just a pragma on any proc."
+            },
+            {
+              "id": "4.3.4",
+              "name": "Cross-Compile to JS",
+              "concept": "Nim compiles to JavaScript with `nim js`.\nThe `dom` module provides browser DOM access.\nJS output can run in browsers, Node.js, or Deno.\nSome Nim features (like raw pointers) are not available in JS.",
+              "task": "Write a program that echoes \"JS works\" using `echo`. This compiles with `nim js` and runs with `node`. The tutor handles compilation.",
+              "cmd": "js",
+              "validation_code": "result.stdout.strip() == \"JS works\"",
+              "solution": "echo \"JS works\"",
+              "hint": "Just `echo \"JS works\"`. The tutor applies `nim js` automatically.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "4.3.1"
+              ],
+              "cross_language_notes": "Rust compiles to WASM with `wasm-pack`. Python has `pyodide`. Nim's JS backend is unique in being a first-class target, not a third-party tool."
+            }
+          ]
+        },
+        {
+          "id": "4.4",
+          "name": "Advanced Testing",
+          "lessons": [
+            {
+              "id": "4.4.1",
+              "name": "Writing a Test Suite",
+              "concept": "You've seen `unittest` before, but let's get serious.\nA proper test suite has setup, teardown, and multiple test cases.\nUse `setup:` and `teardown:` blocks inside a `suite`.",
+              "task": "Create a `suite \"Database\":`.\nDefine a variable `dbConnected` (bool).\nIn `setup:`, set `dbConnected = true`.\nIn `teardown:`, set `dbConnected = false`.\nWrite a `test \"connection\":` that checks `dbConnected == true`.",
+              "validation_code": "\"Database\" in result.stdout and \"connection\" in result.stdout",
+              "solution": "import unittest\nsuite \"Database\":\n  var dbConnected = false\n  setup:\n    dbConnected = true\n  teardown:\n    dbConnected = false\n  test \"connection\":\n    check dbConnected == true",
+              "hint": "Structure: `suite ... setup: ... teardown: ... test ...`.",
+              "prerequisites": [
+                "4.3.4",
+                "3.9.1"
+              ]
+            },
+            {
+              "id": "4.4.2",
+              "name": "Mocking",
+              "concept": "Nim doesn't have a built-in mocking library, but you can use `proc` variables or templates to inject dependencies.\nThis is called 'Dependency Injection'.",
+              "task": "1. Define a type `Sender = proc(msg: string)`.\n2. Define a proc `notify(s: Sender, msg: string)` that calls `s(msg)`.\n3. Create a mock sender that echoes \"MOCK: \" & msg.\n4. Call `notify` with your mock and the message \"Alert\".",
+              "validation_code": "result.stdout.strip() == \"MOCK: Alert\"",
+              "solution": "type Sender = proc(msg: string)\nproc notify(s: Sender, msg: string) = s(msg)\nproc mockSender(msg: string) = echo \"MOCK: \", msg\nnotify(mockSender, \"Alert\")",
+              "hint": "Define the proc type, then the notifier. Pass `mockSender` as the first argument to `notify`.",
+              "prerequisites": [
+                "4.4.1"
+              ]
+            },
+            {
+              "id": "4.4.3",
+              "name": "Mocking with Proc Types",
+              "concept": "Nim's proc types allow dependency injection.\nInstead of hardcoding a database, accept a `proc(): string` parameter.\nIn tests, pass a fake proc. In production, pass the real one.",
+              "task": "Write a proc `getGreeting(getName: proc(): string): string` that returns `\"Hello \" & getName()`. Call it with a proc that returns `\"Test\"`. Echo the result.",
+              "validation_code": "result.stdout.strip() == \"Hello Test\"",
+              "solution": "proc getGreeting(getName: proc(): string): string = \"Hello \" & getName()\nproc mockName(): string = \"Test\"\necho getGreeting(mockName)",
+              "hint": "`proc getGreeting(getName: proc(): string): string = \"Hello \" & getName()`. Then a mock proc `proc mockName(): string = \"Test\"`. Call: `getGreeting(mockName)`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "4.4.1"
+              ],
+              "cross_language_notes": "Go: interfaces for DI. Java: Mockito. Python: `unittest.mock`. Nim's proc types are lightweight — no framework needed, just pass a proc."
+            },
+            {
+              "id": "4.4.4",
+              "name": "Testing Async Code",
+              "concept": "Async procs return `Future`. In tests, use `waitFor` to block and get the result.\nFor concurrent futures, use `all()` or loop over `await`.\nTimeouts are important — use `sleepAsync` to simulate work.",
+              "task": "Write an async proc `slowDouble(x: int): Future[int]` that sleeps 50ms and returns `x * 2`. Use `waitFor slowDouble(21)` and echo the result.",
+              "validation_code": "result.stdout.strip() == \"42\"",
+              "solution": "import asyncdispatch\nproc slowDouble(x: int): Future[int] {.async.} =\n  await sleepAsync(50)\n  return x * 2\necho waitFor slowDouble(21)",
+              "hint": "`proc slowDouble(x: int): Future[int] {.async.} = await sleepAsync(50); return x * 2`. Then `echo waitFor slowDouble(21)`.",
+              "difficulty": "hard",
+              "prerequisites": [
+                "4.4.1",
+                "3.1.2"
+              ],
+              "cross_language_notes": "Python: `pytest-asyncio`. Rust: `tokio::test`. Nim's `waitFor` in tests is simpler — just wrap the async call and assert on the result."
+            }
+          ]
+        },
+        {
+          "id": "4.5",
+          "name": "DX",
+          "lessons": [
+            {
+              "id": "4.5.1",
+              "name": "Nimble Structure",
+              "concept": "A `.nimble` file describes your package.\nIt uses a specific Nim-based DSL.\nRequired fields: `version`, `author`, `description`, `license`.",
+              "task": "Create a file `myproject.nimble`.\nSet `version` to \"0.1.0\", `author` to \"Me\", `description` to \"Test\", `license` to \"MIT\".\nThis is a Project Mode lesson, so just write the content of the nimble file.",
+              "filename": "myproject.nimble",
+              "skip_run": true,
+              "validation_code": "\"version\" in code and \"author\" in code",
+              "solution": "version = \"0.1.0\"\nauthor = \"Me\"\ndescription = \"Test\"\nlicense = \"MIT\"",
+              "hint": "Just assign the variables: `version = \"0.1.0\"` etc.",
+              "prerequisites": [
+                "4.4.4",
+                "3.9.1"
+              ]
+            },
+            {
+              "id": "4.5.2",
+              "name": "Code Style",
+              "concept": "Professional code must be readable.\nNim comes with `nimpretty`, a code formatter.\nIn this lesson, the engine will check your style!\nWrite a messy proc `proc  ugly(  x : int )= echo x` and see if you get a warning.",
+              "task": "Write a properly formatted proc `clean(x: int) = echo x`.\nIf you write it messily, you'll pass the logic check but get a style warning.",
+              "validation_code": "result.exitCode == 0",
+              "solution": "proc clean(x: int) = echo x",
+              "hint": "Write `proc clean(x: int) = echo x` exactly like that.",
+              "prerequisites": [
+                "4.5.1"
+              ]
+            },
+            {
+              "id": "4.5.3",
+              "name": "Code Style Guide",
+              "concept": "Consistent style improves readability. Nim conventions:\n- Use 2-space indentation\n- camelCase for variables and procs\n- PascalCase for types\n- Use `..` for ranges, `^` for from-end indexing\nNim's `nimpretty` formatter automatically enforces these.",
+              "task": "Just read the concept. Press Enter to continue.",
+              "skip_run": true,
+              "validation_code": "true",
+              "solution": "# Read the style guide",
+              "hint": "Consistency matters more than which convention you pick.",
+              "cross_language_notes": "Go: `gofmt` (enforced). Python: `black` (opinionated). Rust: `rustfmt`. Nim: `nimpretty` — each language has a canonical formatter; use it.",
+              "prerequisites": [
+                "4.5.2"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4.6",
+          "name": "Performance",
+          "lessons": [
+            {
+              "id": "4.6.1",
+              "name": "Benchmarking",
+              "concept": "To make code fast, you must measure it.\nThe `std/times` module provides `cpuTime()`.\nMeasure time before and after a block of code to see how long it takes.",
+              "task": "Import `times`.\nGet `let t0 = cpuTime()`.\nRun a loop `for i in 1..1_000_000: discard`.\nEcho `cpuTime() - t0`.",
+              "validation_code": "\"cpuTime\" in code and \"1000000\" in code.replace(\"_\", \"\")",
+              "solution": "import times\nlet t0 = cpuTime()\nfor i in 1..1_000_000: discard\necho cpuTime() - t0",
+              "hint": "Use `cpuTime()` before and after the loop. Subtract to get the duration.",
+              "prerequisites": [
+                "4.5.3",
+                "3.9.1"
+              ]
+            },
+            {
+              "id": "4.6.2",
+              "name": "Profiling",
+              "concept": "Nim has a built-in profiler.\nCompile with `--profiler:on --stackTrace:on`.\nIn code, import `nimprof` to enable it.\nThis writes a `profile_results.txt` file.",
+              "task": "Import `nimprof`.\nWrite a slow proc `slow()` that loops 100,000 times.\nCall `slow()`.",
+              "compiler_args": [
+                "--profiler:on",
+                "--stackTrace:on"
+              ],
+              "validation_code": "\"nimprof\" in code",
+              "solution": "import nimprof\nproc slow() = \n  for i in 1..100_000: discard\nslow()",
+              "hint": "Just `import nimprof` and write a loop.",
+              "prerequisites": [
+                "4.6.1"
+              ]
+            },
+            {
+              "id": "4.6.3",
+              "name": "inline Pragmas",
+              "concept": "`{.inline.}` suggests the compiler to inline a proc, reducing call overhead.\n`{.noinline.}` prevents inlining.\nOver-inlining can bloat code size.\nUse for small, hot functions like getters.",
+              "task": "Write a tiny proc `addOne(x: int): int {.inline.} = x + 1`. Call it with `5` and echo the result.",
+              "validation_code": "result.stdout.strip() == \"6\"",
+              "solution": "proc addOne(x: int): int {.inline.} = x + 1\necho addOne(5)",
+              "hint": "`proc addOne(x: int): int {.inline.} = x + 1`. The `{.inline.}` pragma goes before `=`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "4.6.1"
+              ],
+              "cross_language_notes": "C: `inline`. C++: `inline`. Rust: `#[inline]`. Nim's `{.inline.}` pragma is a hint, just like C — the compiler may ignore it for large functions."
+            },
+            {
+              "id": "4.6.4",
+              "name": "Compile-Time Fib",
+              "concept": "`static:` executes code at compile time.\nUse it to generate lookup tables or pre-compute data.\nThe result is a constant — zero runtime cost.\nOnly pure computations work (no I/O).",
+              "task": "Use `static:` to compute the 10th Fibonacci number at compile time. Store it in a `const` and echo it.",
+              "validation_code": "result.stdout.strip() == \"55\"",
+              "solution": "proc fib(n: int): int =\n  if n < 2: return n\n  fib(n-1) + fib(n-2)\nconst fib10 = static:\n  fib(10)\necho fib10",
+              "hint": "Define `proc fib(n: int): int`. Then `const fib10 = static: fib(10)`. Finally `echo fib10`.",
+              "difficulty": "hard",
+              "prerequisites": [
+                "1.3.1"
+              ],
+              "cross_language_notes": "C++: `constexpr`. Rust: `const` with `const fn`. Zig: `comptime`. Nim's `static:` is unique — it forces compile-time evaluation for any expression."
+            }
+          ]
+        },
+        {
+          "id": "4.7",
+          "name": "Capstone: Web API",
+          "lessons": [
+            {
+              "id": "4.7.1",
+              "name": "Project Setup",
+              "concept": "Welcome to the final challenge.\nYou will build a simple Todo API.\nFirst, let's set up the project structure.\nWe need a `src/server.nim` and a `src/todo.nim`.",
+              "task": "Create `src/todo.nim`.\nDefine a `Todo` object with `id: int`, `title: string`, `done: bool`.\nExport the type and fields (`*`).",
+              "filename": "src/todo.nim",
+              "validation_code": "\"type\" in code and \"Todo*\" in code and \"title*\" in code",
+              "solution": "type Todo* = object\n  id*: int\n  title*: string\n  done*: bool",
+              "hint": "Remember to use `*` to export symbols.",
+              "prerequisites": [
+                "4.6.4",
+                "3.9.1"
+              ]
+            },
+            {
+              "id": "4.7.2",
+              "name": "The Server",
+              "concept": "Now let's build the server in `src/server.nim`.\nWe'll use `asynchttpserver` and import our `todo` module.",
+              "task": "Import `asynchttpserver`, `asyncdispatch`, `json`, and `todo`.\nCreate a server that responds with `{\"status\": \"ok\"}` (JSON) to any request.\nUse `Port(0)` to avoid conflicts in tests.",
+              "filename": "src/server.nim",
+              "files": {
+                "src/todo.nim": "type Todo* = object\n  id*: int\n  title*: string\n  done*: bool"
+              },
+              "validation_code": "\"import\" in code and \"todo\" in code and \"%*\" in code",
+              "solution": "import asynchttpserver, asyncdispatch, json, todo\nvar server = newAsyncHttpServer()\nproc cb(req: Request) {.async.} =\n  await req.respond(Http200, $(%*{\"status\": \"ok\"}))\nasyncCheck server.serve(Port(0), cb)\npoll()",
+              "hint": "Use `%*` for JSON construction. Don't forget to import `todo`.",
+              "prerequisites": [
+                "4.7.1"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4.8",
+          "name": "Macros Deep",
+          "lessons": [
+            {
+              "id": "4.8.1",
+              "name": "HTML DSL",
+              "concept": "Macros allow you to create Domain Specific Languages (DSLs).\nLet's create a simple HTML generator.\nWe want syntax like `html div: echo \"content\"`.\nTo do this, we accept a body of `untyped` statements.",
+              "task": "Import `macros`.\nCreate a macro `html(name: untyped, body: untyped)`.\nIt should return a `quote do:` block that echoes \"<\" & $name & \">\", then runs `body`, then echoes \"</\" & $name & \">\" .\nUse it: `html \"section\": echo \"Hello\"`.",
+              "validation_code": "\"<section>\" in result.stdout and \"</section>\" in result.stdout and \"Hello\" in result.stdout",
+              "solution": "import macros\n\nmacro html(name: untyped, body: untyped): untyped =\n  let nameLit = newLit($name)\n  result = newStmtList()\n  result.add quote do:\n    echo \"<\" & `nameLit` & \">\"\n  result.add body\n  result.add quote do:\n    echo \"</\" & `nameLit` & \">\"\n\nhtml \"section\":\n  echo \"Hello\"",
+              "hint": "Inside `quote do:`, remember to use backticks to inject variables: `$`name``. Also note that `div` is a Nim keyword, so use a string as the tag name.",
+              "prerequisites": [
+                "4.7.2",
+                "3.9.1"
+              ]
+            },
+            {
+              "id": "4.8.2",
+              "name": "Typed Macros",
+              "concept": "So far we used `untyped`. But `typed` arguments are fully type-checked before the macro runs.\nThis is useful for verifying inputs.\nWrite a macro `checkInt(x: typed)` that errors at compile time if `x` is not an int.",
+              "task": "Import `macros`.\nWrite macro `checkInt(x: typed)`.\nUse `x.getType.typeKind` to check if it is `ntyInt`.\nIf not, call `error(\"Not an int\", x)`.\nCall it with `10`.",
+              "validation_code": "result.exitCode == 0",
+              "solution": "import macros\nmacro checkInt(x: typed): untyped =\n  if x.getType.typeKind != ntyInt:\n    error(\"Not an int\", x)\ncheckInt(10)",
+              "hint": "Access `x.getType.typeKind`. Compare with `ntyInt` (from `macros` module).",
+              "prerequisites": [
+                "4.8.1"
+              ]
+            },
+            {
+              "id": "4.8.3",
+              "name": "Type Introspection",
+              "concept": "`getType` retrieves the type of an expression as a `NimNode`.\n`getTypeInst` gets the instantiated type (for generics).\n`getTypeImpl` gets the implementation details.\nUse `{.compileTime.}` pragma for helper procs used at compile time.",
+              "task": "Write a macro `typeName(expr: static[string]): untyped` that echoes the string. Test with `typeName(\"int\")`.",
+              "validation_code": "result.stdout.strip() == \"int\"",
+              "solution": "import macros\nmacro typeName(expr: static[string]): untyped =\n  result = quote do:\n    echo `expr`\ntypeName(\"int\")",
+              "hint": "Use `static[string]` to get a compile-time string. Then `result = quote do: echo expr` with backtick injection.",
+              "difficulty": "hard",
+              "prerequisites": [
+                "3.2.4"
+              ],
+              "cross_language_notes": "Rust: `std::any::type_name::<T>()`. C++: `typeid(T).name()`. Nim's macro-based approach is more flexible — `getType` works at the AST level, not runtime."
+            },
+            {
+              "id": "4.8.4",
+              "name": "Compile-Time Errors",
+              "concept": "Inside a macro, call `error(\"message\", node)` to emit a compile-time error at the source location.\nUseful for validating macro arguments.\nThe error points to the exact position in the source code.",
+              "task": "Write a macro `assertPositive(x: int)` that checks if `x` is positive. If `x <= 0`, call `error(\"must be positive\", x)`. Otherwise echo \"OK\". Call it with `5`.",
+              "validation_code": "result.stdout.strip() == \"OK\"",
+              "solution": "import macros\nmacro assertPositive(x: static[int]): untyped =\n  if x <= 0:\n    error(\"must be positive\", newLit(x))\n  result = quote do:\n    echo \"OK\"\nassertPositive(5)",
+              "hint": "Use `static[int]` for compile-time int values. Then `if x <= 0: error(\"must be positive\", newLit(x))`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "4.8.1"
+              ],
+              "cross_language_notes": "Rust: `compile_error!()` macro. C++: `static_assert`. Nim's `error()` inside macros is the most flexible — you can point to specific source locations."
+            }
+          ]
+        },
+        {
+          "id": "4.9",
+          "name": "Boss: MiniTest",
+          "lessons": [
+            {
+              "id": "4.9.1",
+              "name": "The Framework",
+              "concept": "You've learned macros and projects. Now build a mini testing framework.\nThis is a Project Mode lesson.\nYou need to implement `src/minitest.nim` with a `suite` and `test` macro.",
+              "type": "project",
+              "task": "1. In `src/minitest.nim`, export a template `suite(name, body)` that echoes \"[SUITE] \" & name and runs body.\n2. Export a template `test(name, body)` that echoes \"  [TEST] \" & name and runs body.\n3. The `tests/test1.nim` file already uses it. Just implement the module.",
+              "filename": "src/minitest.nim",
+              "files": {
+                "minitest.nimble": "version = \"0.1.0\"\nauthor = \"Boss\"\ndescription = \"Minitest\"\nlicense = \"MIT\"\nsrcDir = \"src\"\n",
+                "tests/test1.nim": "import minitest\nsuite \"MySuite\":\n  test \"MyTest\":\n    echo \"Running\""
+              },
+              "validation_code": "\"[SUITE] MySuite\" in result.stdout and \"[TEST] MyTest\" in result.stdout",
+              "solution": "template suite*(name: string, body: untyped) =\n  echo \"[SUITE] \", name\n  body\n\ntemplate test*(name: string, body: untyped) =\n  echo \"  [TEST] \", name\n  body",
+              "hint": "Use `template` not `macro` for simplicity here. `template suite*(name: string, body: untyped) = ...`",
+              "prerequisites": [
+                "4.1.4",
+                "4.2.4",
+                "4.3.4",
+                "4.4.4",
+                "4.5.3",
+                "4.6.4",
+                "4.7.2",
+                "4.8.4"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

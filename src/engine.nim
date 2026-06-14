@@ -1,6 +1,7 @@
 import os, osproc, strutils, tables, streams, times, re
 import std/tempfiles
-import types, models
+import std/sets
+import types, content
 
 const ExercisesDir = "exercises"
 const RunTimeout = 5000 # 5 seconds
@@ -152,9 +153,42 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
 
   cmd.add " " & quoteShell(lesson.filename)
 
+  # Pass runtime arguments to the compiled binary
+  for arg in lesson.runArgs:
+    cmd.add " " & quoteShell(arg)
+
   # Execute
   let (outp, errC) = runWithTimeout(cmd, tmpDir)
   return RunResult(stdout: outp, stderr: "", exitCode: errC)
+
+proc canSkip*(lessonId: string, progress: HashSet[string]): bool =
+  ## Check if a lesson's prerequisites are all satisfied.
+  ## Returns true if the lesson can be accessed (prereqs met).
+  ## 1.1.1 is always accessible (the root).
+  if lessonId == "1.1.1":
+    return true
+  
+  # Find the lesson
+  var lesson: Lesson
+  var found = false
+  for level in levels:
+    for chapter in level.chapters:
+      for l in chapter.lessons:
+        if l.id == lessonId:
+          lesson = l
+          found = true
+          break
+      if found: break
+    if found: break
+  
+  if not found:
+    return false
+  
+  # All prerequisites must be in progress
+  for pre in lesson.prerequisites:
+    if pre notin progress:
+      return false
+  return true
 
 proc validate*(lesson: Lesson, code: string, res: RunResult): (bool, string) =
   # For project type, we only care about exit code from nimble test

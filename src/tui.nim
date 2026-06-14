@@ -1,309 +1,170 @@
-
-import illwill, os, strutils, times, std/sets, osproc, threadpool
+import strutils, std/sets
 import types, content, models, engine
 
-# Constants
+# ── ANSI helpers ────────────────────────────────────────────────────
+
 const
-  KEY_ESC = Key.Escape
-  KEY_TAB = Key.Tab
-  KEY_ENTER = Key.Enter
+  Reset* = "\e[0m"
+  Bold* = "\e[1m"
+  Dim* = "\e[2m"
 
-type
-  View = enum
-    vTree, vContent, vOutput
+  Red* = "\e[31m"
+  Green* = "\e[32m"
+  Yellow* = "\e[33m"
+  Blue* = "\e[34m"
+  Magenta* = "\e[35m"
+  Cyan* = "\e[36m"
+  White* = "\e[37m"
+  Grey* = "\e[90m"
 
-  AppState = object
-    tb: TerminalBuffer
-    currentLessonIdx: int
-    activeView: View
-    showHelp: bool
-    outputBuffer: seq[string]
+proc dim*(s: string): string = Dim & s & Reset
+proc bold*(s: string): string = Bold & s & Reset
+proc colored*(s: string, c: string): string = c & s & Reset
 
-    # Async State
-    checkFuture: FlowVar[RunResult]
-    isChecking: bool
-    lastModTime: Time
-    watchedFile: string
+# ── Progress bar ────────────────────────────────────────────────────
 
-    # Tree State
-    flatLessons: seq[Lesson]
-    completed: seq[string] # IDs
+proc progressBar(filled, total, width: int): string =
+  if total == 0: return repeat(" ", width)
+  let done = (filled.float / total.float * width.float).int
+  let pct = (filled.float / total.float * 100.0).int
+  let bar = repeat("█", done) & repeat("░", width - done)
+  Green & bar & Reset & " " & $pct & "%"
 
-var state: AppState
+# ── Dashboard ───────────────────────────────────────────────────────
 
-# --- Actions ---
-
-proc openInEditor(lesson: Lesson) =
-  # Ensure file exists on disk
-  let path = ensureLessonFile(lesson)
-
-  # Update watched file
-  state.watchedFile = path
-  try:
-    state.lastModTime = getLastModificationTime(path)
-  except:
-    state.lastModTime = fromUnix(0)
-
-  # Get EDITOR from env
-  var editor = getEnv("EDITOR")
-  if editor == "":
-    if findExe("vim") != "": editor = "vim"
-    elif findExe("nano") != "": editor = "nano"
-    elif findExe("code") != "": editor = "code"
-    else:
-      state.outputBuffer = @["Error: EDITOR environment variable not set."]
-      return
-
-  # Suspend TUI, run editor, restore TUI
-  illwillDeinit()
-  showCursor()
-
-  discard execCmd(editor & " " & quoteShell(path))
-
-  # Restore
-  illwillInit(fullscreen=true)
-  hideCursor()
-  state.tb = newTerminalBuffer(terminalWidth(), terminalHeight())
-
-  # FORCE FULL REDRAW sequence to fix ghosting/blank screens
-  # 1. Clear internal buffer to spaces
-  state.tb.clear()
-  # 2. Write the empty buffer to screen. This forces illwill to diff (Current Garbage) vs (Empty),
-  #    emitting ANSI clear codes for the whole screen.
-  state.tb.display()
-
-  # 3. Main loop will now draw UI on top of this known empty state.
-
-  try:
-    state.lastModTime = getLastModificationTime(path)
-  except:
-    discard
-
-proc startCheck(lesson: Lesson) =
-  if state.isChecking: return
-
-  let path = ensureLessonFile(lesson)
-  let code = readFile(path)
-
-  state.outputBuffer = @["Checking..."]
-  state.isChecking = true
-
-  state.checkFuture = spawn runCode(lesson, code)
-
-proc showHint(lesson: Lesson) =
-  # Append the hint to the output buffer instead of overwriting
-  state.outputBuffer.add("")
-  state.outputBuffer.add("--- HINT ---")
-  if lesson.hint.strip.len > 0:
-    state.outputBuffer.add(lesson.hint)
-  else:
-    state.outputBuffer.add("No hint available for this lesson.")
-  state.outputBuffer.add("")
-
-proc pollCheckResult() =
-  if not state.isChecking: return
-
-  if state.checkFuture.isReady():
-    let res = ^state.checkFuture
-    state.isChecking = false
-
-    let lesson = state.flatLessons[state.currentLessonIdx]
-    let path = ensureLessonFile(lesson)
-    let code = readFile(path)
-
-    let (success, msg) = validate(lesson, code, res)
-    state.outputBuffer = msg.splitLines()
-
-    if success:
-      var p = loadProgress()
-      p.incl(lesson.id)
-      saveProgress(p)
-      if lesson.id notin state.completed: state.completed.add(lesson.id)
-
-proc checkFileWatcher() =
-  if state.watchedFile == "" or not fileExists(state.watchedFile): return
-
-  try:
-    let t = getLastModificationTime(state.watchedFile)
-    if t > state.lastModTime:
-      state.lastModTime = t
-      let lesson = state.flatLessons[state.currentLessonIdx]
-      if state.watchedFile.endsWith(lesson.filename):
-         startCheck(lesson)
-  except:
-    discard
-
-# --- Drawing ---
-
-proc drawTree(x, y, w, h: int) =
-  # Reset style for the box
-  state.tb.fill(x, y, x+w-1, y+h-1, " ")
-  state.tb.drawRect(x, y, x+w-1, y+h-1)
-  state.tb.write(x+2, y, " Curriculum ", fgYellow)
-
-  let maxItems = h - 2
-  let startIdx = max(0, state.currentLessonIdx - (maxItems div 2))
-  let endIdx = min(state.flatLessons.len, startIdx + maxItems)
-
-  for i in startIdx ..< endIdx:
-    let lesson = state.flatLessons[i]
-    let row = y + 1 + (i - startIdx)
-    var prefix = "[ ] "
-    var color = fgWhite
-    if lesson.id in state.completed:
-      prefix = "[x] "
-      color = fgGreen
-
-    var style: set[Style] = {}
-    if i == state.currentLessonIdx:
-      style = {styleReverse}
-      if state.activeView == vTree:
-        state.tb.write(x+1, row, ">", fgCyan)
-
-    var text = prefix & lesson.id & ": " & lesson.name
-    if text.len > w - 3: text = text[0 ..< w-3] & "..."
-
-    state.tb.write(x+2, row, color, style, text, resetStyle)
-
-proc drawContent(x, y, w, h: int) =
-  state.tb.fill(x, y, x+w-1, y+h-1, " ")
-  state.tb.drawRect(x, y, x+w-1, y+h-1)
-  state.tb.write(x+2, y, " Lesson ", fgYellow)
-
-  let lesson = state.flatLessons[state.currentLessonIdx]
-  var lines: seq[(string, ForegroundColor)] = @[]
-  lines.add ("ID: " & lesson.id, fgCyan)
-  lines.add ("Name: " & lesson.name, fgWhite)
-  lines.add ("", fgWhite)
-  lines.add ("--- Concept ---", fgYellow)
-
-  for line in lesson.conceptText.splitLines:
-    if line.len < w - 4: lines.add (line, fgWhite)
-    else: lines.add (line[0 ..< w-4], fgWhite)
-
-  lines.add ("", fgWhite)
-  lines.add ("--- Task ---", fgYellow)
-  for line in lesson.task.splitLines:
-    if line.len < w - 4: lines.add (line, fgWhite)
-    else: lines.add (line[0 ..< w-4], fgWhite)
-
-  lines.add ("", fgWhite)
-  lines.add ("--- Instructions ---", fgYellow)
-  lines.add ("'e': edit  'r': run  'h': hint", fgWhite)
-  lines.add ("Auto-check on save is enabled.", fgWhite)
-
-  for i, (text, color) in lines:
-    if i >= h - 2: break
-    state.tb.write(x+2, y+1+i, color, text, resetStyle)
-
-proc drawOutput(x, y, w, h: int) =
-  state.tb.fill(x, y, x+w-1, y+h-1, " ")
-  state.tb.drawRect(x, y, x+w-1, y+h-1)
-  var title = " Output "
-  if state.isChecking: title &= "(Checking...) "
-
-  var titleColor = fgYellow
-  if state.isChecking: titleColor = fgMagenta
-
-  state.tb.write(x+2, y, titleColor, title)
-
-  for i, line in state.outputBuffer:
-    if i >= h - 2: break
-    var color = fgWhite
-    if "Error" in line or "failed" in line.toLowerAscii: color = fgRed
-    elif "Success" in line or "Correct" in line: color = fgGreen
-    elif "Hint" in line: color = fgCyan
-
-    state.tb.write(x+2, y+1+i, color, line, resetStyle)
-
-# --- Main ---
-
-proc exitProc() =
-  illwillDeinit()
-  showCursor()
-  quit(0)
-
-proc runTUI*() =
-  illwillInit(fullscreen=true)
-  setControlCHook(proc() {.noconv.} = exitProc())
-  hideCursor()
-
-  initLessons()
-  state.flatLessons = @[]
-  for m in modules:
-    for l in m.lessons:
-      state.flatLessons.add(l)
-
-  state.tb = newTerminalBuffer(terminalWidth(), terminalHeight())
-  state.activeView = vTree
-  state.isChecking = false
-
+proc printDashboard*() =
+  ## Print a full progress dashboard to stdout
   let saved = loadProgress()
-  for s in saved: state.completed.add(s)
+  var totalLessons = 0
+  var doneLessons = 0
 
-  if state.flatLessons.len > 0:
-    let l = state.flatLessons[state.currentLessonIdx]
-    let path = ensureLessonFile(l)
-    state.watchedFile = path
-    try: state.lastModTime = getLastModificationTime(path)
-    except: discard
+  # First pass: count totals across all levels/chapters
+  for level in levels:
+    for chapter in level.chapters:
+      for l in chapter.lessons:
+        totalLessons.inc
+        if l.id in saved:
+          doneLessons.inc
 
-  while true:
-    state.tb.clear()
-    let w = terminalWidth()
-    let h = terminalHeight()
+  # ── Header ──
+  echo ""
+  echo bold("  ╔══════════════════════════════════════════════════════════════╗")
+  echo bold("  ║") & "          " & bold("nimlings") & " — Interactive Nim Tutor           " & bold("║")
+  echo bold("  ╚══════════════════════════════════════════════════════════════╝")
+  echo ""
 
-    let treeW = (w.float * 0.3).int
-    let contentH = (h.float * 0.6).int
-    let rightW = w - treeW
-    let outputH = h - contentH
+  # ── Daily streak ──
+  let daily = loadDaily()
+  if daily.streak > 0:
+    let fire = if daily.streak >= 7: "🔥" elif daily.streak >= 3: "🔥" else: "🔥"
+    echo "    " & fire & " " & bold("Streak:") & " " & bold($daily.streak & " days")
+    if daily.lessonsToday > 0:
+      echo "    " & dim("  Today: " & $daily.lessonsToday & " lesson(s) done")
+    else:
+      echo "    " & dim("  No lesson yet today — run ") & bold("nimlings learn") & dim(" now")
+  else:
+    echo "    " & dim("  Start your streak: ") & bold("nimlings learn")
+  echo ""
 
-    drawTree(0, 0, treeW, h)
-    drawContent(treeW, 0, rightW, contentH)
-    drawOutput(treeW, contentH, rightW, outputH)
+  # ── Overall progress ──
+  echo "    " & bold("Overall Progress") & "   " & $doneLessons & "/" & $totalLessons & " lessons"
+  echo "    " & progressBar(doneLessons, totalLessons, 50)
+  echo ""
 
-    state.tb.display()
+  # ── Levels ──
+  echo "    " & bold("Levels") & "\n"
 
-    # Input Drain Loop
-    while true:
-      var key = getKey()
-      if key == Key.None: break
+  for level in levels:
+    var lvlDone = 0
+    var lvlTotal = 0
+    for chapter in level.chapters:
+      for l in chapter.lessons:
+        lvlTotal.inc
+        if l.id in saved:
+          lvlDone.inc
 
-      case key
-      of Key.Q:
-        exitProc()
-      of Key.Tab:
-        if state.activeView == vTree: state.activeView = vContent
-        elif state.activeView == vContent: state.activeView = vOutput
-        else: state.activeView = vTree
-      of Key.E, Key.Enter:
-         openInEditor(state.flatLessons[state.currentLessonIdx])
-      of Key.R:
-         startCheck(state.flatLessons[state.currentLessonIdx])
-      of Key.H, Key.QuestionMark:
-         showHint(state.flatLessons[state.currentLessonIdx])
-      of Key.J, Key.Down:
-        if state.activeView == vTree:
-          state.currentLessonIdx = min(state.flatLessons.len - 1, state.currentLessonIdx + 1)
-          # Update watcher
-          let l = state.flatLessons[state.currentLessonIdx]
-          let path = ensureLessonFile(l)
-          state.watchedFile = path
-          try: state.lastModTime = getLastModificationTime(path)
-          except: discard
-      of Key.K, Key.Up:
-        if state.activeView == vTree:
-          state.currentLessonIdx = max(0, state.currentLessonIdx - 1)
-          # Update watcher
-          let l = state.flatLessons[state.currentLessonIdx]
-          let path = ensureLessonFile(l)
-          state.watchedFile = path
-          try: state.lastModTime = getLastModificationTime(path)
-          except: discard
-      else: discard
+    echo "    " & bold("Level " & $level.id & ": " & level.name) & dim("  (" & $lvlDone & "/" & $lvlTotal & ")")
+    echo "    " & progressBar(lvlDone, lvlTotal, 50)
+    echo ""
 
-    # Logic Updates
-    pollCheckResult()
-    checkFileWatcher()
+    for chapter in level.chapters:
+      var chDone = 0
+      var chTotal = 0
+      for l in chapter.lessons:
+        chTotal.inc
+        if l.id in saved:
+          chDone.inc
 
-    sleep(20) # Low sleep for responsiveness
+      let status = if chDone == chTotal: bold(Green & "✓" & Reset)
+                   elif chDone > 0: bold(Yellow & "⟳" & Reset)
+                   else: bold(Grey & "○" & Reset)
+      echo "      " & status & " " & bold(chapter.name) & dim("  (" & $chDone & "/" & $chTotal & ")")
+
+      for l in chapter.lessons:
+        let unlocked = l.id in saved or canSkip(l.id, saved)
+        let marker = if l.id in saved: Green & "◆" & Reset
+                     elif unlocked: Grey & "◇" & Reset
+                     else: Red & "◇" & Reset
+        let nameStr = if unlocked: l.name else: dim(l.name)
+        echo "        " & marker & " " & l.id & ": " & nameStr
+
+      echo ""
+
+  # ── Next lesson ──
+  var nextLesson: Lesson
+  var foundNext = false
+  for level in levels:
+    for chapter in level.chapters:
+      for l in chapter.lessons:
+        if l.id notin saved:
+          nextLesson = l
+          foundNext = true
+          break
+      if foundNext: break
+    if foundNext: break
+
+  if foundNext:
+    echo "    " & bold("Next up:") & " " & nextLesson.id & ": " & nextLesson.name
+    echo "    " & dim("  ► nimlings watch " & nextLesson.id)
+  else:
+    echo "    " & bold(Green & "🎉 All lessons complete!" & Reset)
+  echo ""
+
+proc printLessonHeader*(lesson: Lesson) =
+  ## Print a compact lesson header for watch mode
+  echo ""
+  echo bold("  ══════════════════════════════════════════════════════════════")
+  echo "   " & bold(lesson.id) & ": " & bold(lesson.name)
+  echo dim("   " & lesson.conceptText.splitLines()[0])
+  echo ""
+  echo "   " & bold("Task:") & " " & lesson.task
+  echo "   " & dim("Edit: exercises/" & lesson.id.replace(".", "_") & "/" & lesson.filename)
+  echo bold("  ══════════════════════════════════════════════════════════════")
+  echo ""
+
+proc printOutput*(msg: string) =
+  ## Print validation output with color coding
+  for line in msg.splitLines():
+    let lower = line.toLowerAscii()
+    if line.startsWith("Error") or "error" in lower:
+      echo "  " & Red & line & Reset
+    elif line.startsWith("Correct") or "success" in lower:
+      echo "  " & Green & Bold & line & Reset
+    elif line.startsWith("FAILED") or "failed" in lower:
+      echo "  " & Red & Bold & line & Reset
+    elif line.startsWith("Hint") or line.startsWith("---"):
+      echo "  " & Cyan & line & Reset
+    elif line.startsWith("Waiting") or line.startsWith("[DETECTED"):
+      echo dim("  " & line)
+    else:
+      echo "  " & line
+  echo ""
+
+proc printSuccess*(lesson: Lesson) =
+  ## Print success banner when a lesson is completed
+  echo ""
+  echo "  " & Green & Bold & "  ── ✅ " & lesson.id & " Complete! ──" & Reset
+  echo ""
+
+proc printError*(msg: string) =
+  echo "  " & Red & Bold & "✗ " & Reset & msg

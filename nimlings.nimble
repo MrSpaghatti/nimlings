@@ -1,6 +1,6 @@
 # Package
 
-version       = "2.0.0"
+version       = "2.1.0"
 author        = "Nimlings Team"
 description   = "A purely Nim-based learning path for Nim"
 license       = "MIT"
@@ -11,7 +11,6 @@ bin           = @["nimlings"]
 # Dependencies
 
 requires "nim >= 1.6.0"
-requires "illwill >= 0.3.0"
 
 # Tasks
 

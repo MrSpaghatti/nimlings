@@ -16,12 +16,22 @@ type
     lessonType*: string
     cmd*: string
     compilerArgs*: seq[string]
+    runArgs*: seq[string]
     skipRun*: bool
+    difficulty*: string
+    prerequisites*: seq[string]
+    crossLanguageNotes*: string
     validate*: LessonValidation
 
-  Module* = object
+  Chapter* = object
+    id*: string
     name*: string
     lessons*: seq[Lesson]
+
+  Level* = object
+    id*: int
+    name*: string
+    chapters*: seq[Chapter]
 
   RunResult* = ref object
     stdout*: string
