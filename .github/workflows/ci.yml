@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nim
+        uses: nim-lang/actions/install-nim@v1
+        with:
+          version: stable-2.2
+
+      - name: Generate lesson content
+        run: nimble generate_content
+
+      - name: Build
+        run: nimble build -y
+
+      - name: Check tools compile
+        run: nim check tools/generator.nim
+
+      - name: Run tests
+        run: nimble test -y
+
+      - name: Verify no warnings
+        run: nim c --warning:all src/nimlings.nim 2>&1 | (! grep -i "warning")

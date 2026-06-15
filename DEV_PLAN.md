@@ -1,23 +1,42 @@
-# Development Status & Roadmap
-**Date:** Wednesday, November 26, 2025
-**Current Branch:** main
+# Development Status
 
-## 1. The Merge Report
-*The `main` branch is in sync with `origin/main`. Several feature and stabilization branches exist, with some ahead of `main` and one manually merged, potentially leading to future conflicts.*
-- **Main:** In sync with `origin/main`
-- **Feature Branches:**
-    - `origin/fix-runwithtimeout-regression`: Ahead of `main`. *Recommendation (Merge into `main` via `stabilize-repo`)*
-    - `origin/manual-merge-project-runner`: Diverged from `main` and `project-runner-1` due to a manual merge. *Recommendation (Review and decide on rebase or cherry-pick onto updated `main`)*
-    - `origin/project-runner-1`: Merged into `main`. *Recommendation (Delete remote branch after verification)*
-    - `origin/stabilize-repo`: Ahead of `main`, contains `fix-runwithtimeout-regression`. *Recommendation (Merge into `main`)*
+**Last updated:** 2026-06-14
 
-## 2. Issues & Conflicts ⚠️
-- `origin/manual-merge-project-runner` had manual conflict resolution during its creation in `src/engine.nim`, `src/types.nim`, `src/lessons.json`, `tools/generator.nim`, and `tests/test_engine.nim`. Merging this into `main` will require careful review and potential re-resolution of conflicts.
+> This file is a historical artifact from the early branch-management phase.
+> For live project status, see [`STATUS.md`](./STATUS.md).
+> For recent changes, see [`CHANGELOG.md`](./CHANGELOG.md).
+> For the current improvement plan, see [`PLAN.md`](./PLAN.md).
 
-## 3. Immediate Next Steps (The Plan)
-1.  Merge `origin/stabilize-repo` into `main` to incorporate the bugfix (`fix-runwithtimeout-regression`) and stabilization changes.
-2.  Carefully review the changes in `origin/manual-merge-project-runner`. If still relevant, rebase it onto the updated `main` or cherry-pick specific commits, addressing any new conflicts.
+## Historical Context
 
-## 4. Brainstorming / The Horizon
-- Consider establishing a more formal branching strategy (e.g., Gitflow, GitHub Flow) to prevent diverging histories and simplify merges.
-- Regularly prune merged or inactive remote branches to keep the repository clean.
+Previous versions of this file tracked branch management concerns (`fix-runwithtimeout-regression`, `manual-merge-project-runner`, `stabilize-repo`).
+All those branches have been merged into `main` and the repository is stable.
+
+## Current State (`main`)
+
+- **Version:** 2.1.2
+- **Lessons:** 142 across 4 levels (30 + new topics)
+- **Audit:** All 16 findings resolved (see `AUDIT.md`)
+- **Build:** Clean — zero warnings with `--warning:all`
+- **Tests:** 5 suites, all passing
+- **CI:** GitHub Actions workflow at `.github/workflows/ci.yml`
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/nimlings.nim` | CLI entry point — command dispatch, watch mode, main loop |
+| `src/engine.nim` | Compilation, validation, error hint parsing, sandboxing |
+| `src/tui.nim` | ANSI dashboard, progress bars, lesson headers |
+| `src/models.nim` | Progress persistence (JSON), daily streaks, date arithmetic |
+| `src/types.nim` | Core types: Lesson, Chapter, Level, RunResult |
+| `src/content.nim` | Generated (3K lines) — all 142 lessons with per-lesson validators |
+| `src/lessons.json` | Source of truth — content input for generator |
+| `tools/generator.nim` | Transforms `lessons.json` → `src/content.nim` |
+| `tests/` | 5 test suites (Content, Engine, Models, Prerequisites, Solutions) |
+
+## Branch Status
+
+- **`main`** — Active development. All branches merged and stable.
+- No other active branches. Feature branches are merged or historical.
+- Git history is linear and clean.

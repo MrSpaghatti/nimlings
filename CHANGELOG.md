@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.3] — 2026-06-14
+
+### Added
+
+- **Streak date logic tests**: Extracted `updateStreak` pure proc from `recordLessonCompletion` for testability; 13 test cases covering first lesson, same day, consecutive day, month/year boundaries, gaps, and past dates (`src/models.nim`, `tests/test_models.nim`)
+- **GitHub Actions CI**: Build, test, and warning-verification workflow for push/PR to `main` (`.github/workflows/ci.yml`)
+
+### Fixed
+
+- **Test isolation**: Moved `byId` declaration before `setup` in prereq tests and added `teardown` for defensive cleanup (`tests/test_prereqs.nim`)
+
+### Docs
+
+- **DEV_PLAN.md** updated: replaced stale branch-management content with current project snapshot and cross-references to canonical docs
+- **progress.md** filled: converted from empty boilerplate to actual session tracker
+
 ## [2.1.2] — 2026-06-14
 
 ### Added

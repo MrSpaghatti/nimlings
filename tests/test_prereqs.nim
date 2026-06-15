@@ -3,15 +3,19 @@ import types, content, engine
 
 suite "Prerequisites":
 
+  var byId = initTable[string, Lesson]()
+
   setup:
+    ## Runs before each test: rebuild the byId lookup table.
     initLessons()
     byId.clear()
     for lv in levels:
       for ch in lv.chapters:
         for l in ch.lessons:
           byId[l.id] = l
-  
-  var byId = initTable[string, Lesson]()
+
+  teardown:
+    byId.clear()
 
   test "All lessons have prerequisites except root (1.1.1)":
     for lv in levels:

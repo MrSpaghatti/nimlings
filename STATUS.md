@@ -1,6 +1,6 @@
 # nimlings Status
 
-**Last updated:** 2026-06-14
+**Last updated:** 2026-06-14 (polish round)
 
 ## Project Overview
 
@@ -8,10 +8,11 @@ Interactive Nim tutor — 142 lessons across 4 levels. CLI application written i
 
 ## Current Status: ✅ Stable — Expanded
 
-- **Version:** 2.1.2
-- **Branch:** `main` (ahead of origin)
-- **Build:** Compiles cleanly (no warnings)
-- **Tests:** All pass (Content, Engine, Models, Prerequisites, Solutions)
+- **Version:** 2.1.3-dev
+- **Branch:** `main`
+- **Build:** Compiles cleanly (zero warnings with `--warning:all`)
+- **Tests:** All pass (Content, Engine, Models, Prerequisites, Solutions) — 13 streak tests added
+- **CI:** GitHub Actions workflow at `.github/workflows/ci.yml`
 - **Lessons:** 142/142 — all pass internal solution tests
 
 ## What's Here
@@ -31,8 +32,9 @@ Interactive Nim tutor — 142 lessons across 4 levels. CLI application written i
 
 ## Audit Resolved
 
-All 16 findings from AUDIT.md fixed (v2.1.2).
+All 16 findings from AUDIT.md fixed (v2.1.2). Streak date logic now has 13 test cases covering all edge cases.
 
 ## What's Next
 
-- Push to origin (already done)
+- Push to origin
+- CI will auto-verify on push

@@ -66,26 +66,24 @@ proc saveDaily*(record: DailyRecord) =
   }
   writeFile(DailyFile, $jsonNode)
 
-proc recordLessonCompletion*() =
-  ## Call this when a lesson is completed. Updates streak.
-  var daily = loadDaily()
-  let todayDate = today()
+proc updateStreak*(daily: DailyRecord, todayDate: string): DailyRecord =
+  ## Pure function: compute updated streak given current record and today's date.
+  ## Does not touch filesystem or system clock.
+  result = daily
 
-  if daily.lastLessonDate == todayDate:
+  if result.lastLessonDate == todayDate:
     # Already did a lesson today — just increment count
-    daily.lessonsToday += 1
-  elif daily.lastLessonDate == "":
+    result.lessonsToday += 1
+  elif result.lastLessonDate == "":
     # First lesson ever
-    daily.streak = 1
-    daily.longestStreak = 1
-    daily.lessonsToday = 1
-    daily.lastLessonDate = todayDate
+    result.streak = 1
+    result.longestStreak = 1
+    result.lessonsToday = 1
+    result.lastLessonDate = todayDate
   else:
     # Check if yesterday or gap
-    let lastDate = daily.lastLessonDate
-    # Simple check: if today is consecutive day
+    let lastDate = result.lastLessonDate
     if lastDate < todayDate:
-      # Parse dates to check if yesterday
       try:
         let last = lastDate.split("-")
         let parts = todayDate.split("-")
@@ -96,12 +94,10 @@ proc recordLessonCompletion*() =
         let todayMonth = parseInt(parts[1])
         let todayYear = parseInt(parts[0])
 
-        # Check if consecutive day
         var isConsecutive = false
         if lastYear == todayYear and lastMonth == todayMonth and todayDay - lastDay == 1:
           isConsecutive = true
         elif lastYear == todayYear and lastMonth == todayMonth - 1:
-          # month boundary
           let daysInLastMonth = case lastMonth
             of 1, 3, 5, 7, 8, 10, 12: 31
             of 4, 6, 9, 11: 30
@@ -113,18 +109,22 @@ proc recordLessonCompletion*() =
           isConsecutive = true
 
         if isConsecutive:
-          daily.streak += 1
+          result.streak += 1
         else:
-          daily.streak = 1  # Reset (gap > 1 day)
+          result.streak = 1
 
-        if daily.streak > daily.longestStreak:
-          daily.longestStreak = daily.streak
+        if result.streak > result.longestStreak:
+          result.longestStreak = result.streak
       except:
-        daily.streak = 1
+        result.streak = 1
 
-    daily.lessonsToday = 1
-    daily.lastLessonDate = todayDate
+    result.lessonsToday = 1
+    result.lastLessonDate = todayDate
 
-  saveDaily(daily)
+proc recordLessonCompletion*() =
+  ## Call this when a lesson is completed. Updates streak.
+  let daily = loadDaily()
+  let updated = updateStreak(daily, today())
+  saveDaily(updated)
 
 
