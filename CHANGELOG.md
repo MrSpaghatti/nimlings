@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.2] — 2026-06-14
 
+### Added
+
+- **22 new lessons** across 9 new chapters:
+  - L2: Regex (3), Data Structures (3), OS & Filesystem (3), DateTime (2)
+  - L3: Encoding (2), Text Parsing & Streams (3)
+  - L4: Networking (3), Publishing & Documentation (3)
+  - Total: 142 lessons
+
 ### Fixed
 
 - **Version sync**: Source constant now matches nimble file (both 2.1.0 → both 2.1.2)

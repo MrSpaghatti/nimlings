@@ -4,19 +4,22 @@
 
 ## Project Overview
 
-Interactive Nim tutor — 120 lessons across 4 levels. CLI application written in 100% Nim.
+Interactive Nim tutor — 142 lessons across 4 levels. CLI application written in 100% Nim.
 
-## Current Status: ✅ Stable — Audit Cleared
+## Current Status: ✅ Stable — Expanded
 
 - **Version:** 2.1.2
 - **Branch:** `main` (ahead of origin)
 - **Build:** Compiles cleanly (no warnings)
-- **Tests:** All pass (Content, Engine, Models, Prerequisites)
-- **Lessons:** 120/120 complete with difficulty ratings and cross-language notes
+- **Tests:** All pass (Content, Engine, Models, Prerequisites, Solutions)
+- **Lessons:** 142/142 — all pass internal solution tests
 
 ## What's Here
 
-- ✅ 120 lessons covering Nim from "Hello World" to macros/DSL
+- ✅ 142 lessons (was 120) — 22 new across L2-L4
+- ✅ **New topics:** Regex, Data Structures (sets/tables/deques), OS & Filesystem, DateTime, Encoding, Text Parsing, Streams, Networking, Publishing & Documentation
+- ✅ All prerequisite chain tests pass
+- ✅ All 142 solutions compile and validate correctly
 - ✅ Prerequisite tree with level gating (boss lessons)
 - ✅ CLI: learn, watch, list, path, test, hint, solution, export/import
 - ✅ TUI dashboard with ANSI progress bars
@@ -28,13 +31,8 @@ Interactive Nim tutor — 120 lessons across 4 levels. CLI application written i
 
 ## Audit Resolved
 
-All findings from AUDIT.md have been fixed:
-- **Errors:** Version sync, silent data loss, inconsistent findLesson, fragile splitLines — all resolved
-- **Hallucinations:** Stack trace disabling (--d:release removed), Node.js check added, dead stderr field documented
-- **Inefficiencies:** canSkip overload, polling interval tuned
-- **Style:** Dead types/procs removed, imports cleaned, printHelp simplified, generator cleanup
+All 16 findings from AUDIT.md fixed (v2.1.2).
 
 ## What's Next
 
-- Push to origin
-- Tag v2.1.2 release
+- Push to origin (already done)

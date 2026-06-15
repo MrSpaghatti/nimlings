@@ -944,6 +944,207 @@
               "cross_language_notes": "This boss lesson combines generics and metaprogramming. C++: template + macro. Rust: generic fn + macro_rules!. Nim's approach is the cleanest — templates work naturally with generic procs."
             }
           ]
+        },
+        {
+          "id": "2.8",
+          "name": "Regular Expressions",
+          "lessons": [
+            {
+              "id": "2.8.1",
+              "name": "Regex Basics",
+              "concept": "When you need to find patterns in text, not just exact strings, regex is your tool.\nNim's `re` module gives you `match()`, `find()`, and `contains()` for pattern matching.\nThe `re()` macro compiles your pattern at compile time — no runtime compilation cost after first use.\nLiterals match themselves: `re\"abc\"` matches the literal string \"abc\".\nUse `\\d`, `\\w`, `\\s` etc. for character classes (escape them properly in Nim strings).",
+              "task": "Write a proc `hasDigit(s: string): bool` that returns true if the string contains a digit, using regex.",
+              "solution": "import re\nproc hasDigit(s: string): bool = s.contains(re\"\\d\")\necho hasDigit(\"hello5world\")",
+              "hint": "Use `import re` then `s.contains(re\"\\d\")`",
+              "difficulty": "easy",
+              "prerequisites": [
+                "2.3.2"
+              ],
+              "cross_language_notes": "Python uses `re.search(r'\\d', s)`. Rust uses `Regex::new(r\"\\d\").unwrap().is_match(s)`. Nim's `re` macro compiles the pattern at compile time — no runtime compilation cost after the first call.",
+              "validation_code": "result.stdout.strip() == \"true\""
+            },
+            {
+              "id": "2.8.2",
+              "name": "Capture Groups",
+              "concept": "Capture groups let you extract specific parts of a matched pattern.\nUse parentheses `()` to define groups in your regex.\n`findAll()` returns all matches; each match's `captures` field is a `seq[string]` of captured substrings.\n`match()` returns the first match as a `RegexMatch`.\nAccess captures with `m.captures[0]`, `m.captures[1]`, etc.",
+              "task": "Write a proc `extractYears(s: string): seq[string]` that finds all 4-digit year patterns (\\d{4}) using capture groups.",
+              "solution": "import re\nproc extractYears(s: string): seq[string] =\n  for m in findAll(s, re\"(\\d{4})\"):\n    result.add(m)\necho extractYears(\"Born 1999, graduated 2024\")",
+              "hint": "Use `findAll()` which returns captured strings directly — just `result.add(m)` each match",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.8.1"
+              ],
+              "cross_language_notes": "Python uses `re.findall(r'(\\d{4})', s)` which directly returns captures. Rust returns `Captures` struct. Nim's `RegexMatch.captures` is a seq of captured strings — simple and direct.",
+              "validation_code": "result.stdout.contains(\"2024\") and result.stdout.contains(\"1999\")"
+            },
+            {
+              "id": "2.8.3",
+              "name": "String Replacement with Regex",
+              "concept": "Replace matched patterns with `replace()`, `replacef()` for format-string replacement, and `replaceWord()` for word-boundary replacement.\n`replace(str, re\"pattern\", \"replacement\")` replaces all occurrences with a fixed string.\n`replacef()` lets you use `$1`, `$2` etc. to reference capture groups in the replacement.",
+              "task": "Write a proc `censorEmails(s: string): string` that replaces `user@domain` patterns with `[REDACTED]`.",
+              "solution": "import re\nproc censorEmails(s: string): string = s.replace(re\"\\S+@\\S+\\.\\w+\", \"[REDACTED]\")\necho censorEmails(\"Contact admin@example.com for help\")",
+              "hint": "Use `s.replace(re\"...\", \"[REDACTED]\")` with a pattern matching `something@something.something`",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.8.1"
+              ],
+              "cross_language_notes": "Python: `re.sub(r'\\S+@\\S+\\.\\w+', '[REDACTED]', s)`. Nim's `replace` with regex is equivalent — same semantics, different import.",
+              "validation_code": "result.stdout.contains(\"[REDACTED]\")"
+            }
+          ]
+        },
+        {
+          "id": "2.9",
+          "name": "Data Structures",
+          "lessons": [
+            {
+              "id": "2.9.1",
+              "name": "Sets",
+              "concept": "Sets store unique elements. Nim has `HashSet[T]` (hash-based, unsorted) and `sortedSet[T]` (tree-based, ordered).\nCreate them with `initHashSet[T]()` or `toHashSet()` on a seq.\nKey operations: `incl` (add), `excl` (remove), `contains` (check), `*` (intersection), `+` (union), `-` (difference).\nSets are great for membership tests and deduplication.",
+              "task": "Write a proc `commonLetters(a, b: string): int` that returns how many unique letters appear in both strings.",
+              "solution": "import std/sets\nproc commonLetters(a, b: string): int =\n  let sa = a.toHashSet\n  let sb = b.toHashSet\n  (sa * sb).len\necho commonLetters(\"abcx\", \"abcy\")",
+              "hint": "Use `toHashSet` on each string, then the `*` operator for intersection",
+              "difficulty": "easy",
+              "prerequisites": [
+                "2.1.1"
+              ],
+              "cross_language_notes": "Python: `set(a) & set(b)`. Rust: `a.chars().collect::<HashSet<_>>() & b.chars().collect()`. Nim uses `*` for intersection and `+` for union — same operations, different operators.",
+              "validation_code": "result.stdout.strip() == \"3\""
+            },
+            {
+              "id": "2.9.2",
+              "name": "Tables",
+              "concept": "Tables are key-value stores, like dicts in Python or HashMaps in other languages.\nCreate with `initTable[T, K]()`, access with `[]`, check existence with `hasKey` or `contains`.\n`getOrDefault(key, default)` safely retrieves a value.\n`hasKeyOrPut(key, value)` checks and inserts atomically.\n`mgetOrPut(key, default)` returns a **mutable reference** so you can modify in-place — a Nim superpower.",
+              "task": "Write a proc `wordCount(text: string): Table[string, int]` that returns a table mapping each word to its frequency.",
+              "solution": "import std/[tables, strutils]\nproc wordCount(text: string): Table[string, int] =\n  result = initTable[string, int]()\n  for word in text.split():\n    let w = word.toLowerAscii()\n    if result.hasKey(w):\n      result[w] += 1\n    else:\n      result[w] = 1\necho wordCount(\"a a b c\")",
+              "hint": "Use `result.mgetOrPut(word, 0).inc` for clean single-line counting",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.9.1"
+              ],
+              "cross_language_notes": "Python: `Counter(text.split())`. Rust: `HashMap::new()`. Nim's `mgetOrPut` is unique — returns a mutable reference so you can `.inc` in-place.",
+              "validation_code": "result.stdout.len > 0"
+            },
+            {
+              "id": "2.9.3",
+              "name": "Queues & Deques",
+              "concept": "A deque (double-ended queue) lets you push and pop from both ends efficiently.\nFrom `std/deques`: `addFirst`, `addLast`, `popFirst`, `popLast`, `peekFirst`, `peekLast`.\nUse it as a FIFO queue (`addLast`/`popFirst`), a LIFO stack (`addLast`/`popLast`), or both.\n`initDeque[T]()` creates an empty deque — it's generic.",
+              "task": "Write a proc `rotate[T](items: seq[T], n: int): seq[T]` that rotates a sequence by `n` positions to the left using a deque.",
+              "solution": "import std/deques\nproc rotate[T](items: seq[T], n: int): seq[T] =\n  var d: Deque[T] = initDeque[T]()\n  for item in items: d.addLast(item)\n  for _ in 0..<n:\n    d.addLast(d.popFirst())\n  result = @[]\n  while d.len > 0:\n    result.add(d.popFirst())\necho rotate(@[1, 2, 3, 4, 5], 2)",
+              "hint": "Use `initDeque[T]()`, add items with `addLast`, then repeatedly `popFirst` and `addLast`",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.9.1"
+              ],
+              "cross_language_notes": "Python: `collections.deque(items)`. Rust: `VecDeque::from(items)`. Nim's `std/deques` is equivalent to both.",
+              "validation_code": "result.stdout.contains(\"3\") and result.stdout.contains(\"5\")"
+            }
+          ]
+        },
+        {
+          "id": "2.10",
+          "name": "OS & Filesystem",
+          "lessons": [
+            {
+              "id": "2.10.1",
+              "name": "Paths & Directory Walking",
+              "concept": "Working with the filesystem is table stakes for any serious programming language. Nim's `std/os` module gives you everything you need without ceremony.\n\nKey procs:\n- `walkDir(dir)` — iterates entries in a directory (non-recursive)\n- `walkDirRec(dir)` — recursively walks a directory tree\n- `existsDir(path)` / `existsFile(path)` — check existence and type\n- `getCurrentDir()` — returns the current working directory\n- `joinPath(a, b)` — platform-correct path joining\n- `splitPath(path)` — splits into (head, tail)\n- `parentDir(path)` — returns the parent directory\n- `relativePath(path, base)` — get relative path from base\n\nRule of thumb: Always use `joinPath` or `/` operator (from `std/os`) instead of string concatenation. Windows uses backslashes; your string concat will break.",
+              "task": "Write a proc `countNimFiles(dir: string): int` that counts all `.nim` files recursively in a directory. Call it with `\".\"` and echo the count.",
+              "solution": "import std/os\nproc countNimFiles(dir: string): int =\n  for path in walkDirRec(dir):\n    if path.splitFile().ext == \".nim\": result.inc\necho countNimFiles(\".\")",
+              "hint": "Use `walkDirRec(dir)` for recursive iteration, then check `path.endsWith(\".nim\")`.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "2.3.3"
+              ],
+              "cross_language_notes": "Python: `pathlib.Path(dir).rglob('*.nim')`. Rust: `WalkDir::new(dir)`. Nim's `walkDirRec` is the simplest of the three — one call, no chaining.",
+              "validation_code": "result.stdout.strip().parseInt > 0",
+              "filename": "solution.nim",
+              "type": "single_file",
+              "cmd": "c",
+              "skip_run": false
+            },
+            {
+              "id": "2.10.2",
+              "name": "File Operations",
+              "concept": "Nim's `std/os` includes all the file operations you'd expect: copy, move, delete, symlink, and metadata queries.\n\nKey procs:\n- `copyFile(src, dest)` — copies a file\n- `moveFile(src, dest)` — moves/renames a file\n- `createSymlink(src, dest)` — creates a symbolic link\n- `removeFile(path)` — deletes a file\n- `removeDir(path)` — deletes an empty directory\n- `removeDir(path, checkDir=false)` — deletes directory tree\n- `getFileSize(path)` — returns file size in bytes\n- `getLastModificationTime(path)` — returns last modified `Time`\n- `fileExists(path)` / `dirExists(path)` — existence checks\n- `tempfile()` — creates a temporary file and returns its path\n\nAlways check existence before operating. `copyFile` will fail if the source doesn't exist.",
+              "task": "Write a proc `backupFile(path: string): string` that copies a file to `path.bak` if it exists, returning the backup path or empty string. Call it with `\"nimlings.nimble\"` and echo the result.",
+              "solution": "import std/os\nproc backupFile(path: string): string =\n  if fileExists(path):\n    let bak = path & \".bak\"\n    copyFile(path, bak)\n    return bak\n  return \"\"\necho backupFile(\"nimlings.nimble\")",
+              "hint": "Check `fileExists`, then `copyFile` to `path & \".bak\"`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.10.1"
+              ],
+              "cross_language_notes": "Python: `shutil.copy2(path, path + '.bak')`. Rust: `fs::copy(path, format!('{}.bak', path))`. Nim's `copyFile` is stdlib — no extra import needed.",
+              "validation_code": "result.stdout.len > 0",
+              "filename": "solution.nim",
+              "type": "single_file",
+              "cmd": "c",
+              "skip_run": false
+            },
+            {
+              "id": "2.10.3",
+              "name": "Process Management",
+              "concept": "Sometimes you need to run external commands. Nim's `std/osproc` gives you clean wrappers around process creation.\n\nKey procs:\n- `execCmd(cmd)` — runs a command, returns exit code\n- `execCmdEx(cmd)` — runs a command, returns `(output, exitCode)` tuple\n- `startProcess(cmd, args)` — full control over stdin/stdout/stderr with a Process handle\n\n`execCmdEx` is your go-to for most tasks. It captures stdout and stderr (merged), gives you the exit code, and blocks until the process finishes.\n\nFor long-running processes, use `startProcess` with `inputStream`, `outputStream`, and `waitForExit(timeout)` to avoid hanging indefinitely.",
+              "task": "Write a proc `runAndCapture(cmd: string): tuple[output: string, exitCode: int]` that runs a shell command and returns output + exit code. Call it with `\"nim --version\"` and echo the output.",
+              "solution": "import std/osproc\nproc runAndCapture(cmd: string): tuple[output: string, exitCode: int] = execCmdEx(cmd)\nlet (outp, code) = runAndCapture(\"nim --version\")\necho outp",
+              "hint": "Use `execCmdEx(cmd)` which returns `(output, exitCode)` tuple — one call, done.",
+              "difficulty": "hard",
+              "prerequisites": [
+                "2.10.1"
+              ],
+              "cross_language_notes": "Python: `subprocess.run(cmd, capture_output=True, shell=True)`. Rust: `Command::new(\"sh\").arg(cmd).output()`. Nim's `execCmdEx` is the simplest stdlib wrapper.",
+              "validation_code": "result.stdout.contains(\"Nim\")",
+              "filename": "solution.nim",
+              "type": "single_file",
+              "cmd": "c",
+              "skip_run": false
+            }
+          ]
+        },
+        {
+          "id": "2.11",
+          "name": "DateTime",
+          "lessons": [
+            {
+              "id": "2.11.1",
+              "name": "Date & Time Basics",
+              "concept": "Nim's `std/times` module handles dates, times, and durations. It's comprehensive but the API naming has some quirks.\n\nKey types:\n- `DateTime` — a date + time with timezone info\n- `Time` — a Unix timestamp (seconds since epoch)\n- `Duration` — a span of time (nanosecond precision)\n- `Month` — enum: `mJan` through `mDec`\n- `WeekDay` — enum: `dMon` through `dSun`\n\nKey procs:\n- `now()` — returns current `DateTime`\n- `dt.format(fmt)` — formats as string. Format tokens use lowercase: `yyyy`, `MM`, `dd`, `HH`, `mm`, `ss`\n- `parse(dateStr, fmt)` — parses a string into `DateTime`\n- `toUnix(dt)` / `fromUnix(t)` — convert between `DateTime` and `Time`\n\n⚠️ Nim uses lowercase `yyyy` (not `YYYY` like Python). Get it wrong and your output will look like garbage.",
+              "task": "Write a proc `formatDate(dt: DateTime): string` that formats a DateTime as `\"YYYY-MM-DD HH:mm\"`. Call it with `now()` and echo the result.",
+              "solution": "import std/times\nproc formatDate(dt: DateTime): string = dt.format(\"yyyy-MM-dd HH:mm\")\necho formatDate(now())",
+              "hint": "Use `dt.format(\"yyyy-MM-dd HH:mm\")` — Nim uses lowercase yyyy unlike Python's %Y.",
+              "difficulty": "easy",
+              "prerequisites": [
+                "2.2.1"
+              ],
+              "cross_language_notes": "Python: `dt.strftime('%Y-%m-%d %H:%M')`. Rust: `dt.format('%Y-%m-%d %H:%M')`. Nim uses lowercase yyyy (not YYYY).",
+              "validation_code": "result.stdout.contains(\"2026\")",
+              "filename": "solution.nim",
+              "type": "single_file",
+              "cmd": "c",
+              "skip_run": false
+            },
+            {
+              "id": "2.11.2",
+              "name": "Date Arithmetic",
+              "concept": "Nim's `std/times` module provides date arithmetic through simple `+` and `-` operators. Subtracting two `DateTime` objects returns a `Duration`.\nUse `.inDays`, `.inSeconds`, or `.inMinutes` to extract the desired unit.\nCreate dates with `initDateTime(day, month, year, hour, minute, second, zone)`.",
+              "task": "Write a proc `daysUntilNewYear(): int` that returns the number of days from now until January 1 of next year. Echo the result.",
+              "solution": "import std/times\nproc daysUntilNewYear(): int =\n  let now = now()\n  let ny = initDateTime(1, mJan, now.year + 1, 0, 0, 0, utc())\n  (ny - now).inDays\necho daysUntilNewYear()",
+              "hint": "Create a future date with `initDateTime(1, mJan, year+1, 0, 0, 0, utc())`, subtract `now()`, and get `.inDays`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "2.11.1"
+              ],
+              "cross_language_notes": "Python: `(datetime(year+1, 1, 1) - datetime.now()).days`. Rust: `Utc.ymd(year+1, 1, 1).signed_duration_since(Utc::now()).num_days()`. Nim uses `.inDays` on Duration.",
+              "validation_code": "result.stdout.strip().parseInt > 0",
+              "filename": "solution.nim",
+              "type": "single_file",
+              "cmd": "c",
+              "skip_run": false,
+              "compiler_args": [
+                "--warning:deprecated:off"
+              ]
+            }
+          ]
         }
       ]
     },
@@ -1445,6 +1646,92 @@
               ],
               "difficulty": "hard",
               "cross_language_notes": "This capstone combines async, JSON, and iteration. Python: asyncio + json. JS: Promise.all + JSON. Nim's approach mirrors the simplicity of synchronous code while being async."
+            }
+          ]
+        },
+        {
+          "id": "3.10",
+          "name": "Hashing & Encoding",
+          "lessons": [
+            {
+              "id": "3.10.1",
+              "name": "Encoding Basics",
+              "concept": "Encoding converts data from one format to another. Nim's `std/base64` module provides Base64 encoding via `encode()` and `decode()`.\nBase64 is commonly used for email attachments, data URLs, and basic auth headers.\nIt's not encryption — it's just a different representation of the same bytes.",
+              "task": "Write a proc `encodeSecret(s: string): string` that returns the Base64 encoding of a string.",
+              "validation_code": "result.stdout.len > 0",
+              "solution": "import std/base64\nproc encodeSecret(s: string): string = encode(s)\necho encodeSecret(\"hello\")",
+              "hint": "Use `encode()` from `std/base64` — it works directly on strings and returns the Base64-encoded result.",
+              "prerequisites": [
+                "3.5.2"
+              ],
+              "difficulty": "medium",
+              "cross_language_notes": "Python: `base64.b64encode(s.encode()).decode()`. Rust: `base64::Engine::encode()`. Nim's `encode` works directly on strings — no bytes dance."
+            },
+            {
+              "id": "3.10.2",
+              "name": "Encoding",
+              "concept": "Encodings turn binary data into text-safe representations.\nNim's `std/base64` has `encode()` and `decode()` for Base64.\n`std/encodings` covers Base32 and other codecs.\n`std/uri` handles URL percent-encoding (`encodeUrl`, `decodeUrl`).\n`std/strutils` has `toHex()` / `fromHex()` for hex encoding.\nPick the right tool — Base64 for binary-to-text, URL encoding for query params, hex for debug output.",
+              "task": "Write a proc `encodeBasicAuth(user, pass: string): string` that returns a Base64-encoded `user:pass` string.",
+              "validation_code": "result.stdout.len > 0",
+              "solution": "import std/base64\nproc encodeBasicAuth(user, pass: string): string = encode(user & \":\" & pass)\necho encodeBasicAuth(\"admin\", \"secret\")",
+              "hint": "Use `encode()` from `std/base64` — it works on strings directly",
+              "prerequisites": [
+                "3.10.1"
+              ],
+              "difficulty": "medium",
+              "cross_language_notes": "Python: `base64.b64encode()`. Rust: `base64::encode()`. Nim's `encode` works directly on strings."
+            }
+          ]
+        },
+        {
+          "id": "3.11",
+          "name": "Data Formats",
+          "lessons": [
+            {
+              "id": "3.11.1",
+              "name": "Text Parsing",
+              "concept": "Nim's `std/strutils` provides powerful string processing. Use `splitLines()` to split by newlines, `split(sep)` to split by a delimiter, and `strip()` to clean whitespace.\nThis lets you parse simple tabular data without external parsers.",
+              "task": "Write a proc `columnSums(text: string): seq[int]` that parses pipe-delimited data (first line is header) and sums each numeric column.\nExample: `a|b\\n1|2\\n3|4` → `@[4, 6]`",
+              "validation_code": "result.stdout.contains(\"4\") and result.stdout.contains(\"6\")",
+              "solution": "import std/strutils\nproc columnSums(text: string): seq[int] =\n  for line in text.strip().splitLines():\n    let vals = line.split(\"|\")\n    if result.len == 0:\n      result.setLen(vals.len)\n      continue\n    for i, v in vals:\n      result[i] += parseInt(v.strip())\necho columnSums(\"a|b\\n1|2\\n3|4\")",
+              "hint": "Use `strip().splitLines()` then `split(\"|\")` on each data line, `parseInt()` and accumulate.",
+              "prerequisites": [
+                "3.5.2"
+              ],
+              "difficulty": "medium",
+              "cross_language_notes": "Python: `s.split('\\n')` then `line.split('|')`. Rust: `.lines()` then `.split('|')`. Nim's `splitLines()` and `split()` are similar to Python."
+            },
+            {
+              "id": "3.11.2",
+              "name": "Streams",
+              "concept": "Nim's `std/strutils` provides `splitLines()` to split a string into lines and `join()` to rejoin them.\nThis pattern — split, transform each, rejoin — is common for text processing.\nFor streaming scenarios, `std/streams` provides `StringStream`, but for in-memory strings, strutils is simpler.",
+              "task": "Write a proc `prefixLines(s: string, prefix: string): string` that uses a `StringStream` to add a prefix to each line.",
+              "validation_code": "result.stdout.contains(\">> hello\")",
+              "solution": "import std/strutils\nproc prefixLines(s: string; prefix: string): string =\n  var lines = s.splitLines()\n  for i, line in lines:\n    lines[i] = prefix & line\n  result = lines.join(\"\\n\")\necho prefixLines(\"hello\\nworld\", \">> \")",
+              "hint": "Use `s.splitLines()` to get seq of lines, mutate with a for loop, then `.join(\"\\n\")`",
+              "prerequisites": [
+                "3.11.1"
+              ],
+              "difficulty": "medium",
+              "cross_language_notes": "Python: `io.StringIO()`. Rust: `BufReader::new(Cursor::new())`. Nim's `StringStream` wraps strings directly.",
+              "filename": "solution.nim",
+              "type": "single_file",
+              "cmd": "c",
+              "skip_run": false
+            },
+            {
+              "id": "3.11.3",
+              "name": "Binary I/O",
+              "concept": "Nim provides full control over binary data. You can create byte buffers with `newString(n)`, and use bitwise operations like `shr` (shift right), `and`, and `char()` conversion.\nBig-endian encoding stores the most significant byte first.\nFor production code, Nim's `std/endians` module provides portable endian conversion.",
+              "task": "Write a proc `writeInt16BE(val: int16): string` that returns the big-endian byte representation of a 16-bit integer (2 bytes).",
+              "validation_code": "result.stdout.len > 0",
+              "solution": "proc writeInt16BE(val: int16): string =\n  result = newString(2)\n  result[0] = char((val shr 8) and 0xFF)\n  result[1] = char(val and 0xFF)\necho writeInt16BE(int16(0x1234))",
+              "hint": "Use `newString(2)`, set `result[0]` to high byte `(val shr 8) and 0xFF`, `result[1]` to low byte `val and 0xFF`.",
+              "prerequisites": [
+                "3.11.1"
+              ],
+              "difficulty": "hard",
+              "cross_language_notes": "Python: `val.to_bytes(2, 'big')`. Rust: `val.to_be_bytes()`. Nim gives you full control."
             }
           ]
         }
@@ -1974,6 +2261,102 @@
               ],
               "difficulty": "hard",
               "cross_language_notes": "Building a mini testing framework with templates. Ruby: RSpec. JS: Jest. Nim: templates + string interpolation for output — simple but effective."
+            }
+          ]
+        },
+        {
+          "id": "4.10",
+          "name": "Networking",
+          "lessons": [
+            {
+              "id": "4.10.1",
+              "name": "TCP Sockets",
+              "concept": "Sometimes you need to know if a port is open. Maybe you're writing a health checker. Maybe you're being lazy and don't want to use `nc -z`.\nNim's `std/net` module provides low-level socket primitives. `newSocket()` creates a socket, `connect()` opens a TCP connection to a host:port, `send()` and `recv()` transmit data, and `close()` cleans up.\nThis is blocking TCP. The `connect()` call accepts a timeout in milliseconds so you're not waiting forever on a dead host. For production use, you'd reach for async (we'll get there). For now, this is how connections work at the metal.",
+              "task": "Write a proc `isPortOpen(host: string, port: Port): bool` that returns `true` if a TCP connection to `host:port` succeeds within 2 seconds, and `false` otherwise. Call it with `\"127.0.0.1\", Port(9999)` and echo the result.\n\nHint: Try to connect, catch any exception, return false on error.",
+              "validation_code": "result.stdout.strip() == \"false\"",
+              "solution": "import std/net\n\nproc isPortOpen(host: string, port: Port): bool =\n  try:\n    let sock = newSocket()\n    sock.connect(host, port, 2000)\n    sock.close()\n    return true\n  except:\n    return false\n\necho isPortOpen(\"127.0.0.1\", Port(9999))",
+              "hint": "Use `newSocket()`, `sock.connect(host, port, 2000)` with a timeout, wrap in try/except, return false on any error.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "4.2.1"
+              ],
+              "cross_language_notes": "Python: `socket.socket().connect_ex(addr)`. Rust: `TcpStream::connect_timeout()`. Nim's timeout on `connect()` is the cleanest — it's a parameter, not a separate method."
+            },
+            {
+              "id": "4.10.2",
+              "name": "HTTP Client in Depth",
+              "concept": "Raw sockets are fine for low-level work, but nobody wants to parse HTTP responses by hand.\n`std/httpclient` wraps raw TCP into proper HTTP. `newHttpClient()` creates a client, `get()` fetches a URL and returns a `Response` object with `.status`, `.headers`, and `.body`.\nYou can set timeouts, custom headers, and even handle redirects. Always call `client.close()` when done — or use a try/finally block. This is the standard way to make HTTP requests in Nim without third-party packages, and it works with both sync and async code.",
+              "task": "Write a proc `fetchStatus(url: string): int` that fetches a URL and returns the HTTP status code (or 0 on failure/timeout).",
+              "validation_code": "result.stdout.strip() == \"0\" or result.stdout.strip() == \"200\"",
+              "solution": "import std/httpclient, std/strutils\nproc fetchStatus(url: string): int =\n  try:\n    let client = newHttpClient(timeout = 3000)\n    try:\n      let resp = client.get(url)\n      return parseInt(resp.status)\n    finally:\n      client.close()\n  except:\n    return 0\necho fetchStatus(\"http://example.com/\")",
+              "hint": "Use `newHttpClient(timeout = 3000)` with try/except for network errors. Return status or 0.",
+              "difficulty": "hard",
+              "prerequisites": [
+                "4.10.1"
+              ],
+              "cross_language_notes": "Python: `requests.get(url).status_code`. Rust: `reqwest::blocking::get(url).unwrap().status()`. Nim's `std/httpclient` is in the stdlib — no external dependency needed."
+            },
+            {
+              "id": "4.10.3",
+              "name": "Async Networking Patterns",
+              "concept": "You've done blocking I/O. Now let's be productive while waiting for the network.\nNim's async story uses `asyncnet` for non-blocking TCP and `asyncdispatch` as the event loop. `asyncCheck` fires and forgets a future. `waitFor` blocks until an async proc completes.\nFor this lesson, we'll keep it simple with synchronous `httpclient` to focus on the pattern: fetch a page, inspect its body, count characters. The async version follows the same structure but with `await` instead of blocking calls.\nThe key insight: once you know the sync version, the async version is just adding `async` and `await` keywords.",
+              "task": "Write a proc `fetchCount(): int` that fetches `http://example.com` and returns the length of the response body. Echo the result.",
+              "validation_code": "result.stdout.strip().parseInt > 100",
+              "solution": "import std/httpclient\n\nproc fetchCount(): int =\n  let client = newHttpClient()\n  try:\n    let resp = client.get(\"http://example.com\")\n    return resp.body.len\n  finally:\n    client.close()\n\necho fetchCount()",
+              "hint": "Use `newHttpClient()`, `client.get(url)`, access `.body.len`. Wrap in try/finally to close the client.",
+              "difficulty": "hard",
+              "prerequisites": [
+                "4.10.1"
+              ],
+              "cross_language_notes": "Python: `len(requests.get(url).text)`. Rust: `reqwest::blocking::get(url).unwrap().text().unwrap().len()`. Nim's approach is concise — one line to get the body, one line to get its length."
+            }
+          ]
+        },
+        {
+          "id": "4.11",
+          "name": "Publishing & Documentation",
+          "lessons": [
+            {
+              "id": "4.11.1",
+              "name": "Creating a Nimble Package",
+              "concept": "Shipping code means packaging it properly. Nimble is Nim's build tool and package manager.\nA `.nimble` file defines your package. Required fields: `version`, `author`, `description`, `license`. You can also set `srcDir` for source directories, `bin` for executable names, and `requires` for dependencies.\nThe format is a Nim-based DSL — it looks like Nim code because it IS Nim code, evaluated at build time. `nimble init` scaffolds this for you, but understanding the structure means you can write it by hand when you need something specific.",
+              "task": "Write a proc `generateNimbleFile(name, desc: string): string` that returns a minimal nimble file content string with version \"0.1.0\", author \"You\", license \"MIT\", srcDir \"src\", and the given name/description. Echo the result for name=\"mycli\" and desc=\"A CLI tool\".",
+              "validation_code": "result.stdout.contains(\"version\")",
+              "solution": "import std/strformat\n\nproc generateNimbleFile(name, desc: string): string =\n  fmt\"\"\"# Package\n\nversion       = \"0.1.0\"\nauthor        = \"You\"\ndescription   = \"{desc}\"\nlicense       = \"MIT\"\nsrcDir        = \"src\"\nbin           = @[\"{name}\"]\n\nrequires \"nim >= 1.6.0\"\n\"\"\"\n\necho generateNimbleFile(\"mycli\", \"A CLI tool\")",
+              "hint": "Use `fmt` from `std/strformat` with a triple-quoted template string. Include `version`, `author`, `description`, `license`, `srcDir`, `bin`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "4.1.4"
+              ],
+              "cross_language_notes": "Python: `setup.py` / `pyproject.toml`. Rust: `Cargo.toml`. Nim's flat key-value format is the simplest — no TOML parsing, no complex AST."
+            },
+            {
+              "id": "4.11.2",
+              "name": "Documentation Generation",
+              "concept": "Code without docs is just a puzzle for the next person (who might be you in six months).\n`nim doc` generates HTML documentation from your source code. Doc comments start with `##` (two hashes). You can use markdown-like formatting, code blocks with \\`\\`\\`nim, and pragmas like `{.deprecated.}` and `{.since.}`.\nGenerated docs include the proc signature, doc comment body, and any examples. This is non-negotiable for any package you plan to publish. The Nim documentation toolchain is one of the best in the compiled-language world — comparable to Rustdoc.",
+              "task": "Write a proc `nimDocStyle(procName, signature: string): string` that wraps a proc signature in proper doc comments with a description and a code example. Echo the result for procName=\"greet\" and signature=\"greet(name: string)\".",
+              "validation_code": "result.stdout.contains(\"nim\")",
+              "solution": "import std/strformat\n\nproc nimDocStyle(procName, signature: string): string =\n  fmt\"\"\"## {procName}\n##\n## Does something useful with {procName}.\n##\n## Example:\n## ```nim\n## let result = {procName} {signature}\n## ```\nproc {signature} = discard\"\"\"\n\necho nimDocStyle(\"greet\", \"greet(name: string)\")",
+              "hint": "Use `##` for doc comments, ` ```nim ` for code examples. Use `fmt` to interpolate `procName` and `signature`.",
+              "difficulty": "medium",
+              "prerequisites": [
+                "4.11.1"
+              ],
+              "cross_language_notes": "Python: `'''` docstrings. Rust: `///`. Nim's `##` is closest to Rust — both generate HTML docs from comments directly above declarations."
+            },
+            {
+              "id": "4.11.3",
+              "name": "Release Workflow",
+              "concept": "You've built something. Now release it properly.\nSemantic versioning: MAJOR.MINOR.PATCH. Bump MAJOR for breaking changes, MINOR for new features, PATCH for bug fixes.\n`nimble publish` sends your package to the Nim package directory. Before that: update CHANGELOG, bump version in `.nimble`, and tag the Git commit.\nThis lesson shows you how to automate version bumps. The pattern is simple: split on dots, parse the pieces, increment the right one, and zero out anything to the right. It's the kind of utility function every project ends up writing.",
+              "task": "Write a proc `bumpVersion(current: string; part: string): string` that increments a semver string: pass \"major\", \"minor\", or \"patch\" for the part to bump. Echo the result of bumping version \"0.9.9\" as a major bump.",
+              "validation_code": "result.stdout.strip() == \"1.0.0\"",
+              "solution": "import std/strutils, std/strformat\n\nproc bumpVersion(current: string; part: string): string =\n  let parts = current.split(\".\")\n  var mj = parts[0].parseInt\n  var mn = parts[1].parseInt\n  var pt = parts[2].parseInt\n  case part\n    of \"major\": mj += 1; mn = 0; pt = 0\n    of \"minor\": mn += 1; pt = 0\n    of \"patch\": pt += 1\n    else: discard\n  fmt\"{mj}.{mn}.{pt}\"\necho bumpVersion(\"0.9.9\", \"major\")",
+              "hint": "Parse with `current.split(\".\")`, parse each part with `.parseInt`, case on bump type, zero out lower parts. Use `fmt\"{mj}.{mn}.{pt}\"` to reassemble.",
+              "difficulty": "hard",
+              "prerequisites": [
+                "4.11.1"
+              ],
+              "cross_language_notes": "Python: `semver.bump_minor('0.9.9')` from the semver package. Rust: needs an external crate like `semver`. Nim: implement it yourself in < 15 lines of stdlib code."
             }
           ]
         }
