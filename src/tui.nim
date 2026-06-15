@@ -101,7 +101,7 @@ proc printDashboard*() =
       echo "      " & status & " " & bold(chapter.name) & dim("  (" & $chDone & "/" & $chTotal & ")")
 
       for l in chapter.lessons:
-        let unlocked = l.id in saved or canSkip(l.id, saved)
+        let unlocked = l.id in saved or canSkip(l, saved)
         let marker = if l.id in saved: Green & "◆" & Reset
                      elif unlocked: Grey & "◇" & Reset
                      else: Red & "◇" & Reset
@@ -135,7 +135,8 @@ proc printLessonHeader*(lesson: Lesson) =
   echo ""
   echo bold("  ══════════════════════════════════════════════════════════════")
   echo "   " & bold(lesson.id) & ": " & bold(lesson.name)
-  echo dim("   " & lesson.conceptText.splitLines()[0])
+  let firstLine = if lesson.conceptText.len > 0: lesson.conceptText.splitLines()[0] else: ""
+  echo dim("   " & firstLine)
   echo ""
   echo "   " & bold("Task:") & " " & lesson.task
   echo "   " & dim("Edit: exercises/" & lesson.id.replace(".", "_") & "/" & lesson.filename)

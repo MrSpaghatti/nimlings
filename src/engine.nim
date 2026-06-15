@@ -9,9 +9,9 @@ const RunTimeout = 5000 # 5 seconds
 # Regexes for common Nim errors
 # Cannot be const because re() might involve C calls or checks not available at CT
 let
-  ReTypeMismatch = re"type mismatch: got <(.+)> but expected '(.+)'"
-  ReIdentUndeclared = re"undeclared identifier: '(.+)'"
-  ReIndentError = re"invalid indentation"
+  typeMismatchRe = re"type mismatch: got <(.+)> but expected '(.+)'"
+  undeclaredRe = re"undeclared identifier: '(.+)'"
+  indentErrorRe = re"invalid indentation"
 
 proc checkNimInstalled*() =
   if execCmd("nim --version") != 0:
@@ -23,16 +23,21 @@ proc checkNimbleInstalled*() =
     echo "Error: Nimble package manager not found."
     quit(1)
 
+proc checkNodeInstalled*() =
+  if execCmd("node --version") != 0:
+    echo "Error: Node.js not found. JS lessons require Node.js."
+    quit(1)
+
 proc parseCompilerErrors(raw: string): string =
   var hints = newSeq[string]()
 
-  if raw.contains(ReTypeMismatch):
+  if raw.contains(typeMismatchRe):
     hints.add "Type Mismatch: You're trying to put a square peg in a round hole.\nCheck your types."
 
-  if raw.contains(ReIdentUndeclared):
+  if raw.contains(undeclaredRe):
     hints.add "Undeclared Identifier: You used a name that doesn't exist.\nDid you typo it? Did you forget to declare it?"
 
-  if raw.contains(ReIndentError):
+  if raw.contains(indentErrorRe):
     hints.add "Indentation Error: Nim uses whitespace to define blocks.\nAlign your code properly."
 
   if hints.len > 0:
@@ -72,7 +77,7 @@ proc runWithTimeout*(cmd: string, workingDir: string): tuple[output: string, exi
   var output = ""
 
   while p.running and (epochTime() - t0 < (RunTimeout / 1000.0)):
-    os.sleep(50) # Poll every 50ms
+    os.sleep(100) # Poll every 100ms
 
   if p.running:
     p.terminate()
@@ -136,9 +141,7 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
       return RunResult(stdout: compileOut, stderr: "", exitCode: compileErr)
 
     # If compilation is successful, run with node
-    # Check if node is installed? 
-    # For now assume yes as per HEAD implementation, or maybe add a check?
-    # Keeping it simple as per HEAD.
+    checkNodeInstalled()
     let runCmd = "node " & quoteShell(jsFile)
     let (runOut, runErr) = runWithTimeout(runCmd, tmpDir)
     return RunResult(stdout: runOut, stderr: "", exitCode: runErr)
@@ -161,14 +164,19 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
   let (outp, errC) = runWithTimeout(cmd, tmpDir)
   return RunResult(stdout: outp, stderr: "", exitCode: errC)
 
-proc canSkip*(lessonId: string, progress: HashSet[string]): bool =
+proc canSkip*(lesson: Lesson, progress: HashSet[string]): bool =
   ## Check if a lesson's prerequisites are all satisfied.
   ## Returns true if the lesson can be accessed (prereqs met).
   ## 1.1.1 is always accessible (the root).
-  if lessonId == "1.1.1":
+  if lesson.id == "1.1.1":
     return true
-  
-  # Find the lesson
+  for pre in lesson.prerequisites:
+    if pre notin progress:
+      return false
+  return true
+
+proc canSkip*(lessonId: string, progress: HashSet[string]): bool =
+  ## Overload that looks up the lesson by ID first.
   var lesson: Lesson
   var found = false
   for level in levels:
@@ -180,15 +188,9 @@ proc canSkip*(lessonId: string, progress: HashSet[string]): bool =
           break
       if found: break
     if found: break
-  
   if not found:
     return false
-  
-  # All prerequisites must be in progress
-  for pre in lesson.prerequisites:
-    if pre notin progress:
-      return false
-  return true
+  return canSkip(lesson, progress)
 
 proc validate*(lesson: Lesson, code: string, res: RunResult): (bool, string) =
   # For project type, we only care about exit code from nimble test

@@ -4,42 +4,42 @@ when defined(posix):
 import engine, tui, types, content, models
 
 # Version constant (match nimble file)
-const NimlingsVersion = "2.0.0"
+const NimlingsVersion = "2.1.2"
 
 when NimMajor < 1 or (NimMajor == 1 and NimMinor < 6):
   {.error: "Nim 1.6 or higher is required to build nimlings.".}
 
 proc printHelp() =
-  echo "nimlings: An interactive tutor for the Nim programming language."
-  echo ""
-  echo "Usage: nimlings [options] [command] [args]"
-  echo ""
-  echo "Commands:"
-  echo "  learn [lesson_id]         Show dashboard and start watch mode (default)"
-  echo "  watch [lesson_id]         Watch a lesson and auto-validate on save"
-  echo "  list                      Show progress dashboard"
-  echo "  path                      Show recommended upgrade path"
-  echo "  status                    Quick daily status (for shell greeting)"
-  echo "  reset                     Reset progress"
-  echo "  test                      Run internal tests"
-  echo "  hint <lesson_id>          Show hint for a lesson"
-  echo "  solution <lesson_id>      Show solution for a lesson"
-  echo "  export                    Export progress to stdout (JSON)"
-  echo "  import [file]             Import progress from file (or stdin)"
-  echo ""
-  echo "Options:"
-  echo "  -h, --help                Show this help message"
-  echo "  -v, --version             Show version"
-  echo "  -f, --force               Skip prerequisite checks"
-  echo ""
-  echo "Config:"
-  echo "  Progress and state are stored in: ~/.config/nimlings/"
-  echo ""
-  echo "Quick start:"
-  echo "  nimlings learn            Start from the beginning"
-  echo "  nimlings path             See your upgrade path"
-  echo "  nimlings list             See your progress"
-  echo "  nimlings watch 4.9.1      Jump to any lesson (--force to skip prereqs)"
+  echo """nimlings: An interactive tutor for the Nim programming language.
+
+Usage: nimlings [options] [command] [args]
+
+Commands:
+  learn [lesson_id]         Show dashboard and start watch mode (default)
+  watch [lesson_id]         Watch a lesson and auto-validate on save
+  list                      Show progress dashboard
+  path                      Show recommended upgrade path
+  status                    Quick daily status (for shell greeting)
+  reset                     Reset progress
+  test                      Run internal tests
+  hint <lesson_id>          Show hint for a lesson
+  solution <lesson_id>      Show solution for a lesson
+  export                    Export progress to stdout (JSON)
+  import [file]             Import progress from file (or stdin)
+
+Options:
+  -h, --help                Show this help message
+  -v, --version             Show version
+  -f, --force               Skip prerequisite checks
+
+Config:
+  Progress and state are stored in: ~/.config/nimlings/
+
+Quick start:
+  nimlings learn            Start from the beginning
+  nimlings path             See your upgrade path
+  nimlings list             See your progress
+  nimlings watch 4.9.1      Jump to any lesson (--force to skip prereqs)"""
 
 # ── Helpers ─────────────────────────────────────────────────────────
 
@@ -51,20 +51,18 @@ proc findLesson(id: string): (bool, Lesson) =
   return (false, Lesson())
 
 proc findLessonById(id: string): Lesson =
-  for level in levels:
-    for chapter in level.chapters:
-      for l in chapter.lessons:
-        if l.id == id:
-          return l
-  echo "Lesson not found: ", id
-  quit(1)
+  let (found, lesson) = findLesson(id)
+  if not found:
+    echo "Lesson not found: ", id
+    quit(1)
+  return lesson
 
 proc findNextUnfinished(): string =
   let p = loadProgress()
   for level in levels:
     for chapter in level.chapters:
       for l in chapter.lessons:
-        if l.id notin p and canSkip(l.id, p):
+        if l.id notin p and canSkip(l, p):
           return l.id
   return ""
 
@@ -75,7 +73,7 @@ proc findNextLesson(id: string, force: bool = false): Lesson =
     for chapter in level.chapters:
       for l in chapter.lessons:
         if found:
-          if force or canSkip(l.id, p):
+          if force or canSkip(l, p):
             return l
         if l.id == id: found = true
   return Lesson()

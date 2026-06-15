@@ -1,0 +1,59 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.1.2] — 2026-06-14
+
+### Fixed
+
+- **Version sync**: Source constant now matches nimble file (both 2.1.0 → both 2.1.2)
+- **Stack traces restored**: Removed `--d:release` from `nimlings.nims` for dev builds
+- **Noisy data loss**: Added `stderr` warnings on corrupt progress/daily/state files instead of silent `discard`
+- **Dead fields**: Removed unused `Progress` type, `saveState`/`loadState` procs, and `StateFile` constant from models
+- **Unused import**: Removed `tables` import from generator
+- **Node.js check**: `runCode` now verifies Node.js is installed before JS lesson execution
+- **Regex naming**: Renamed `Re*` variables to `*Re` convention (Nim-idiomatic)
+- **`canSkip` overload**: Added `canSkip(lesson, progress)` to skip redundant lesson lookup
+- **`findLessonById` dedup**: Delegates to `findLesson` instead of duplicating iteration
+- **`printLessonHeader` defense**: Guards against empty `conceptText`
+- **`printHelp` cleanup**: Single `echo` with multi-line string instead of 22 separate `echo` calls
+- **Polling tweak**: `runWithTimeout` polls at 100ms instead of 50ms (50 → 25 iterations)
+- **Generator cleanup**: Removed unused `chapId`, `chapName`, `levelName` variables
+
+## [2.1.1] — 2026-06-14
+
+### Added
+
+- `difficulty` field to 44 lessons across all levels (was only on newer lessons)
+- `cross_language_notes` field to 44 lessons (was only on newer lessons)
+- `STATUS.md` for project status tracking
+- `CHANGE_REPORT.md` for this change cycle
+
+### Fixed
+
+- N/A — content enrichment only, no bug fixes
+
+## [2.1.0] — 2026-06-13
+
+### Added
+
+- 120 lessons across 4 levels (30 each)
+- Prerequisite tree with root at 1.1.1
+- Level gating via boss lessons
+- Cross-language notes on select lessons
+- `nimlings path` CLI command for upgrade path visualization
+- `--force` flag to bypass prerequisite checks
+- Project mode (nimble test runner) for multi-file lessons
+- JS compilation backend support
+- Daily streak tracking
+- Sandboxed execution with 5-second timeout
+- TUI dashboard with ANSI progress bars
+- All CLI commands: learn, watch, list, reset, test, hint, solution, export, import, status, path
+
+### Fixed
+
+- `runWithTimeout` race condition dropping output (stabilize-repo merge)
+- Project runner integration (manual-merge-project-runner)

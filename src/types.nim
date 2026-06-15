@@ -35,5 +35,5 @@ type
 
   RunResult* = ref object
     stdout*: string
-    stderr*: string
+    stderr*: string   ## Note: always "" — poStdErrToStdOut merges into stdout
     exitCode*: int

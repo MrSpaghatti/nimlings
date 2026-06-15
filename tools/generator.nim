@@ -1,4 +1,4 @@
-import json, strutils, strformat, os, tables
+import json, strutils, strformat, os
 
 const LessonFile = "src/lessons.json"
 const OutputFile = "src/content.nim"
@@ -29,13 +29,10 @@ proc main() =
 
   for level in root["levels"]:
     let levelId = level["id"].getInt()
-    let levelName = level["name"].getStr()
     output.add "  chapters = @[]"
     output.add ""
 
     for chapter in level["chapters"]:
-      let chapId = chapter["id"].getStr()
-      let chapName = chapter["name"].getStr()
       output.add "  ch_lessons = @[]"
 
       for lesson in chapter["lessons"]:

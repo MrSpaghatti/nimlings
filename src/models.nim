@@ -1,9 +1,6 @@
 import json, os, sets, times, strutils
 
 type
-  Progress* = object
-    completed*: HashSet[string]
-
   DailyRecord* = object
     lastLessonDate*: string   # YYYY-MM-DD
     streak*: int
@@ -14,7 +11,6 @@ const
   ConfigDir = getHomeDir() / ".config" / "nimlings"
   ProgressFile = ConfigDir / "progress.json"
   DailyFile = ConfigDir / "daily.json"
-  StateFile = ConfigDir / "state.json"
 
 proc ensureConfigDir*() =
   createDir(ConfigDir)
@@ -30,7 +26,7 @@ proc loadProgress*(): HashSet[string] =
     for item in data.getElems():
       result.incl(item.getStr())
   except:
-    discard
+    stderr.writeLine("[nimlings] Warning: Could not load progress file, starting fresh")
 
 proc saveProgress*(completed: HashSet[string]) =
   ensureConfigDir()
@@ -57,6 +53,7 @@ proc loadDaily*(): DailyRecord =
       lessonsToday: data{"lessonsToday"}.getInt(0)
     )
   except:
+    stderr.writeLine("[nimlings] Warning: Could not load daily streak file, starting fresh")
     result = DailyRecord()
 
 proc saveDaily*(record: DailyRecord) =
@@ -130,17 +127,4 @@ proc recordLessonCompletion*() =
 
   saveDaily(daily)
 
-# ── State ───────────────────────────────────────────────────────────
 
-proc loadState*(): JsonNode =
-  if not fileExists(StateFile):
-    return newJObject()
-  try:
-    return parseJson(readFile(StateFile))
-  except:
-    return newJObject()
-
-proc saveState*(lessonId: string) =
-  ensureConfigDir()
-  let jsonNode = %* {"last_lesson": lessonId}
-  writeFile(StateFile, $jsonNode)
