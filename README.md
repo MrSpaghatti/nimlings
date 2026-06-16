@@ -76,7 +76,7 @@ nimlings/
 ├── src/
 │   ├── nimlings.nim     # CLI entry point
 │   ├── engine.nim       # Core logic (compilation, validation, sandboxing)
-│   ├── tui.nim          # Terminal UI (using illwill)
+│   ├── tui.nim          # Terminal UI (live dashboard with ANSI output)
 │   ├── models.nim       # Data models & persistence
 │   ├── types.nim        # Type definitions
 │   └── lessons.json     # Raw lesson data
