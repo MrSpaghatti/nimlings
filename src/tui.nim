@@ -137,6 +137,8 @@ proc printLessonHeader*(lesson: Lesson) =
   echo "   " & bold(lesson.id) & ": " & bold(lesson.name)
   let firstLine = if lesson.conceptText.len > 0: lesson.conceptText.splitLines()[0] else: ""
   echo dim("   " & firstLine)
+  if lesson.crossLanguageNotes.len > 0:
+    echo dim("   📖 " & lesson.crossLanguageNotes)
   echo ""
   echo "   " & bold("Task:") & " " & lesson.task
   echo "   " & dim("Edit: exercises/" & lesson.id.replace(".", "_") & "/" & lesson.filename)

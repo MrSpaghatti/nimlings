@@ -8,7 +8,7 @@ Interactive Nim tutor — 142 lessons across 4 levels. CLI application written i
 
 ## Current Status: ✅ Stable — Expanded
 
-- **Version:** 2.1.3-dev
+- **Version:** 2.1.3
 - **Branch:** `main`
 - **Build:** Compiles cleanly (zero warnings with `--warning:all`)
 - **Tests:** All pass (Content, Engine, Models, Prerequisites, Solutions) — 13 streak tests added
