@@ -1,14 +1,12 @@
 # nimlings Status
 
-**Last updated:** 2026-06-14 (polish round)
-
+**Last updated:** 2026-06-26 (audit cleanup)
 ## Project Overview
 
 Interactive Nim tutor — 142 lessons across 4 levels. CLI application written in 100% Nim.
 
 ## Current Status: ✅ Stable — Expanded
-
-- **Version:** 2.1.3-dev
+- **Version:** 2.1.4-dev
 - **Branch:** `main`
 - **Build:** Compiles cleanly (zero warnings with `--warning:all`)
 - **Tests:** All pass (Content, Engine, Models, Prerequisites, Solutions) — 13 streak tests added

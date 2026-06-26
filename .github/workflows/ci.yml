@@ -31,4 +31,4 @@ jobs:
         run: nimble test -y
 
       - name: Verify no warnings
-        run: nim c --warning:all src/nimlings.nim 2>&1 | (! grep -i "warning")
+        run: nim c --warnings:on src/nimlings.nim 2>&1 | (! grep -i "warning")

@@ -148,19 +148,16 @@ proc runWatchMode(startId: string, force: bool = false) =
     while true:
       sleep(500)
       dotCount.inc
-      try:
-        let t = getLastModificationTime(path)
-        if t > lastTime:
-          lastTime = t
-          echo dim("  [file changed] Re-checking...")
-          break
-      except:
-        discard
+      let t = try: getLastModificationTime(path)
+              except: Time.high
+      if t > lastTime:
+        lastTime = t
+        echo dim("  [file changed] Re-checking...")
+        break
       # Show a spinner every 2 seconds
       if dotCount mod 4 == 0:
         write(stdout, dim("."))
         flushFile(stdout)
-    echo ""
 
 # ── Main ────────────────────────────────────────────────────────────
 

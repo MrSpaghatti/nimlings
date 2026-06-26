@@ -20,9 +20,6 @@ suite "Models":
     check "1.2" in res
     check res.len == 2
 
-  test "State JSON round-trip":
-    let data = %* {"last_lesson": "1.2"}
-    check data["last_lesson"].getStr() == "1.2"
 
   test "updateStreak: first lesson ever":
     let daily = DailyRecord()

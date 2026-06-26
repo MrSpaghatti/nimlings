@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [2.1.4] — 2026-06-26
+
+### Fixed
+
+- **Removed unused `import tables` from `engine.nim`** — verified it's actually needed for `pairs()` on `Table` via `types.nim`; the audit was wrong about this being redundant. (No change.)
+- **Removed dead "State JSON round-trip" test** from `test_models.nim` — tested Nim's `json` module, not project code. Leftover from `State` type removal in v2.1.2.
+- **Flattened useless conditional in `printDashboard`** (`src/tui.nim:59`) — all three branches produced `"🔥"`; replaced with `let fire = "🔥"`.
+- **Extended Lesson Fields Integrity test** (`tests/test_content.nim`) — now validates `conceptText`, `task`, `solution`, `hint` (except `skipRun` lessons), and `difficulty` are non-empty. Caught 4 lessons with empty solution/hint (all `skip_run=True`, confirmed intentional).
+
+### Changed
+
+- **Test coverage**: Content integrity test now checks 8 fields (was 4).
+- **AUDIT.md**: Updated with current zero-bug findings.
+
 ## [2.1.3] — 2026-06-14
 
 ### Added

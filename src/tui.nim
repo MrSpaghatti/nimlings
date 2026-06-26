@@ -56,7 +56,7 @@ proc printDashboard*() =
   # ── Daily streak ──
   let daily = loadDaily()
   if daily.streak > 0:
-    let fire = if daily.streak >= 7: "🔥" elif daily.streak >= 3: "🔥" else: "🔥"
+    let fire = "🔥"
     echo "    " & fire & " " & bold("Streak:") & " " & bold($daily.streak & " days")
     if daily.lessonsToday > 0:
       echo "    " & dim("  Today: " & $daily.lessonsToday & " lesson(s) done")

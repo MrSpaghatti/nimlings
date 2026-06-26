@@ -24,3 +24,10 @@ suite "Content":
           check l.filename.len > 0
           # Validate proc should be present
           check l.validate != nil
+          check l.conceptText.len > 0
+          check l.task.len > 0
+          # skip_run lessons (conceptual/intro) may omit solution and hint
+          if not l.skipRun:
+            check l.solution.len > 0
+            check l.hint.len > 0
+          check l.difficulty.len > 0

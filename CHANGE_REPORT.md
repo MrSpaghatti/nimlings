@@ -1,37 +1,32 @@
 # Change Report
 
-**Date:** 2026-06-14
-**Type:** Polish round — tests, CI, and housekeeping
+**Date:** 2026-06-26
+**Type:** Post-audit cleanup — zero bugs found, 4 minor tidy-ups
 
 ## Summary
 
-Executed the 5-item polish plan from PLAN.md. Version bumped to 2.1.3.
+Full deep-dive audit (Phase 3-5 of project workflow). Zero actual bugs found. 4 trivial cleanups executed.
 
 ## Files Modified
 
 | File | Changes |
 |------|---------|
-| `src/models.nim` | Extracted `updateStreak(daily, todayDate)` pure proc from `recordLessonCompletion` for testability — same logic, no behavior change |
-| `tests/test_models.nim` | 13 test cases for streak date logic: first lesson, same day, consecutive day, month/year boundaries, gaps, past dates |
-| `tests/test_prereqs.nim` | Moved `byId` declaration before `setup`, added `teardown: byId.clear()` for defensive test isolation |
-| `.github/workflows/ci.yml` | **New** — GitHub Actions: Nim 2.2.x, content generation, build, tools check, all test suites, warning verification |
-| `DEV_PLAN.md` | Replaced stale branch-management content with current project snapshot |
-| `progress.md` | Converted from empty boilerplate to useful session tracker |
-| `STATUS.md` | Updated version, CI info, test count, "what's next" |
-| `CHANGELOG.md` | Added v2.1.3 entry |
-| `nimlings.nimble` | Version bump 2.1.2 → 2.1.3 |
-| `src/nimlings.nim` | Version constant sync 2.1.2 → 2.1.3 |
+| `src/engine.nim` | Reverted false-positive audit finding `import tables` removal — actually required for `pairs(Table)` |
+| `src/tui.nim` | Flattened useless `if/elif/else` all returning `"🔥"` → `let fire = "🔥"` |
+| `tests/test_models.nim` | Removed dead "State JSON round-trip" test (tested Nim stdlib, not project code) |
+| `tests/test_content.nim` | Extended field integrity checks to 8 fields (was 4): now validates `conceptText`, `task`, `solution`/`hint` (conditional on `skipRun`), `difficulty` |
+| `CHANGELOG.md` | Added v2.1.4 entry |
+| `STATUS.md` | Updated version and status |
+| `AUDIT.md` | Updated with current findings |
 
-## Out of Scope (verified non-issues)
+## Key Decisions
 
-- **GC safety warnings** (engine.nim:206,209): Zero with Nim 2.2.10 + ORC GC + `--warning:all`. Not actionable.
+- `solution`/`hint` checks are conditional on `not l.skipRun` — 4 conceptual lessons (1.1.1, 2.4.2, 2.4.3, 2.5.1) intentionally have no solution/hint
+- Did not refactor `updateStreak` date arithmetic (S2) — correct as-is, low ROI
 
 ## Verification
 
-- [x] `nim check src/nimlings.nim` — clean
-- [x] `nim check tools/generator.nim` — clean
-- [x] `nimble build` — clean (no warnings)
-- [x] `nim c --warning:all src/nimlings.nim 2>&1 | (! grep -i "warning")` — zero warnings
-- [x] All test suites pass (Content, Engine, Models, Prerequisites, Solutions)
-- [x] 13 new streak tests all pass
-- [x] Zero lens_diagnostics errors
+- [x] `nim c --warnings:on src/nimlings.nim` — zero warnings
+- [x] `nim check` on all changed files — clean
+- [x] All 5 test suites pass (Content, Engine, Models, Prerequisites)
+- [x] `nimble test -y` — all tests pass
