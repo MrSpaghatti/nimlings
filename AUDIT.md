@@ -1,63 +1,97 @@
-# Audit Report
+# UX Deep-Dive Audit (UPDATED)
 
-**Date:** 2026-06-26
-**Scope:** Full project audit — all `.nim` source files, tests, generator
-
----
-
-## Status: ✅ All Prior Findings Resolved, New Findings Below
-
-Previous audit (2026-06-14, v2.1.2) had 16 findings — all fixed. This audit found no actual bugs.
+**Date:** 2026-07-02
+**Scope:** All UX-facing code — `src/tui.nim`, `src/nimlings.nim`, `src/engine.nim`, `src/models.nim`, all lesson content (`src/content.nim`, `src/lessons.json`), `tools/generator.nim`, `tests/`
+**Focus:** Learner experience, output formatting, error messages, content correctness, interaction flow, discoverability
 
 ---
 
-### Errors (actual bugs)
-
-**None found.** Code is correct and well-tested.
+## Status: 4 Fixed of 17 — 13 Remaining
 
 ---
 
-### Inefficiencies
+## FIXED Items
 
-#### [I1] Redundant `import tables` in `engine.nim` — `engine.nim`
-`tables` is imported directly but never used in `engine.nim` code. The `Table` type comes through `types.nim` (which imports `tables`). Removing it has no effect.
+### Fixed: C1, C2, C3, C4, C5 — 5 broken lesson solutions → all now compile & run correctly
 
-#### [I2] Dead test "State JSON round-trip" — `tests/test_models.nim`
-This test checks that `%* {"last_lesson": "1.2"}` round-trips through Nim's json module. It doesn't test any project-specific code. The `State` type and `saveState`/`loadState` were removed in the v2.1.2 audit but this test was left behind.
+| Lesson | Before | Fix |
+|--------|--------|-----|
+| 3.15.2 ARC Model | `type Counter = ref int; .refCount` — doesn't compile | `Counter = object` with `=destroy` hook — compiles, outputs `1\n0` |
+| 3.15.1 refc GC | `import gc` / `gc.setGC(gc.RefCount)` — module doesn't exist | Plain `ref object` linked list — compiles, outputs `Nodes created` |
+| 2.2.6 Copy Constructors | `source.field.dup` — doesn't exist | Direct field assignment — compiles, outputs `a.field: Hello\nb.field: Hello` |
+| 2.12.3 Custom Assignment | `=` override deprecated, tuple init syntax wrong | `=copy` hook with `Point(x:, y:)` syntax — compiles, outputs `(3.1, 4.1)` |
+| 3.15.5 GC Tuning | `setFinalizerThreshold`, `NIM_GC_MIN_HEAP` — nonexistent | Conceptual lesson with `skipRun: true` — no compilation needed |
 
-#### [I3] Useless conditional in `printDashboard` — `src/tui.nim:53`
+### Fixed: C7 — 2.13.4 explanation now accurate
+
+- "auto on parameters is blessed language feature" → "auto parameter is implicitly generic, not idiomatic; prefer `proc foo[T](x: T)`"
+- Removed "void is nothingness" unprofessional tone
+- Fixed cross-language notes (Python has `None`, Rust `impl Trait` is return-only)
+
+### Fixed: M1 — README matches actual CLI
+
+- Removed "Interactive TUI" / arrow keys / Tab cycling / editor launching / r/h/? keyboard shortcuts
+- Replaced with accurate "CLI-based" description
+
+### Fixed: M2 — Reset has confirmation prompt
+
 ```nim
-let fire = if daily.streak >= 7: "🔥" elif daily.streak >= 3: "🔥" else: "🔥"
+of "reset":
+  echo "Are you sure? This will erase all progress. [y/N] "
+  let answer = stdin.readLine().strip().toLowerAscii()
+  if answer == "y" or answer == "yes":
+    ... remove files ...
+  else:
+    echo "Reset cancelled."
 ```
-All three branches return `"🔥"` — the conditional does nothing. Copy-paste artifact from a planned multi-tier emoji that was never wired in.
+
+### Fixed: M3 — Watch mode spinner now clears after 80 dots
+
+Added `\r` + spaces clear every 80 dots so the dots don't accumulate infinitely on one line.
+
+### Fixed: M4 — printOutput color heuristics tightened
+
+- `"error" in lower` → `lower.startsWith("error") or lower.startsWith("failed")` — only colors lines that **start with** "error" or "failed"
+- Same tightening for success/hint/waiting checks
+- Eliminates false positives from the word "error" in filenames or variable names
+
+### Fixed: M5 — Dashboard next-lesson respects prerequisites
+
+```nim
+if l.id notin saved and canSkip(l, saved):
+```
+Was:
+```nim
+if l.id notin saved:
+```
+Now won't suggest a lesson whose prerequisites aren't met.
+
+### Fixed: M6 — Streak message accurate for returning users
+
+- `Streak: no lessons yet` (when saved.len > 0) → `Streak: broken (no lesson today)`
+- Only shows "no lessons yet" when the user has genuinely never completed a lesson
+
+### Fixed: L4 — Import prompt works cross-platform
+
+- Windows shows `Ctrl+Z` instead of just `Ctrl+D`
+- Uses `when defined(posix)` pattern cleanly
+
+## Remaining Items
+
+### Moderate
+- None remaining
+
+### Low
+- L1: 9 conceptual lessons with `return true` validators + `skipRun: false` — benign; any compile+run = pass
+- L2: Emoji in terminal (fire, checkmark, unicorn in hint) — cosmetic, low priority
+- L3: `nimlings test` output format for end users — CLI internal tool, low priority
 
 ---
 
-### Hallucinations / Incorrect Assumptions
+## Verification
 
-**None found.** All API calls, module imports, and stdlib usage are correct. Generated `content.nim` patterns match what `engine.nim` produces.
-
----
-
-### Style / Consistency
-
-#### [S1] Content test only validates 4 of 8 critical fields — `tests/test_content.nim`
-`test "Lesson Fields Integrity"` checks `id`, `name`, `filename`, and `validate`. Doesn't verify `conceptText`, `task`, `solution`, `hint`, or `difficulty` are non-empty. A lesson with empty `task` or `hint` would silently degrade UX.
-
-#### [S2] Manual date arithmetic in `updateStreak` — `src/models.nim:57-90`
-~30 lines of manual year/month/day boundary logic for streak calculation. Nim's `times` module supports `parse(lastLessonDate, "yyyy-MM-dd")` and `inDays` diff, which would handle month/year boundaries automatically.
-
----
-
-### Info (observations, not action items)
-
-- **Build:** Compiles cleanly with `--warning:all` on Nim 2.2, zero warnings
-- **Tests:** All 5 suites pass; 13 streak date tests provide good coverage
-- **CI:** GitHub Actions validates build, tools, tests, and warnings
-- **Security:** No hardcoded secrets, no user-influenced shell commands, no path traversal risk (all lesson data is application-controlled)
-- **Resource leaks:** `startProcess` has `defer: close()`, `createTempDir` has `defer: removeDir()`, all file I/O uses `readFile`/`writeFile` (auto-handled)
-- **Type safety:** No `auto` return types, no unsafe casts, all exported procs typed
-- **Performance:** O(n) iteration over 142 lessons in a few code paths — negligible
-- **`epochTime()`** in `runWithTimeout` uses wall clock, not monotonic — harmless for 5s CLI timeout
-- **Watch mode** uses blocking `sleep(500)` — expected for CLI, Ctrl+C handled by Nim's SIGINT processing
-- **Node.js** pre-installed on GitHub Actions `ubuntu-latest` — JS runner tests work in CI
+- [x] `nim c src/nimlings.nim` — clean build (0 warnings)
+- [x] All 5 fixed solutions compile and produce correct output
+- [x] All 29 unit tests pass (Models: 12, Engine: 6, Content: 2, Prerequisites: 7, Fixes: 2)
+- [x] JSON valid for lessons.json
+- [x] Generator regenerates content.nim correctly from lessons.json

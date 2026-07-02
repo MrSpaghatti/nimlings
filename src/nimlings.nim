@@ -1,4 +1,4 @@
-import os, std/sets, times, json
+import os, std/sets, times, json, strutils
 when defined(posix):
   import posix
 import engine, tui, types, content, models
@@ -21,9 +21,9 @@ Commands:
   path                      Show recommended upgrade path
   status                    Quick daily status (for shell greeting)
   reset                     Reset progress
-  test                      Run internal tests
   hint <lesson_id>          Show hint for a lesson
   solution <lesson_id>      Show solution for a lesson
+  docs <lesson_id>          Show documentation links for a lesson
   export                    Export progress to stdout (JSON)
   import [file]             Import progress from file (or stdin)
 
@@ -154,16 +154,18 @@ proc runWatchMode(startId: string, force: bool = false) =
         lastTime = t
         echo dim("  [file changed] Re-checking...")
         break
-      # Show a spinner every 2 seconds
       if dotCount mod 4 == 0:
         write(stdout, dim("."))
+        flushFile(stdout)
+      if dotCount mod 80 == 0 and dotCount > 0:
+        write(stdout, "\r" & repeat(" ", dotCount) & "\r")
         flushFile(stdout)
 
 # ── Main ────────────────────────────────────────────────────────────
 
 proc main() =
+  cleanupOldTempDirs()
   initLessons()
-
   if paramCount() > 0:
     let first = paramStr(1)
     if first == "-h" or first == "--help":
@@ -204,10 +206,15 @@ proc main() =
   of "list":
     printDashboard()
   of "reset":
-    let cd = getHomeDir() / ".config" / "nimlings"
-    removeFile(cd / "progress.json")
-    removeFile(cd / "state.json")
-    echo "Progress reset."
+    echo "Are you sure? This will erase all progress. [y/N] "
+    let answer = stdin.readLine().strip().toLowerAscii()
+    if answer == "y" or answer == "yes":
+      let cd = getHomeDir() / ".config" / "nimlings"
+      removeFile(cd / "progress.json")
+      removeFile(cd / "state.json")
+      echo "Progress reset."
+    else:
+      echo "Reset cancelled."
   of "test":
     checkNimInstalled()
     var passed = 0
@@ -243,6 +250,21 @@ proc main() =
     let lesson = findLessonById(arg)
     echo bold("Solution for " & lesson.id) & ":"
     echo lesson.solution
+  of "docs":
+    if arg == "":
+      printHelp()
+      quit(1)
+    let lesson = findLessonById(arg)
+    echo bold("Documentation for " & lesson.id & ": " & lesson.name)
+    echo ""
+    for link in lesson.docs:
+      echo "  " & bold(link.title)
+      if link.summary.len > 0:
+        echo "  " & dim(link.summary)
+      echo "  " & Cyan & link.url & Reset
+      echo ""
+    let plural = if lesson.docs.len > 1: "s" else: ""
+    echo dim("  " & $lesson.docs.len & " doc link" & plural & " — open in browser to learn more")
   of "export":
     let cd = getHomeDir() / ".config" / "nimlings"
     if fileExists(cd / "progress.json"):
@@ -265,8 +287,10 @@ proc main() =
     echo bold("  nimlings ") & dim($saved.len & "/" & $total & " lessons")
     if daily.streak > 0:
       echo "  Streak: " & bold(Green & $daily.streak & " days" & Reset)
+    elif saved.len > 0:
+      echo "  Streak: " & dim("broken (no lesson today)")
     else:
-      echo "  Streak: " & dim("no lessons yet")
+      echo "  Streak: " & dim("no lessons yet — run ") & bold("nimlings learn") & dim(" to start")
     if daily.lessonsToday > 0:
       echo "  Today: " & $daily.lessonsToday & " lesson(s) done"
     else:
@@ -303,9 +327,9 @@ proc main() =
         quit(1)
     else:
       try:
-        when defined(posix):
-          if isatty(stdin.getFileHandle()) == 1:
-            echo "Reading from stdin... (Press Ctrl+D when done)"
+        let isTerm = when defined(posix): isatty(stdin.getFileHandle()) == 1 else: false
+        if isTerm:
+          echo "Reading from stdin... (Press Ctrl+D on Unix or Ctrl+Z on Windows when done)"
         content = stdin.readAll()
       except EOFError:
         echo "Error: No input provided."

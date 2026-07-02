@@ -6,6 +6,17 @@ import types, content
 const ExercisesDir = "exercises"
 const RunTimeout = 5000 # 5 seconds
 
+proc cleanupOldTempDirs*() =
+  ## Remove orphaned nimlings_* temp dirs from /tmp.
+  ## These accumulate when runCode() is interrupted (defer never fires).
+  let tmpDir = getTempDir()
+  for kind, path in walkDir(tmpDir):
+    if kind == pcDir and path.splitPath().tail.startsWith("nimlings_"):
+      try:
+        removeDir(path)
+      except:
+        discard  # Ignore permissions races
+
 # Regexes for common Nim errors
 # Cannot be const because re() might involve C calls or checks not available at CT
 let

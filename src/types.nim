@@ -4,6 +4,10 @@ import tables
 type
   LessonValidation* = proc(code: string, output: string, stderr: string, exitCode: int): bool
 
+  DocLink* = object
+    title*: string
+    url*: string
+    summary*: string
   Lesson* = object
     id*: string
     name*: string
@@ -13,6 +17,7 @@ type
     hint*: string
     filename*: string
     files*: Table[string, string]
+    docs*: seq[DocLink]
     lessonType*: string
     cmd*: string
     compilerArgs*: seq[string]

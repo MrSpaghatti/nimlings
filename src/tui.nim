@@ -116,7 +116,7 @@ proc printDashboard*() =
   for level in levels:
     for chapter in level.chapters:
       for l in chapter.lessons:
-        if l.id notin saved:
+        if l.id notin saved and canSkip(l, saved):
           nextLesson = l
           foundNext = true
           break
@@ -127,8 +127,7 @@ proc printDashboard*() =
     echo "    " & bold("Next up:") & " " & nextLesson.id & ": " & nextLesson.name
     echo "    " & dim("  ► nimlings watch " & nextLesson.id)
   else:
-    echo "    " & bold(Green & "🎉 All lessons complete!" & Reset)
-  echo ""
+    echo "    " & bold(Green & "All lessons complete!" & Reset)
 
 proc printLessonHeader*(lesson: Lesson) =
   ## Print a compact lesson header for watch mode
@@ -140,22 +139,23 @@ proc printLessonHeader*(lesson: Lesson) =
   echo ""
   echo "   " & bold("Task:") & " " & lesson.task
   echo "   " & dim("Edit: exercises/" & lesson.id.replace(".", "_") & "/" & lesson.filename)
+  if lesson.docs.len > 0:
+    echo "   " & bold("Docs:") & " " & dim("nimlings docs " & lesson.id) & Cyan & "  " & lesson.docs[0].title & Reset
   echo bold("  ══════════════════════════════════════════════════════════════")
+  echo ""
   echo ""
 
 proc printOutput*(msg: string) =
   ## Print validation output with color coding
   for line in msg.splitLines():
     let lower = line.toLowerAscii()
-    if line.startsWith("Error") or "error" in lower:
-      echo "  " & Red & line & Reset
-    elif line.startsWith("Correct") or "success" in lower:
-      echo "  " & Green & Bold & line & Reset
-    elif line.startsWith("FAILED") or "failed" in lower:
+    if lower.startsWith("error") or lower.startsWith("failed"):
       echo "  " & Red & Bold & line & Reset
-    elif line.startsWith("Hint") or line.startsWith("---"):
+    elif lower.startsWith("correct") or lower.startsWith("success"):
+      echo "  " & Green & Bold & line & Reset
+    elif lower.startsWith("hint") or line.startsWith("---"):
       echo "  " & Cyan & line & Reset
-    elif line.startsWith("Waiting") or line.startsWith("[DETECTED"):
+    elif lower.startsWith("waiting") or lower.startsWith("[detected"):
       echo dim("  " & line)
     else:
       echo "  " & line

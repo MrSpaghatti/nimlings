@@ -4,12 +4,12 @@
 
 **Now rewritten in 100% Nim!**
 
-The tutor presents you with a concept, gives you a coding task, and then opens your default text editor for you to write a solution. It then compiles and runs your code in a sandboxed environment, providing immediate feedback. All in a cynical, no-bullshit tone.
+The tutor presents you with a concept, gives you a coding task, and then opens a file for you to write a solution in your editor. It then compiles and runs your code in a sandboxed environment, providing immediate feedback. All in a cynical, no-bullshit tone.
 
 ## Features
 
-- **Interactive TUI**: Navigate lessons and view feedback in a terminal interface.
-- **Bring Your Own Editor**: Seamlessly integrates with your favorite editor (Vim, VS Code, Nano, etc.).
+- **CLI-based**: Simple command-line interface with lesson dashboard and watch mode.
+- **Bring Your Own Editor**: Edit exercise files in your favorite editor (Vim, VS Code, Nano, etc.).
 - **Auto-Check**: Automatically detects file changes and verifies your solution in the background.
 - **Sandboxed Execution**: User code runs with a 5-second timeout to prevent infinite loops.
 - **Smart Hints**: Parses scary compiler errors into friendly (or cynical) hints.
@@ -45,16 +45,20 @@ This produces a `nimlings` binary in the current directory (or where nimble plac
 ./nimlings learn
 ```
 
-### Navigation (TUI)
+### Watch Mode
+```bash
+./nimlings watch [id]     # Start watching a lesson, auto-validates on save
+./nimlings learn           # Find next unfinished lesson and start watching
+```
 
-- **Arrow keys / j/k**: Navigate lesson list.
-- **Enter / e**: Open the current lesson in your `$EDITOR`.
-- **r**: Manually trigger verification.
-- **h / ?**: Show hint.
-- **Tab**: Cycle through views (Curriculum -> Lesson -> Output).
-- **q**: Quit.
+The tutor monitors the exercise file. As soon as you save your changes in your editor, nimlings automatically compiles and checks your code.
 
-The tutor monitors the current exercise file. As soon as you save your changes in your editor, `nimlings` will automatically compile and check your code.
+### Dashboard
+```bash
+./nimlings list    # Show progress dashboard
+./nimlings status  # Quick daily status (for shell prompts)
+./nimlings path    # Show recommended upgrade path
+```
 
 ### CLI Commands
 

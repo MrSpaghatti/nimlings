@@ -93,6 +93,16 @@ proc main() =
           prerequisites_nim = "@[" & items.join(", ") & "]"
 
         let crossNotes = if lesson.hasKey("cross_language_notes"): $lesson["cross_language_notes"] else: "\"\""
+        let docRefs = if lesson.hasKey("docs") and lesson["docs"].len > 0:
+          var items: seq[string] = @[]
+          for item in lesson["docs"]:
+            let title = if item.hasKey("title"): $item["title"] else: $item
+            let url = if item.hasKey("url"): $item["url"] else: $item
+            let summary = if item.hasKey("summary"): $item["summary"] else: "\"\""
+            items.add("DocLink(title: " & title & ", url: " & url & ", summary: " & summary & ")")
+          "@[" & items.join(", ") & "]"
+        else:
+          "newSeq[DocLink]()"
 
         output.add "  ch_lessons.add(Lesson("
         output.add "    id: " & $lesson["id"] & ","
@@ -105,6 +115,7 @@ proc main() =
         output.add "    files: " & files_nim & ","
         output.add "    lessonType: " & lType & ","
         output.add "    cmd: " & cmd & ","
+        output.add "    docs: " & docRefs & ","
         output.add "    compilerArgs: " & comp_args & ","
         output.add "    runArgs: " & run_args & ","
         output.add "    skipRun: " & skipRun & ","
