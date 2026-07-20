@@ -40,7 +40,7 @@ proc main() =
         let id_safe = id.replace(".", "_")
 
         var val_code = "true"
-        if lesson.hasKey("validation_code"):
+        if lesson.hasKey("validation_code") and lesson["validation_code"].getStr().len > 0:
           val_code = lesson["validation_code"].getStr()
 
         val_code = val_code.replace("result.stdout", "output")
@@ -83,6 +83,8 @@ proc main() =
         if lesson.hasKey("skip_run"):
           skipRun = $lesson["skip_run"].getBool()
 
+        let stdinInput = if lesson.hasKey("stdin"): $lesson["stdin"] else: "\"\""
+
         let difficulty = if lesson.hasKey("difficulty"): $lesson["difficulty"] else: "\"easy\""
 
         var prerequisites_nim = "@[]"
@@ -119,6 +121,7 @@ proc main() =
         output.add "    compilerArgs: " & comp_args & ","
         output.add "    runArgs: " & run_args & ","
         output.add "    skipRun: " & skipRun & ","
+        output.add "    stdinInput: " & stdinInput & ","
         output.add "    difficulty: " & difficulty & ","
         output.add "    prerequisites: " & prerequisites_nim & ","
         output.add "    crossLanguageNotes: " & crossNotes & ","

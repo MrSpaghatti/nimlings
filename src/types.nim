@@ -23,6 +23,7 @@ type
     compilerArgs*: seq[string]
     runArgs*: seq[string]
     skipRun*: bool
+    stdinInput*: string
     difficulty*: string
     prerequisites*: seq[string]
     crossLanguageNotes*: string

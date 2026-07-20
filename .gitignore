@@ -11,6 +11,8 @@ src/content.nim
 
 # Temp files
 tests/temp_script_for_test.nim
+*.bak
+*.bak.*
 
 # OS
 .DS_Store

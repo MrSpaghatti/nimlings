@@ -77,12 +77,16 @@ proc ensureLessonFile*(lesson: Lesson): string =
 
   return absolutePath(path)
 
-proc runWithTimeout*(cmd: string, workingDir: string): tuple[output: string, exitCode: int] =
+proc runWithTimeout*(cmd: string, workingDir: string, input: string = ""): tuple[output: string, exitCode: int] =
   # Use shell to run the command to handle arguments parsing automatically
   # On Unix: sh -c "cmd"
   # On Windows: cmd /c "cmd"
   let p = startProcess(cmd, workingDir = workingDir, options = {poStdErrToStdOut, poUsePath, poEvalCommand})
   defer: p.close()
+
+  if input.len > 0:
+    p.inputStream.write(input)
+  p.inputStream.close()
 
   let t0 = epochTime()
   var output = ""
@@ -159,8 +163,8 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
 
   # 3. Standard Nim Mode
   var cmd = "nim " & lesson.cmd
-  if lesson.cmd == "c":
-    cmd.add " -r --threads:on --hints:off"
+  if lesson.cmd in ["c", "cpp"]:
+    cmd.add " -r --threads:on --hints:off --warnings:off"
 
   for arg in lesson.compilerArgs:
     cmd.add " " & arg
@@ -172,7 +176,7 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
     cmd.add " " & quoteShell(arg)
 
   # Execute
-  let (outp, errC) = runWithTimeout(cmd, tmpDir)
+  let (outp, errC) = runWithTimeout(cmd, tmpDir, lesson.stdinInput)
   return RunResult(stdout: outp, stderr: "", exitCode: errC)
 
 proc canSkip*(lesson: Lesson, progress: HashSet[string]): bool =
@@ -212,14 +216,17 @@ proc validate*(lesson: Lesson, code: string, res: RunResult): (bool, string) =
       # We show the full nimble test output on failure
       return (false, "\n--- TEST FAILED ---\n" & res.stdout)
 
-  # Standard validation for other types
+  # Standard validation for other types.
+  # The lesson's own validator gets the final say, even on a non-zero exit
+  # code — some lessons (effect-system violations, uncaught Defects) are
+  # specifically about a compile or runtime failure being the correct outcome.
+  if lesson.validate(code, res.stdout, res.stderr, res.exitCode):
+    return (true, "\nCorrect!\n" & res.stdout)
+
   if res.exitCode != 0:
     # Before showing error, print the user's code for context
     var context = "\n--- YOUR CODE ---\n" & code & "\n-----------------"
     let friendlyErr = parseCompilerErrors(res.stdout & "\n" & res.stderr)
     return (false, context & "\n--- COMPILE/RUN ERROR ---" & friendlyErr & "\n\nHINT: " & lesson.hint)
-
-  if lesson.validate(code, res.stdout, res.stderr, res.exitCode):
-    return (true, "\nCorrect!\n" & res.stdout)
   else:
     return (false, "\n--- LOGIC ERROR ---\nOutput:\n" & res.stdout)
