@@ -115,7 +115,7 @@ proc updateStreak*(daily: DailyRecord, todayDate: string): DailyRecord =
 
         if result.streak > result.longestStreak:
           result.longestStreak = result.streak
-      except:
+      except ValueError:
         result.streak = 1
 
     result.lessonsToday = 1

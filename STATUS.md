@@ -1,6 +1,6 @@
 # nimlings Status
 
-**Last updated:** 2026-07-19
+**Last updated:** 2026-07-20
 
 ## Project Overview
 
@@ -13,13 +13,27 @@ LLM-driven lesson generation pipeline at `~/nimlings-fleet/` with hybrid backend
 
 | Metric | Value |
 |--------|-------|
+| Version | 2.1.6 |
 | Lessons | 255 — comprehensive Nim curriculum |
 | Build | Compiles cleanly, zero warnings (`nim c --warnings:on src/nimlings.nim`) |
-| Unit tests | All 5 suites pass (Content, Engine, Models, Prerequisites) |
+| Unit tests | All 4 suites pass (Content: 2, Engine: 5, Models: 12, Prerequisites: 7) |
 | `nimlings test` (runs every solution against its validator) | **241/255 passing** |
 | Curriculum tree | 255 topics across 4 levels, 55 chapters |
 | Local model | Qwen3.6-27B (dense, 17GB Q4_K_M, ~32GB VRAM) |
 | OpenRouter model | Gemini 2.5 Flash ($0.15/$0.60 per MTok) |
+
+## 2026-07-20 Session: Version Sync & Source Audit
+
+Fixed version mismatch: `nimlings.nim` and `nimlings.nimble` were stuck at 2.1.3 while CHANGELOG
+had entries for 2.1.4 and 2.1.5. Bumped to 2.1.6. Ran full deep-dive audit of all source files
+(engine, models, tui, types, generator, tests). Found 2 bugs, 3 inefficiencies, 2 style issues —
+all actionable items fixed:
+- JS mode missing `--warnings:off` (same bug class as v2.1.5 fix for c/cpp mode)
+- Bare `except:` clauses narrowed to specific exception types
+- `checkNodeInstalled()` moved before JS compilation
+- `initLessons()` moved after -h/-v early-exit guards
+
+Build: clean, zero warnings. Tests: all 26 pass across 4 suites.
 
 ## 2026-07-19 Session: Deep Content & Engine Audit
 

@@ -4,7 +4,7 @@ when defined(posix):
 import engine, tui, types, content, models
 
 # Version constant (match nimble file)
-const NimlingsVersion = "2.1.3"
+const NimlingsVersion = "2.1.6"
 
 when NimMajor < 1 or (NimMajor == 1 and NimMinor < 6):
   {.error: "Nim 1.6 or higher is required to build nimlings.".}
@@ -149,7 +149,7 @@ proc runWatchMode(startId: string, force: bool = false) =
       sleep(500)
       dotCount.inc
       let t = try: getLastModificationTime(path)
-              except: Time.high
+              except OSError: Time.high
       if t > lastTime:
         lastTime = t
         echo dim("  [file changed] Re-checking...")
@@ -165,7 +165,6 @@ proc runWatchMode(startId: string, force: bool = false) =
 
 proc main() =
   cleanupOldTempDirs()
-  initLessons()
   if paramCount() > 0:
     let first = paramStr(1)
     if first == "-h" or first == "--help":
@@ -174,6 +173,8 @@ proc main() =
     if first == "-v" or first == "--version":
       echo "nimlings " & NimlingsVersion
       quit(0)
+
+  initLessons()
 
   var cmd = "learn"
   var arg = ""

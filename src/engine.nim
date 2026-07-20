@@ -112,12 +112,12 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
     of "project": getHomeDir() / ".config" / "nimlings" / "projects" / lesson.id.replace(".", "_")
     else: createTempDir("nimlings_", "")
 
-  # Cleanup for non-project lessons
-  if lesson.lessonType != "project":
-    defer: removeDir(tmpDir)
-  else:
-    # For projects, we clear the dir before use
-    if dirExists(tmpDir): removeDir(tmpDir)
+  defer:
+    if lesson.lessonType != "project":
+      removeDir(tmpDir)
+
+  if lesson.lessonType == "project" and dirExists(tmpDir):
+    removeDir(tmpDir)
 
   createDir(tmpDir)
 
@@ -145,8 +145,9 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
   # 2. JS Mode (from HEAD)
   if lesson.cmd == "js":
     # JS-specific logic: compile, then run with Node
+    checkNodeInstalled()
     let jsFile = tmpDir / changeFileExt(lesson.filename, "js")
-    var compileCmd = "nim js -o:" & quoteShell(jsFile)
+    var compileCmd = "nim js --hints:off --warnings:off -o:" & quoteShell(jsFile)
     for arg in lesson.compilerArgs:
       compileCmd.add " " & arg
     compileCmd.add " " & quoteShell(lesson.filename)
@@ -155,8 +156,6 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
     if compileErr != 0:
       return RunResult(stdout: compileOut, stderr: "", exitCode: compileErr)
 
-    # If compilation is successful, run with node
-    checkNodeInstalled()
     let runCmd = "node " & quoteShell(jsFile)
     let (runOut, runErr) = runWithTimeout(runCmd, tmpDir)
     return RunResult(stdout: runOut, stderr: "", exitCode: runErr)

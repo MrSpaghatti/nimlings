@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+
+## [2.1.6] — 2026-07-20
+
+### Fixed
+
+- **JS mode missing `--warnings:off`**: The v2.1.5 fix added `--warnings:off` for `c`/`cpp` compilation, but JS mode builds its own compile command separately. Nim compiler warnings could pollute stdout and break lesson validators that do exact string matching. Fixed by adding `--hints:off --warnings:off` to the JS compile command (`src/engine.nim`).
+- **Bare `except:` in `updateStreak`**: The `except:` clause in the date-parsing branch caught all exceptions including `Defect`, silently resetting the streak on any unexpected error. Narrowed to `except ValueError:` (`src/models.nim`).
+- **Bare `except:` in watch mode file check**: `except: Time.high` caught all exceptions, not just `OSError`. Narrowed to `except OSError:` (`src/nimlings.nim`).
+- **`checkNodeInstalled()` after JS compilation**: If Node.js was missing, the nim→js compilation ran to completion before failing. Moved the check before compilation so users don't wait for a doomed compile (`src/engine.nim`).
+- **`initLessons()` before `-h`/`-v` guards**: 840KB of lesson data was deserialized even for help/version invocations. Moved `initLessons()` after the early-exit guards (`src/nimlings.nim`).
+
+### Changed
+
+- **Version synced**: Source constant and nimble file bumped from 2.1.3 → 2.1.6 (2.1.4 and 2.1.5 changes were recorded in CHANGELOG but never reflected in the version fields).
+- **AUDIT.md**: Full deep-dive audit of all source files; 2 bugs, 3 inefficiencies, 2 style issues found; all actionable items fixed.
+- **DEV_PLAN.md**: Version updated to 2.1.6.
+
+## [2.1.5] — 2026-07-19
+
+### Fixed
+
+- **Temp dir leak in `runCode`**: Nim's `defer` fires when its enclosing *block* exits, not at proc scope. The `defer: removeDir(tmpDir)` was nested inside an `if lesson.lessonType != "project"` block, causing it to fire immediately — before `createDir(tmpDir)` re-created the directory. The re-created dir had no cleanup, leaking a temp dir on every `runCode` call. Fixed by moving `defer` to unconditional proc scope with the conditional inside the deferred body (`src/engine.nim`).
+
+### Changed
+
+- **AGENTS_READ_THIS.md**: Replaced the `/tmp` clutter rant with a concise agent reference covering build commands, architecture, gotchas, and key docs.
+- **DEV_PLAN.md**: Updated version (2.1.4), lesson count (255), test suite count (26 across 4 suites), file sizes.
+- **AUDIT.md**: Corrected test count (26, not 29; Engine has 5, not 6; no "Fixes" suite).
+- **CHANGELOG.md**: Fixed v2.1.4 field count (9 fields, not 8).
+
+### Removed
+
+- **PLAN.md**: All items completed in v2.1.4; archived (recoverable via git).
+- **progress.md**: Session complete; removed.
+
 ## [2.1.4] — 2026-06-26
 
 ### Fixed
@@ -17,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Test coverage**: Content integrity test now checks 8 fields (was 4).
+- **Test coverage**: Content integrity test now checks 9 fields (was 4).
 - **AUDIT.md**: Updated with current zero-bug findings.
 
 ## [2.1.3] — 2026-06-14
