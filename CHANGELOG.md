@@ -5,7 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.7] — 2026-07-20
 
+### Fixed
+
+- **All 14 known-failing lessons resolved**: 12 structural-incompatibility lessons (async servers, SDL2, WebSocket, Fidget, compiler plugins, ObjC, etc.) now serve as `skipRun: true` reference material with correct solution code and code-structure validators. 2 lessons (3.15.3 ORC Model, 4.13.3 Inline Assembly) rewritten with working solutions that compile and run. `nimlings test` goes from 241/255 to 255/255.
+
+### Changed
+
+- **STATUS.md**: Updated to reflect 255/255 (100%) passing, replaced "Known-remaining failures" with resolution summary table.
+- **DEV_PLAN.md**: Updated to 255/255.
+- **AUDIT.md**: Marked all prior items resolved.
+- **CHANGE_REPORT.md**: Replaced stale v2.1.6 report.
 
 ## [2.1.6] — 2026-07-20
 

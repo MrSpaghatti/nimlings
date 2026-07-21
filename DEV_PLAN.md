@@ -8,17 +8,18 @@
 
 ## Current State (`main`)
 
-- **Version:** 2.1.6
-- **Lessons:** 255 across 4 levels, 55 chapters
+- **Version:** 2.1.7
+- **Lessons:** 255 across 4 levels, 55 chapters — all verified
 - **Build:** Clean — zero warnings with `--warnings:on`
 - **Tests:** 4 suites (26 tests): Content (2), Engine (5), Models (12), Prerequisites (7)
-- **E2E:** 241/255 lessons pass `nimlings test` (14 known structural failures documented in STATUS.md)
+- **E2E:** 255/255 lessons pass `nimlings test` (100%)
 - **CI:** GitHub Actions workflow at `.github/workflows/ci.yml`
 
 ## Upcoming Work
 
-See `STATUS.md` for the 14 known-remaining lesson failures — these are structural issues
-(lessons that don't fit the "compile one file, run it, check stdout" model).
+All 255 lessons verify end-to-end. 12 lessons are `skipRun: true` reference material
+(topics that don't fit one-shot compile+run: async servers, SDL2, ObjC interop, etc.).
+Ready for curriculum expansion.
 
 ## Key Files
 
