@@ -42,6 +42,8 @@ proc main() =
         var val_code = "true"
         if lesson.hasKey("validation_code") and lesson["validation_code"].getStr().len > 0:
           val_code = lesson["validation_code"].getStr()
+          if '\n' in val_code or "\"\"\"" in val_code:
+            quit("Error: validation_code for lesson " & id & " contains a newline or triple-quote, which breaks generated Nim. Use a single-line expression.")
 
         val_code = val_code.replace("result.stdout", "output")
         val_code = val_code.replace("result.stderr", "stderr")
@@ -56,7 +58,7 @@ proc main() =
         if lesson.hasKey("files") and lesson["files"].len > 0:
           var pairs: seq[string] = @[]
           for k, v in lesson["files"].pairs:
-             pairs.add(($ %k) & ": " & $v)
+             pairs.add($k & ": " & $v)
           files_nim = "{" & pairs.join(", ") & "}.toTable"
 
         var comp_args = "@[]"

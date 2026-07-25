@@ -25,7 +25,7 @@ proc loadProgress*(): HashSet[string] =
     let data = parseJson(readFile(ProgressFile))
     for item in data.getElems():
       result.incl(item.getStr())
-  except:
+  except JsonParsingError, JsonKindError, IOError:
     stderr.writeLine("[nimlings] Warning: Could not load progress file, starting fresh")
 
 proc saveProgress*(completed: HashSet[string]) =
@@ -52,7 +52,7 @@ proc loadDaily*(): DailyRecord =
       longestStreak: data{"longestStreak"}.getInt(0),
       lessonsToday: data{"lessonsToday"}.getInt(0)
     )
-  except:
+  except JsonParsingError, JsonKindError, IOError:
     stderr.writeLine("[nimlings] Warning: Could not load daily streak file, starting fresh")
     result = DailyRecord()
 
@@ -87,6 +87,8 @@ proc updateStreak*(daily: DailyRecord, todayDate: string): DailyRecord =
       try:
         let last = lastDate.split("-")
         let parts = todayDate.split("-")
+        if last.len != 3 or parts.len != 3:
+          raise newException(ValueError, "malformed date")
         let lastDay = parseInt(last[2])
         let lastMonth = parseInt(last[1])
         let lastYear = parseInt(last[0])

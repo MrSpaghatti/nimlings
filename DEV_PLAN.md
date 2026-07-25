@@ -8,10 +8,10 @@
 
 ## Current State (`main`)
 
-- **Version:** 2.1.7
+- **Version:** 2.1.9
 - **Lessons:** 255 across 4 levels, 55 chapters — all verified
 - **Build:** Clean — zero warnings with `--warnings:on`
-- **Tests:** 4 suites (26 tests): Content (2), Engine (5), Models (12), Prerequisites (7)
+- **Tests:** 4 suites (28 tests): Content (2), Engine (5), Models (14), Prerequisites (7)
 - **E2E:** 255/255 lessons pass `nimlings test` (100%)
 - **CI:** GitHub Actions workflow at `.github/workflows/ci.yml`
 

@@ -4302,7 +4302,7 @@
                   "summary": "Further information about the refc garbage collector, including its limitations and use cases."
                 }
               ],
-              "validation_code": ""
+              "validation_code": "result.stdout.strip() == \"Nodes created\""
             },
             {
               "id": "3.15.2",

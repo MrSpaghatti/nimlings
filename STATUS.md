@@ -1,19 +1,18 @@
 # nimlings Status
 
-**Last updated:** 2026-07-20
+**Last updated:** 2026-07-24
 
 ## Project Overview
 
 Interactive Nim tutor — 255 lessons across 4 levels. CLI application in 100% Nim.
-LLM-driven lesson generation pipeline at `~/nimlings-fleet/` with hybrid backend:
-- **Planner/Auditor/Fixer:** Google Gemini 2.5 Flash (OpenRouter) — planning, auditing, fixes
-- **Smith (generation):** Qwen3.6-27B (local, Q4_K_M, R9700/ROCm) — bulk generation, fixes
+- **Planner:** Google Gemini 2.5 Flash (OpenRouter) — lesson structure design only
+- **Smith / Fixer / Auditor:** Qwen3.6-27B (local, Q4_K_M, R9700/ROCm) — generation, fixes, auditing
 
 ## Current Status: 255/255 Lessons — 100% Verified End-to-End
 
 | Metric | Value |
 |--------|-------|
-| Version | 2.1.6 |
+| Version | 2.1.8 |
 | Lessons | 255 — comprehensive Nim curriculum |
 | Build | Compiles cleanly, zero warnings (`nim c --warnings:on src/nimlings.nim`) |
 | Unit tests | All 4 suites pass (Content: 2, Engine: 5, Models: 12, Prerequisites: 7) |
@@ -24,8 +23,8 @@ LLM-driven lesson generation pipeline at `~/nimlings-fleet/` with hybrid backend
 
 ## 2026-07-20 (afternoon) Session: Final Lesson Fixes
 
-All 14 previously-known structural failures resolved. 12 lessons that don't fit the one-shot
-"compile, run, capture stdout" model are now `skipRun: true` — they serve as reference material
+All 14 previously-known structural failures resolved. 35 lessons that don't fit the one-shot
+"compile, run, capture stdout" model are `skipRun: true` — they serve as reference material
 with correct solution code and validators that check code structure. 2 lessons (3.15.3 ORC Model,
 4.13.3 Inline Assembly) were rewritten with working solutions that compile and run correctly.
 

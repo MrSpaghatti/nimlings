@@ -13,7 +13,7 @@ The tutor presents you with a concept, gives you a coding task, and then opens a
 - **Auto-Check**: Automatically detects file changes and verifies your solution in the background.
 - **Sandboxed Execution**: User code runs with a 5-second timeout to prevent infinite loops.
 - **Smart Hints**: Parses scary compiler errors into friendly (or cynical) hints.
-- **25 Modules**: From "Hello World" to web servers, covering the full Nim ecosystem.
+- **55 Chapters**: From "Hello World" to web servers, across 4 levels covering the full Nim ecosystem.
 - **Progress Persistence**: Export/Import your progress to move between machines.
 
 ## Prerequisites

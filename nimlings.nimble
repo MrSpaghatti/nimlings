@@ -1,6 +1,6 @@
 # Package
 
-version       = "2.1.6"
+version       = "2.1.9"
 author        = "Nimlings Team"
 description   = "A purely Nim-based learning path for Nim"
 license       = "MIT"

@@ -101,3 +101,21 @@ suite "Models":
     check updated.longestStreak == 10
     check updated.lessonsToday == 1
     check updated.lastLessonDate == "2026-06-14"
+
+  test "updateStreak: malformed lastLessonDate doesn't crash":
+    let daily = DailyRecord(lastLessonDate: "2026-07", streak: 3, longestStreak: 5, lessonsToday: 1)
+    let updated = updateStreak(daily, "2026-07-15")
+    # Malformed date: ValueError caught, streak resets to 1, date updates
+    check updated.streak == 1
+    check updated.longestStreak == 5
+    check updated.lessonsToday == 1
+    check updated.lastLessonDate == "2026-07-15"
+
+  test "updateStreak: malformed todayDate doesn't crash":
+    let daily = DailyRecord(lastLessonDate: "2026-07-10", streak: 3, longestStreak: 5, lessonsToday: 1)
+    let updated = updateStreak(daily, "")
+    # Empty todayDate: todayDate < lastDate, streak unchanged, date set to empty
+    check updated.streak == 3
+    check updated.longestStreak == 5
+    check updated.lessonsToday == 1
+    check updated.lastLessonDate == ""

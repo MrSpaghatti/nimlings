@@ -9,9 +9,8 @@ const RunTimeout = 5000 # 5 seconds
 proc cleanupOldTempDirs*() =
   ## Remove orphaned nimlings_* temp dirs from /tmp.
   ## These accumulate when runCode() is interrupted (defer never fires).
-  let tmpDir = getTempDir()
-  for kind, path in walkDir(tmpDir):
-    if kind == pcDir and path.splitPath().tail.startsWith("nimlings_"):
+  for path in walkDirs(getTempDir() / "nimlings_*"):
+    if dirExists(path):
       try:
         removeDir(path)
       except:
@@ -114,10 +113,8 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
 
   defer:
     if lesson.lessonType != "project":
-      removeDir(tmpDir)
-
-  if lesson.lessonType == "project" and dirExists(tmpDir):
-    removeDir(tmpDir)
+      try: removeDir(tmpDir)
+      except: discard
 
   createDir(tmpDir)
 
@@ -149,7 +146,7 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
     let jsFile = tmpDir / changeFileExt(lesson.filename, "js")
     var compileCmd = "nim js --hints:off --warnings:off -o:" & quoteShell(jsFile)
     for arg in lesson.compilerArgs:
-      compileCmd.add " " & arg
+      compileCmd.add " " & quoteShell(arg)
     compileCmd.add " " & quoteShell(lesson.filename)
 
     let (compileOut, compileErr) = runWithTimeout(compileCmd, tmpDir)
@@ -166,7 +163,7 @@ proc runCode*(lesson: Lesson, code: string): RunResult =
     cmd.add " -r --threads:on --hints:off --warnings:off"
 
   for arg in lesson.compilerArgs:
-    cmd.add " " & arg
+    cmd.add " " & quoteShell(arg)
 
   cmd.add " " & quoteShell(lesson.filename)
 

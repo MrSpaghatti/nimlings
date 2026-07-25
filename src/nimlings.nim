@@ -4,7 +4,7 @@ when defined(posix):
 import engine, tui, types, content, models
 
 # Version constant (match nimble file)
-const NimlingsVersion = "2.1.6"
+const NimlingsVersion = "2.1.9"
 
 when NimMajor < 1 or (NimMajor == 1 and NimMinor < 6):
   {.error: "Nim 1.6 or higher is required to build nimlings.".}
@@ -212,7 +212,6 @@ proc main() =
     if answer == "y" or answer == "yes":
       let cd = getHomeDir() / ".config" / "nimlings"
       removeFile(cd / "progress.json")
-      removeFile(cd / "state.json")
       echo "Progress reset."
     else:
       echo "Reset cancelled."

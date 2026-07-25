@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.9] — 2026-07-24
+
+### Fixed
+
+- **Lesson 3.15.1 accepted any compilable code** (`src/lessons.json`): The `validation_code` for "refc GC" was empty while `skip_run` was `false`. The generator converts empty `validation_code` to `return true`, so any program that compiled passed the lesson. Fixed: `validation_code` now `result.stdout.strip() == "Nodes created"`; `content.nim` regenerated. (Audit E1 — the single critical finding.)
+- **`updateStreak` could raise uncaught `IndexDefect` on malformed dates** (`src/models.nim`): The date-split array access (`split("-")[0..2]`) had no length check. A malformed `lastLessonDate` in `daily.json` would raise `IndexDefect` (a `Defect`, not caught by the `except ValueError` handler) and crash the app. Fixed: added explicit `len != 3` check that raises `ValueError` (which IS caught), resetting the streak gracefully. (Audit E3.)
+- **`defer removeDir` in `runCode` lacked error handling** (`src/engine.nim`): If `removeDir` failed (permissions race, NFS), the exception propagated uncaught and terminated the program. The sibling `cleanupOldTempDirs` already wrapped `removeDir` in `try/except: discard`. Fixed: `defer` block now wraps `removeDir` in `try/except: discard` for consistency. (Audit E4.)
+
+### Changed
+
+- **`test_prereqs` now imported in test runner** (`tests/runner.nim`): The runner imported `test_models, test_content, test_engine` but omitted `test_prereqs`, so `nim c -r tests/runner.nim` would silently skip all 7 prerequisite tests. `nimble test` was unaffected (it compiles each `test_*.nim` separately). Fixed: added `test_prereqs` to the import list. (Audit I3.)
+- **Generator `($ %k)` → `$k` for `files` dict keys** (`tools/generator.nim`): The `%` operator wrapped the string key in a `JsonNode`, then `$` stringified it as JSON (double-quoted). Correct is plain `$k`. Unreachable currently (no lessons have non-empty `files`), but would produce broken table keys if any lesson added project files. (Audit I4.)
+- **STATUS.md `skipRun` count corrected** — 12 → 35. The 12 figure was from v2.1.7 (only the 14 known-failing lessons considered, 2 later fixed). 23 additional conceptual/reference lessons are also `skipRun`. (Audit S1.)
+- **STATUS.md date updated** — 2026-07-20 → 2026-07-24. (Audit S2.)
+
+### Tests
+
+- **2 new regression tests** (`tests/test_models.nim`): "malformed lastLessonDate doesn't crash" and "malformed todayDate doesn't crash" — verify that corrupted date strings in `daily.json` reset the streak gracefully instead of raising `IndexDefect`. Test count: 26 → 28.
+
+### Docs
+
+- **AUDIT.md**: Full deep-dive audit (6 parallel scout subagents + source verification) — 1 critical bug (E1: empty validator), 3 low-severity bugs (E3, E4, E2-investigated), 4 inefficiencies, 4 style/consistency items. E2 ("past-date overwrites lastLessonDate") investigated and confirmed as intentional tested behavior — NOT a bug.
+
+
+## [2.1.8] — 2026-07-21
+
+### Fixed
+
+- **Project workspace wiped on every run** (`src/engine.nim`): `runCode` unconditionally `removeDir`'d the project workspace before `createDir`, deleting all project state before each run — contradicting the documented "persistent workspace, NOT cleaned up automatically" contract. Removed the pre-delete block; `createDir` is a no-op when the dir exists. (Audit E1.)
+- **Bare `except:` in `loadProgress` and `loadDaily`** (`src/models.nim`): Both caught all exceptions including `Defect`, silently resetting progress/streak on any unexpected error. Narrowed to `JsonParsingError, JsonKindError, IOError` for consistency with the v2.1.6 `updateStreak` fix. (Audit I2.)
+- **Dead code removed** (`src/nimlings.nim`): `removeFile("state.json")` in the `reset` command referenced a file removed in v2.1.2. (Audit S4.)
+
+### Changed
+
+- **Version sync**: Source constant and nimble file bumped 2.1.6 → 2.1.8 (the 2.1.7 release was doc-only by design and never touched the source constant; this release carries the source change). (Audit E2/S3.)
+- **`compilerArgs` now quoted in shell commands** (`src/engine.nim`): Each compiler arg is now passed through `quoteShell()` before being concatenated into the compile command, matching how the filename and run args are already handled. Latent robustness fix — no current lesson triggers it. (Audit I1.)
+- **`/tmp` cleanup scoped to `nimlings_*` glob** (`src/engine.nim`): `cleanupOldTempDirs` now uses `walkDirs(getTempDir() / "nimlings_*")` instead of iterating the entire `/tmp` and string-matching. (Audit I3.)
+- **Generator validates `validation_code`** (`tools/generator.nim`): The generator now rejects `validation_code` containing newlines or triple-quotes at build time with a clear error naming the offending lesson, instead of silently emitting broken Nim. (Audit H1.)
+- **README.md**: Corrected "25 Modules" to "55 Chapters across 4 levels". (Audit S1.)
+- **STATUS.md**: Updated stale model assignments — only the Planner uses OpenRouter (Gemini 2.5 Flash); Smith/Fixer/Auditor run on local Qwen3.6-27B. (Audit S2.)
+
+### Docs
+
+- **AUDIT.md**: Full deep-dive audit (6 parallel scout subagents) — 1 bug, 2 consistency regressions, and low-impact polish items found; all actionable items fixed in this release.
+
 ## [2.1.7] — 2026-07-20
 
 ### Fixed
