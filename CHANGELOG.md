@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.10] — 2026-08-02
+
+### Fixed
+
+- **`ConfigDir` was a compile-time `const`** (`src/models.nim`): `getHomeDir()` was evaluated once at compile time and baked into the binary, so `loadProgress`/`saveProgress`/`ensureConfigDir` always resolved to the *build machine's* `$HOME` regardless of who actually ran the binary or what `$HOME` was set to at runtime — while `reset`/`export` (which call `getHomeDir()` inline in `nimlings.nim`) correctly used the runtime value. On any machine/account where build-time and run-time `$HOME` differ, progress would silently be read from and written to the wrong directory, and `reset` would appear to succeed while leaving the real progress file untouched. Fixed: `const` → `let`, so it's resolved once at process startup instead.
+- **`status` count included non-lesson IDs** (`src/nimlings.nim`): `status` printed the raw size of the stored progress set (`saved.len`), while `list`/`path` validated each entry against the real lesson tree. Stray/legacy entries in `progress.json` (e.g. chapter- or level-style IDs left over from an older format, or anything let in by `import`) inflated `status`'s count without showing up in `list`, so the two commands could disagree on how many lessons were actually done. Fixed: `status` now counts only entries that match a real lesson ID, matching `list`/`path`.
+- **`import` accepted arbitrary strings into progress.json** (`src/nimlings.nim`): Any string in the imported JSON array was added to progress with no check that it corresponded to a real lesson. Fixed: `import` now validates each ID against the lesson tree via `findLesson`, skips unrecognized ones, and reports how many were skipped.
+
 ## [2.1.9] — 2026-07-24
 
 ### Fixed

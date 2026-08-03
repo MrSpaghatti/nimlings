@@ -1,6 +1,6 @@
 # nimlings Status
 
-**Last updated:** 2026-07-24
+**Last updated:** 2026-08-02
 
 ## Project Overview
 
@@ -12,14 +12,30 @@ Interactive Nim tutor — 255 lessons across 4 levels. CLI application in 100% N
 
 | Metric | Value |
 |--------|-------|
-| Version | 2.1.8 |
+| Version | 2.1.10 |
 | Lessons | 255 — comprehensive Nim curriculum |
 | Build | Compiles cleanly, zero warnings (`nim c --warnings:on src/nimlings.nim`) |
-| Unit tests | All 4 suites pass (Content: 2, Engine: 5, Models: 12, Prerequisites: 7) |
+| Unit tests | All 4 suites pass (Content: 2, Engine: 5, Models: 14, Prerequisites: 7 = 28) |
 | `nimlings test` (runs every solution against its validator) | **255/255 passing** |
 | Curriculum tree | 255 topics across 4 levels, 55 chapters |
 | Local model | Qwen3.6-27B (dense, 17GB Q4_K_M, ~32GB VRAM) |
 | OpenRouter model | Gemini 2.5 Flash ($0.15/$0.60 per MTok) |
+
+## 2026-08-02 Session: Config Dir & Progress Tracking Fixes
+
+Testing the CLI end-to-end (build, help, status/list, hint/solution/docs, and a full
+watch-mode lesson completion) surfaced two bugs, both fixed in v2.1.10:
+
+- `ConfigDir` in `src/models.nim` was a `const`, so `getHomeDir()` was baked in at
+  compile time instead of read at runtime — `reset`/`export` used the runtime value
+  (inconsistent with `loadProgress`/`saveProgress`). Now a `let`, resolved at startup.
+- `status` counted the raw size of the stored progress set instead of validating
+  entries against the real lesson tree (as `list`/`path` already did), so stray
+  non-lesson IDs in `progress.json` inflated its count. `import` also accepted any
+  string with no validation. Both now check against real lesson IDs; 15 stray legacy
+  entries were cleaned from the local `progress.json`.
+
+Build: clean, zero warnings. Tests: all 28 pass across 4 suites.
 
 ## 2026-07-20 (afternoon) Session: Final Lesson Fixes
 
