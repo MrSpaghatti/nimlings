@@ -276,15 +276,18 @@ proc main() =
     let saved = loadProgress()
     let daily = loadDaily()
 
-    # Count totals
+    # Count totals — only count progress entries that match a real lesson ID
     var total = 0
+    var completed = 0
     for level in levels:
       for chapter in level.chapters:
         for l in chapter.lessons:
           total.inc
+          if l.id in saved:
+            completed.inc
 
     echo ""
-    echo bold("  nimlings ") & dim($saved.len & "/" & $total & " lessons")
+    echo bold("  nimlings ") & dim($completed & "/" & $total & " lessons")
     if daily.streak > 0:
       echo "  Streak: " & bold(Green & $daily.streak & " days" & Reset)
     elif saved.len > 0:
@@ -343,15 +346,21 @@ proc main() =
 
       var p = loadProgress()
       var count = 0
+      var skipped = 0
       for item in imported.getElems():
         if item.kind == JString:
           let id = item.getStr()
-          if id notin p:
+          let (ok, _) = findLesson(id)
+          if not ok:
+            skipped.inc()
+          elif id notin p:
             p.incl(id)
             count.inc()
 
       saveProgress(p)
       echo "Imported ", count, " new progress items."
+      if skipped > 0:
+        echo "Skipped ", skipped, " unrecognized lesson id(s)."
     except JsonParsingError:
       echo "Error: Invalid JSON"
       quit(1)

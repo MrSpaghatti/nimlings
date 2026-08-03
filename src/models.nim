@@ -7,7 +7,7 @@ type
     longestStreak*: int
     lessonsToday*: int
 
-const
+let
   ConfigDir = getHomeDir() / ".config" / "nimlings"
   ProgressFile = ConfigDir / "progress.json"
   DailyFile = ConfigDir / "daily.json"
