@@ -24,8 +24,8 @@ tools/
 └── generator.nim    — lessons.json → content.nim
 tests/
 ├── test_content.nim — lesson field integrity (2 tests)
-├── test_engine.nim  — validation, JS/project runners, timeout (5 tests)
-├── test_models.nim  — streak date arithmetic (12 tests)
+├── test_engine.nim  — validation, JS/project runners, timeout + >64KiB output (6 tests)
+├── test_models.nim  — streak date arithmetic (14 tests)
 └── test_prereqs.nim — dependency graph correctness (7 tests)
 ```
 
@@ -44,4 +44,18 @@ tests/
 - **Project lessons** (lessonType "project") use `~/.config/nimlings/projects/<id>/`
   as persistent workspace, not /tmp. They are NOT cleaned up automatically.
 
-- **Key docs**: `STATUS.md` (current state), `CHANGELOG.md` (history), `AUDIT.md` (UX/content audit).
+- **Generator table keys must be quoted**: `std/json`'s `pairs` yields `(string, JsonNode)`,
+  so `$k` on the key emits it UNQUOTED and the generated `files: {helpers.nim: ...}` is not
+  valid Nim. Use `escape(k)`. This broke the build for 13 lessons until 2026-11-05.
+
+- **`cleanupOldTempDirs` only removes dirs older than 10 minutes.** It used to delete every
+  `/tmp/nimlings_*`, so a second `nimlings` invocation (even `nimlings list` from a shell
+  prompt) destroyed the temp dir a running lesson was compiling in — surfacing as a bogus
+  "COMPILE/RUN ERROR" with empty output. Never run two `nimlings` commands concurrently
+  against the same lesson set while debugging that symptom.
+
+- **`runWithTimeout` captures to a FILE, not a pipe.** A pipe's 64 KiB buffer deadlocks a
+  chatty child. Do not "simplify" it back to `p.outputStream.readAll()`.
+
+- **Key docs**: `STATUS.md` (current state + open items), `CHANGELOG.md` (history),
+  `docs/archive/` (superseded plans and audits — history only).

@@ -10,7 +10,7 @@ All new lessons must be one-shot compile+run testable. No async servers, SDL2, o
 
 ## Approach
 
-**Pipeline-driven generation.** Existing fleet pipeline: planner (Gemini 2.5 Flash) → smith (Qwen3.6-27B local) → validate → fix → inject.
+**Pipeline-driven generation.** Existing fleet pipeline: planner (Gemini 2.5 Flash) → smith (Radiance container, local) → validate → fix → inject.
 
 Phase order: write final topic JSON → generate → audit → verify.
 

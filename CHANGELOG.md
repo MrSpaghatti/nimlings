@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.11] — 2026-11-05
+
+### Fixed
+
+- **The project did not compile at HEAD.** `nimble build` failed with
+  `src/content.nim(1726, 13) Error: undeclared identifier: 'helpers'`. `tools/generator.nim`
+  emitted `files` table keys with `$k`; in `std/json` `pairs` yields `(string, JsonNode)`, so
+  `$k` on the key is a plain string and was emitted **unquoted**, producing
+  `files: {helpers.nim: "..."}` — not valid Nim. 13 lessons have non-empty `files` tables, so
+  all of them broke the build. Fixed with `escape(k)`. This was introduced by the v2.1.9 fix
+  for audit item I4, which changed `($ %k)` → `$k` believing the JSON quoting was the bug; the
+  quoting was the fix, and the audit's "unreachable, all 255 lessons have empty `files` dicts"
+  premise was wrong.
+- **`runWithTimeout` deadlocked on high-volume output (audit I1).** The poll loop never drained
+  the child's pipe, so a child writing more than the 64 KiB pipe buffer blocked in `write()`,
+  never exited, and was reported as an infinite loop. Output now goes to a file instead of a
+  pipe. Regression test added (writes ~400 KiB).
+- **`cleanupOldTempDirs` deleted live temp dirs.** It removed every `/tmp/nimlings_*` at
+  startup, so a second `nimlings` invocation — even `nimlings list` from a shell prompt —
+  destroyed the directory a running lesson was compiling in, surfacing as a bogus
+  "COMPILE/RUN ERROR" with empty output. Now only removes dirs untouched for 10 minutes.
+- **Five early lessons accepted answers that did not do the task.** 1.1.4 (comments) validated
+  only the echoed output, 1.1.5 (file I/O) only a substring, and 1.2.1/1.2.2/1.2.3 only
+  `exitCode == 0` — so `echo 7`, or an empty file, passed. Each validator now also checks the
+  required constructs in the submitted code, the same pattern the `skip_run` lessons use.
+
+### Added
+
+- **`LICENSE` (MIT).** The README claimed MIT but no license file existed, so the published
+  repo was legally unusable.
+- `docs/archive/` — `PLAN.md`, `DEV_PLAN.md`, `AUDIT.md` and `CHANGE_REPORT.md` moved there as
+  historical records. `STATUS.md` is now the single current-state doc.
+
+### Changed
+
+- **Generation backend moved off llama.cpp onto Radiance** (`~/Projects/nimlings-fleet`): the
+  fleet no longer starts its own `llama-server` (Qwen3.6-27B Q4_K_M on :8086) behind `proxy.py`
+  on :8097. That stack is retired — the GGUF is not on disk, and the build predates the ROCm
+  10.1 TheRock layout. `orchestrator.py` talks straight to the Radiance container's
+  OpenAI-compatible API on `:8310/v1` (`FLEET_LOCAL_URL`), and `fleet-nimlings.sh start`
+  *attaches* to a loaded Radiance mode instead of launching a server.
+- **The port selects the model, so an explicit gate is required.** One card holds one model and
+  Radiance ignores a request's `model` field, so a client that only sets a model name is served
+  whatever is loaded (`:8300` twin, `:8310` nim, `:8320` fleet). `fleet-nimlings.sh check` exits
+  non-zero unless the expected model answers on the expected port.
+- Requests now carry `chat_template_kwargs {"enable_thinking": false}` — without it a
+  reasoning-tuned base spends the whole `max_tokens` budget on the trace and returns EMPTY
+  content.
+- **11 committed `.pyc` files untracked** (`__pycache__/`, `src/__pycache__/`) — leftovers from
+  the pre-Nim Python implementation, committed despite `.gitignore` listing them.
+- **Content frozen at 255 lessons.** The curriculum is complete; no further generation is
+  planned.
+
 ## [2.1.10] — 2026-08-02
 
 ### Fixed

@@ -75,6 +75,21 @@ suite "Engine":
     let actualLines = output.splitLines.len - 1
     check actualLines == expectedLines
 
+  test "runWithTimeout survives output larger than a pipe buffer":
+    # Regression for audit I1. A pipe holds 64 KiB; a child that writes more
+    # blocks in write() and never exits, so the old implementation reported a
+    # bogus "infinite loop" timeout instead of the real output.
+    let tempScriptPath = "tests/temp_script_for_test.nim"
+    let scriptContent = "for i in 1..20000: echo \"line \", i, \" padding padding\""
+    writeFile(tempScriptPath, scriptContent)
+    defer: removeFile(tempScriptPath)
+
+    let cmd = "nim e --hints:off --warnings:off " & tempScriptPath
+    let (output, exitCode) = runWithTimeout(cmd, "")
+    check exitCode == 0
+    check output.len > 64 * 1024
+    check "line 20000" in output
+
   test "Project Runner":
     var l = Lesson(
       id: "proj_test",

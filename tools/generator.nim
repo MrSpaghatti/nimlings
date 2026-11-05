@@ -58,7 +58,13 @@ proc main() =
         if lesson.hasKey("files") and lesson["files"].len > 0:
           var pairs: seq[string] = @[]
           for k, v in lesson["files"].pairs:
-             pairs.add($k & ": " & $v)
+             # `k` is a plain string here (std/json's pairs yields (string, JsonNode)),
+             # so `$k` emits it UNQUOTED and the generated table key is not a valid Nim
+             # string literal: `files: {helpers.nim: "..."}` -> "undeclared identifier".
+             # `escape` produces a proper quoted literal. (v2.1.9 changed `$ %k` to `$k`
+             # believing the JSON quoting was the bug; it was the fix. Unreachable then
+             # because no lesson had a non-empty `files` table — lesson 2.4.5 now does.)
+             pairs.add(escape(k) & ": " & $v)
           files_nim = "{" & pairs.join(", ") & "}.toTable"
 
         var comp_args = "@[]"

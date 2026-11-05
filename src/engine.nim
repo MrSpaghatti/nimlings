@@ -9,10 +9,18 @@ const RunTimeout = 5000 # 5 seconds
 proc cleanupOldTempDirs*() =
   ## Remove orphaned nimlings_* temp dirs from /tmp.
   ## These accumulate when runCode() is interrupted (defer never fires).
+  ##
+  ## Only dirs untouched for 10 minutes are removed. Without the age check a
+  ## SECOND nimlings process (e.g. `nimlings list` in another shell, or a shell
+  ## prompt calling `nimlings status`) deletes the temp dir a running lesson is
+  ## compiling in — which surfaces as a bogus "COMPILE/RUN ERROR" with empty
+  ## output, and is very hard to attribute to a concurrent command.
+  let cutoff = epochTime() - 600
   for path in walkDirs(getTempDir() / "nimlings_*"):
     if dirExists(path):
       try:
-        removeDir(path)
+        if getLastModificationTime(path).toUnix < cutoff.int64:
+          removeDir(path)
       except:
         discard  # Ignore permissions races
 
@@ -77,10 +85,19 @@ proc ensureLessonFile*(lesson: Lesson): string =
   return absolutePath(path)
 
 proc runWithTimeout*(cmd: string, workingDir: string, input: string = ""): tuple[output: string, exitCode: int] =
-  # Use shell to run the command to handle arguments parsing automatically
-  # On Unix: sh -c "cmd"
-  # On Windows: cmd /c "cmd"
-  let p = startProcess(cmd, workingDir = workingDir, options = {poStdErrToStdOut, poUsePath, poEvalCommand})
+  # The child's stdout+stderr go to a FILE, not a pipe.
+  #
+  # A pipe has a fixed kernel buffer (64 KiB on Linux). A child that writes more
+  # than that blocks inside write() and never exits, so the poll loop below would
+  # spin until the timeout and report a bogus "infinite loop" — the real cause
+  # being a lesson that simply printed a lot (audit I1). A file has no such
+  # limit, so the child always runs to completion and we read the output after.
+  #
+  # This also removes the old race: the previous version only called readAll()
+  # once the process had already exited, which is why a chatty child deadlocked.
+  let captureFile = workingDir / ".nimlings_capture"
+  let fullCmd = cmd & " > " & quoteShell(captureFile) & " 2>&1"
+  let p = startProcess(fullCmd, workingDir = workingDir, options = {poUsePath, poEvalCommand})
   defer: p.close()
 
   if input.len > 0:
@@ -88,19 +105,26 @@ proc runWithTimeout*(cmd: string, workingDir: string, input: string = ""): tuple
   p.inputStream.close()
 
   let t0 = epochTime()
-  var output = ""
-
   while p.running and (epochTime() - t0 < (RunTimeout / 1000.0)):
-    os.sleep(100) # Poll every 100ms
+    os.sleep(50) # Poll every 50ms
 
+  var timedOut = false
   if p.running:
+    timedOut = true
     p.terminate()
     os.sleep(100) # Give it a moment to die gracefully
     if p.running: p.kill()
-    return ("Error: Execution timed out (infinite loop?)\n" & p.outputStream.readAll(), 124)
 
-  # Process has finished, read all output
-  output = p.outputStream.readAll()
+  var output = ""
+  if fileExists(captureFile):
+    try:
+      output = readFile(captureFile)
+      removeFile(captureFile)
+    except CatchableError:
+      discard
+
+  if timedOut:
+    return ("Error: Execution timed out (infinite loop?)\n" & output, 124)
   return (output, p.peekExitCode())
 
 

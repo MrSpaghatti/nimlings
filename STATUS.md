@@ -1,127 +1,137 @@
 # nimlings Status
 
-**Last updated:** 2026-08-02
+**Last updated:** 2026-11-05
 
-## Project Overview
+Interactive Nim tutor — 255 lessons across 4 levels and 55 chapters, CLI in Nim.
+This file is the single source of **current state and open work**. History lives in
+[`CHANGELOG.md`](CHANGELOG.md); superseded plans and audits live in
+[`docs/archive/`](docs/archive/).
 
-Interactive Nim tutor — 255 lessons across 4 levels. CLI application in 100% Nim.
-- **Planner:** Google Gemini 2.5 Flash (OpenRouter) — lesson structure design only
-- **Smith / Fixer / Auditor:** Qwen3.6-27B (local, Q4_K_M, R9700/ROCm) — generation, fixes, auditing
+## Current state (verified 2026-11-05)
 
-## Current Status: 255/255 Lessons — 100% Verified End-to-End
+| Check | Result |
+|---|---|
+| Build | `nimble build` clean — v2.1.10 |
+| Unit tests | **29/29** across 4 suites (Models 14, Content 2, Engine 6, Prerequisites 7) |
+| `nimlings test` | **255/255** — of which **220 are executed end-to-end** and **35 are structure-validated** `skip_run` reference lessons |
+| Lessons | 255 across 4 levels (34 / 61 / 66 / 94), 55 chapters |
+| License | MIT — [`LICENSE`](LICENSE) |
+| CI | `.github/workflows/ci.yml` |
 
-| Metric | Value |
-|--------|-------|
-| Version | 2.1.10 |
-| Lessons | 255 — comprehensive Nim curriculum |
-| Build | Compiles cleanly, zero warnings (`nim c --warnings:on src/nimlings.nim`) |
-| Unit tests | All 4 suites pass (Content: 2, Engine: 5, Models: 14, Prerequisites: 7 = 28) |
-| `nimlings test` (runs every solution against its validator) | **255/255 passing** |
-| Curriculum tree | 255 topics across 4 levels, 55 chapters |
-| Local model | Qwen3.6-27B (dense, 17GB Q4_K_M, ~32GB VRAM) |
-| OpenRouter model | Gemini 2.5 Flash ($0.15/$0.60 per MTok) |
+## 2026-11-05 session: the build was broken, and now it isn't
 
-## 2026-08-02 Session: Config Dir & Progress Tracking Fixes
+**The repo did not compile at HEAD.** `nimble build` failed with:
 
-Testing the CLI end-to-end (build, help, status/list, hint/solution/docs, and a full
-watch-mode lesson completion) surfaced two bugs, both fixed in v2.1.10:
+```
+src/content.nim(1726, 13) Error: undeclared identifier: 'helpers'
+```
 
-- `ConfigDir` in `src/models.nim` was a `const`, so `getHomeDir()` was baked in at
-  compile time instead of read at runtime — `reset`/`export` used the runtime value
-  (inconsistent with `loadProgress`/`saveProgress`). Now a `let`, resolved at startup.
-- `status` counted the raw size of the stored progress set instead of validating
-  entries against the real lesson tree (as `list`/`path` already did), so stray
-  non-lesson IDs in `progress.json` inflated its count. `import` also accepted any
-  string with no validation. Both now check against real lesson IDs; 15 stray legacy
-  entries were cleaned from the local `progress.json`.
+Root cause: `tools/generator.nim` emitted `files` table keys with `$k`. In `std/json`,
+`pairs` yields `(string, JsonNode)`, so `$k` on the key is a plain string and is emitted
+**unquoted** — producing `files: {helpers.nim: "..."}`, which is not valid Nim. **13
+lessons** have non-empty `files` tables, so all of them broke the build.
 
-Build: clean, zero warnings. Tests: all 28 pass across 4 suites.
+This was introduced by the v2.1.9 fix for audit item I4, which changed `($ %k)` → `$k`
+believing the JSON quoting was the bug. The quoting *was* the fix. The audit also recorded
+the path as "unreachable (all 255 lessons have empty `files` dicts)" — 13 don't. Fixed by
+using `escape(k)`.
 
-## 2026-07-20 (afternoon) Session: Final Lesson Fixes
+Also fixed this session:
 
-All 14 previously-known structural failures resolved. 35 lessons that don't fit the one-shot
-"compile, run, capture stdout" model are `skipRun: true` — they serve as reference material
-with correct solution code and validators that check code structure. 2 lessons (3.15.3 ORC Model,
-4.13.3 Inline Assembly) were rewritten with working solutions that compile and run correctly.
+- **I1 — `runWithTimeout` deadlock.** The poll loop never drained the child's pipe, so a
+  child writing more than the 64 KiB pipe buffer blocked in `write()`, never exited, and
+  was reported as an infinite loop. Output now goes to a **file** instead of a pipe.
+  Regression test added (writes ~400 KiB).
+- **`cleanupOldTempDirs` deleted live temp dirs.** It removed every `/tmp/nimlings_*` at
+  startup, so a second `nimlings` invocation — even `nimlings list` from a shell prompt —
+  destroyed the directory a running lesson was compiling in. That surfaces as a bogus
+  "COMPILE/RUN ERROR" with empty output and is very hard to attribute. Now only removes
+  dirs untouched for 10 minutes.
+- **Stale binary.** The checked-out `nimlings` binary was **v2.1.3 from 2026-06-29** and
+  reported "2/144 lessons". Rebuilt; it now reports 2/255.
+- **LICENSE added (MIT).** The README claimed MIT but no license file existed, so the
+  published repo was legally unusable.
+- **11 committed `.pyc` files untracked** (`__pycache__/`, `src/__pycache__/`) — leftovers
+  from the pre-Nim Python implementation, committed despite `.gitignore` listing them.
+- **Docs consolidated.** `PLAN.md`, `DEV_PLAN.md`, `AUDIT.md`, `CHANGE_REPORT.md` moved to
+  `docs/archive/`. This file is now the only current-state doc.
 
-`nimlings test` now passes 255/255 (100%).
+## Open items
 
-### Resolution summary for the 14:
+| # | Item | Severity |
+|---|---|---|
+| I2 | `parseCompilerErrors` regexes capture groups but `.contains()` discards them, so hints stay generic instead of naming the actual types | Low (UX) |
+| S3 | `test_engine.nim` line-count assertion is brittle across Nim versions | Low |
+| S4 | 17 lessons have empty `docs` arrays | Low (UX) |
+| — | 35 `skip_run` lessons are structure-validated only; a human pass over their prose and idioms would help most | Medium |
+| — | `tools/add_docs.py` is Python in an otherwise-Nim project | Low |
+| — | No demo GIF / asciinema in the README (a real `nimlings list` transcript is there instead) | Low |
 
-| Lesson | Resolution |
-|--------|-----------|
-| 3.15.3 ORC Model | **Fixed** — rewritten with real `=trace`/`=destroy` solution, validator checks `output.strip() == "done"` |
-| 4.10.4 UDP & Multicast | skipRun (binds real sockets; flaky/order-dependent) |
-| 4.10.5 WebSocket Client & Server | skipRun (no `websocket` package exists) |
-| 4.12.5 Hot Code Reloading | skipRun (SDL2 game loop; needs real window) |
-| 4.13.3 Inline Assembly | skipRun (GCC inline asm; architecture-specific) |
-| 4.15.3 Fidget UI Framework | skipRun (fictitious `fidget` library) |
-| 4.17.5 JWT & Authentication | skipRun (HMAC implementation; reference material) |
-| 4.19.1 Protocol Design | skipRun (async server; loops forever) |
-| 4.19.2 Server Implementation | skipRun (async server; loops forever) |
-| 4.19.3 Client Implementation | skipRun (async client; needs live server) |
-| 4.20.1 Plugin API Basics | skipRun (for-loop macro needs `ForLoopStmt`) |
-| 4.20.3 Testing Compiler Plugins | skipRun (compiler internals API) |
-| 4.3.5 Interfacing with C++ | skipRun (needs two-step C++ build) |
-| 4.3.6 Compiling to Objective-C | skipRun (macOS-only, untestable on Linux) |
+Fleet-side items (I5–I7: non-atomic `lessons.json` writes, no retry backoff, per-lesson
+checkpoint saves) belong to `~/Projects/nimlings-fleet`, not this repo.
 
-Build: clean, zero warnings. Tests: all 26 pass across 4 suites.
+## Content is frozen at 255
 
-## What's Here
-
-- ✅ 255 lessons across 4 levels
-- ✅ Hybrid LLM pipeline: OpenRouter for planning, Qwen3.6-27B local for generation
-- ✅ 255-topic comprehensive Nim curriculum tree covering every language feature
-- ✅ Full pipeline: planner → smith → validate → fix → inject → build → test
-- ✅ Orphaned `/tmp/nimlings_*` cleanup on startup
-- ✅ Real stdin support for lessons that read user input
-- ✅ `nimlings test` — the real end-to-end check (compiles+runs every solution, validates output);
-  regenerate `src/content.nim` first (`nimble generate_content`) if you've edited `lessons.json` directly
+The 255 → 315 expansion plan in `docs/archive/PLAN.md` was never executed and is not
+planned. The open problem is **consumption, not content**: two lessons have ever been
+completed. More lessons do not move that number.
 
 ## Architecture
 
+The tutor is self-contained; the *generation* pipeline that produced the lessons is a
+separate repo.
+
 ```
-~/nimlings-fleet/
-├── fleet-nimlings.sh     # Start/stop Qwen3.6-27B + proxy
-├── orchestrator.py        # Main generation loop
-├── run-24h.sh             # 24-hour batch run script
-├── nimdocs/               # Documentation retrieval module
-│   └── __init__.py        # Index builder & keyword retriever
-├── nim-topics.json        # 255-topic comprehensive curriculum
-├── proxy.py               # OpenAI-compatible API proxy
-└── logs/                  # Session logs
-    └── reports/           # Run reports
+~/Projects/nimlings/            this repo — the tutor
+├── src/                        engine, TUI, models, generated content
+├── tools/generator.nim         lessons.json -> content.nim
+├── tests/                      4 suites, 29 tests
+└── docs/archive/               superseded plans and audits
+
+~/Projects/nimlings-fleet/      the generation pipeline (not needed to use the tutor)
+├── fleet-nimlings.sh           attaches to a loaded Radiance mode, writes .fleet-env
+├── orchestrator.py             planner -> smith -> validate -> fix -> inject
+├── run-24h.sh                  batch run
+├── nim-topics.json             255-topic curriculum tree
+└── proxy.py                    RETIRED (llama.cpp era) — unused
 ```
 
-## Usage
+Generation split: **Planner** on OpenRouter (Gemini 2.5 Flash, ~$0.0002/lesson);
+**Smith / Fixer / Auditor** on the local Radiance container on the R9700 — bulk token
+spend is zero. One card holds one model, and Radiance ignores a request's `model` field,
+so the **port** selects the model (`:8300` twin, `:8310` nim, `:8320` fleet).
+
+## Commands
 
 ```bash
-cd ~/nimlings-fleet
+# this repo
+nimble build               # regenerate content.nim + build
+nimble test                # 4 unit suites (29 tests)
+./nimlings test            # every lesson's solution against its validator
+./nimlings list            # dashboard
 
-# 1. Start the fleet
-./fleet-nimlings.sh start
-
-# 2. Check coverage
+# the fleet (only if you are generating new lessons)
+cd ~/Projects/nimlings-fleet
+./fleet-nimlings.sh check  # refuse to run unless the expected model is loaded
+./fleet-nimlings.sh start  # attach + write .fleet-env
 python3 orchestrator.py --audit-only
-
-# 3. Generate one lesson
-python3 orchestrator.py --topic "4.12.6"
-
-# 4. Continuous mode
-python3 orchestrator.py --continuous --max-hours 24
-
-# 5. Run full audit
-python3 orchestrator.py --audit-content
-
-# 6. Rebuild doc index (after Nim update)
-python3 orchestrator.py --rebuild-index
 ```
 
-In the main repo:
+## Earlier sessions
 
-```bash
-nimble generate_content   # regenerate src/content.nim from src/lessons.json
-nim c src/nimlings.nim    # build
-./nimlings test           # run every lesson's solution against its validator (the real check)
-nimble test                # run the unit test suites
-```
+- **2026-11-05 (backend):** the fleet stopped running its own model server. `fleet-nimlings.sh`
+  attaches to the Radiance container and refuses to run blind (`check` gate). `orchestrator.py`
+  talks straight to `:8310/v1`; `proxy.py` retired; the dead Qwen3.6-27B GGUF path removed.
+  Requests carry `chat_template_kwargs {"enable_thinking": false}` — without it a
+  reasoning-tuned base spends the whole token budget on the trace and returns empty content.
+  `run-24h.sh` had an unterminated heredoc (`REPORTEOF` at 171 vs `EOF` at 199) that swallowed
+  the last 70 lines of the script. `rocm-smi` call sites replaced with `amd-smi` (ROCm 10.1).
+- **2026-08-02 (v2.1.10):** `ConfigDir` was a `const`, so `getHomeDir()` was baked in at
+  compile time — `reset`/`export` used the runtime value while `loadProgress`/`saveProgress`
+  used the build machine's. Now a `let`. `status` counted raw progress-set size instead of
+  validating IDs against the lesson tree; `import` accepted any string. Both now validate.
+- **2026-07-24 (v2.1.9):** audit cycle — E1 (lesson 3.15.1 accepted any compilable code),
+  E3 (`updateStreak` `IndexDefect` on malformed dates), E4 (unguarded `removeDir` in `defer`),
+  I3 (`test_prereqs` missing from the runner). See `docs/archive/AUDIT.md`.
+- **2026-07-20:** the last 14 known structural failures resolved; 35 lessons marked
+  `skip_run` as reference material.
